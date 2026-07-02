@@ -4,8 +4,6 @@ import { invoiceAPI, clientAPI, productAPI, quotationAPI } from '../../api/servi
 import toast from 'react-hot-toast';
 import { Plus, Trash2, Save, Download, Loader2, X, ChevronDown, Percent, Tag } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { pdf } from '@react-pdf/renderer';
-import InvoicePDF from './InvoicePDF';
 
 const defaultItem = () => ({
   name: '', description: '', hsn: '', quantity: 1, unit: 'pcs',
@@ -265,6 +263,10 @@ export default function InvoiceForm() {
         }
       }
 
+      const [{ pdf }, { default: InvoicePDF }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('./InvoicePDF'),
+      ]);
       const blob = await pdf(<InvoicePDF invoice={invoiceForPDF} />).toBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');

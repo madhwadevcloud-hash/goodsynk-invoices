@@ -1,38 +1,18 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { invoiceAPI, quotationAPI } from '../../api/services';
 import toast from 'react-hot-toast';
 import { Pencil, ArrowLeft, CheckCircle, Send, Download, FileText, Loader2 } from 'lucide-react';
-import { usePDF } from '@react-pdf/renderer';
-import InvoicePDF from './InvoicePDF';
 import { DEFAULT_COLORS } from './InvoiceForm';
 
-function PdfPane({ invoice }) {
-  const [instance] = usePDF({ document: <InvoicePDF invoice={invoice} /> });
+const PdfPane = lazy(() => import('./PdfPane'));
 
-  if (instance.loading) return (
-    <div className="flex-center" style={{ height: '100%', flexDirection: 'column', gap: 10 }}>
-      <Loader2 size={28} className="spin" style={{ color: 'var(--primary)' }} />
-      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Generating PDF…</p>
-    </div>
-  );
-
-  if (instance.error) return (
-    <div className="flex-center" style={{ height: '100%' }}>
-      <p style={{ color: 'var(--danger)' }}>Failed to render PDF.</p>
-    </div>
-  );
-
-  return (
-    <iframe
-      src={`${instance.url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-      title="Invoice PDF"
-      width="100%"
-      height="100%"
-      style={{ border: 'none', display: 'block', background: '#525659' }}
-    />
-  );
-}
+const PdfPaneFallback = () => (
+  <div className="flex-center" style={{ height: '100%', flexDirection: 'column', gap: 10 }}>
+    <Loader2 size={28} className="spin" style={{ color: 'var(--primary)' }} />
+    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading PDF renderer…</p>
+  </div>
+);
 
 export default function InvoiceView() {
   const { id } = useParams();
@@ -170,7 +150,10 @@ export default function InvoiceView() {
             onClick={async (e) => {
               e.preventDefault();
               try {
-                const { pdf } = await import('@react-pdf/renderer');
+                const [{ pdf }, { default: InvoicePDF }] = await Promise.all([
+                  import('@react-pdf/renderer'),
+                  import('./InvoicePDF'),
+                ]);
                 const blob = await pdf(<InvoicePDF invoice={invoiceForPDF} />).toBlob();
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
@@ -196,7 +179,9 @@ export default function InvoiceView() {
 
       {/* ── Clean PDF embed — no browser toolbar ── */}
       <div style={{ flex: 1, minHeight: 0, borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)', background: '#525659', width: '60%', margin: '0 auto' }}>
-        <PdfPane invoice={invoiceForPDF} />
+        <Suspense fallback={<PdfPaneFallback />}>
+          <PdfPane invoice={invoiceForPDF} />
+        </Suspense>
       </div>
     </div>
   );
