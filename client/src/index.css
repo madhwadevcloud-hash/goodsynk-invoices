@@ -584,6 +584,15 @@ tbody tr:hover {
   background: var(--bg-elevated);
 }
 
+/* ─── Dropdown rows (client / product search) ───────────────────────────────── */
+.dropdown-row {
+  transition: background var(--transition);
+}
+
+.dropdown-row:hover {
+  background: var(--bg-elevated);
+}
+
 /* ─── Badges ─────────────────────────────────────────────────────────────────── */
 .badge {
   display: inline-flex;
@@ -799,6 +808,8 @@ tbody tr:hover {
   border-top: 1px solid var(--border);
   margin: 20px 0;
 }
+
+
 
 /* Hide browser default password reveal icon */
 input::-ms-reveal,

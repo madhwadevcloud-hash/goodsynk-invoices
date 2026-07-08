@@ -1,4 +1,6 @@
 const express = require('express');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const {
@@ -9,7 +11,9 @@ const {
   updateQuotationStatus,
   deleteQuotation,
   convertToInvoice,
-} = require('../controllers/quotationController');
+} = require('../controllers/quotationController'); // ← sendEmailWithPDF removed from here
+
+const { sendEmailWithPDF } = require('../controllers/emailController'); // ← only here now
 
 router.use(protect);
 
@@ -17,5 +21,6 @@ router.route('/').get(getQuotations).post(createQuotation);
 router.route('/:id').get(getQuotation).put(updateQuotation).delete(deleteQuotation);
 router.route('/:id/status').patch(updateQuotationStatus);
 router.route('/:id/convert').post(convertToInvoice);
+router.post('/:id/send-email', upload.single('pdf'), sendEmailWithPDF);
 
 module.exports = router;
