@@ -4,7 +4,7 @@ import { invoiceAPI } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { Plus, Pencil, Trash2, Eye, Send, Mail, MessageCircle, Loader2 } from 'lucide-react';
-
+import { DEFAULT_COLORS } from './InvoiceForm';
 import EmailComposeModal from './EmailComposeModal';
 import { isProfileComplete, getMissingProfileField } from '../../utils/profileValidation';
 
@@ -147,34 +147,27 @@ export default function InvoiceList() {
     }
   };
 
-  // 🟢 Send email via backend API
-  const handleSendEmail = async ({ to, subject, body, pdfBlob, pdfFileName }) => {
-    await invoiceAPI.sendEmail(emailModal.invoiceId, { to, subject, body, pdfBlob, pdfFileName });
-  };
 
-  // 🟢 WHATSAPP — Opens WhatsApp directly with pre-filled text
+
+  // 🟢 WHATSAPP — fixed: was calling buildQuotationPDFFile (doesn't exist here)
   const shareViaWhatsapp = async (id) => {
     setShareOpenId(null);
     setSendingId(id);
-
     try {
-      const { file, fileName, inv } = await buildQuotationPDFFile(id);
-      const text = `Hi ${inv.client?.name || ''}, here's your quotation ${inv.invoiceNumber} for ${fmtCurrency(inv.total, inv.currency)}.`;
+      const { file, inv } = await buildInvoicePDFFile(id);
+      const text = `Hi ${inv.client?.name || ''}, here's your invoice ${inv.invoiceNumber} for ${fmtCurrency(inv.total, inv.currency)}.`;
 
-      // Real attachment — only works where the OS share sheet supports files
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({ title: text, text, files: [file] });
         return;
       }
 
-      // Fallback: wa.me only accepts prefilled text, never files —
-      // this is a WhatsApp link limitation, not something any code can work around.
       const phone = (inv.client?.phone || '').replace(/[^0-9]/g, '');
       const base = phone ? `https://wa.me/${phone}` : 'https://wa.me/';
       const waUrl = `${base}?text=${encodeURIComponent(text)}`;
       window.open(waUrl, '_blank');
     } catch (err) {
-      if (err?.name !== 'AbortError') toast.error('Failed to prepare quotation for WhatsApp');
+      if (err?.name !== 'AbortError') toast.error('Failed to prepare invoice for WhatsApp');
     } finally {
       setSendingId(null);
     }
@@ -264,24 +257,15 @@ export default function InvoiceList() {
               type="button"
               className="dropdown-row"
               onClick={() => shareViaEmail(shareOpenId)}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-                padding: '10px 14px', background: 'none', border: 'none',
-                borderBottom: '1px solid var(--border)', cursor: 'pointer',
-                fontSize: '0.82rem', color: 'var(--text-primary)', textAlign: 'left',
-              }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'none', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-primary)', textAlign: 'left' }}
             >
               <Mail size={14} /> Email
             </button>
             <button
               type="button"
               className="dropdown-row"
-              onClick={() => shareViaWhatsapp(inv._id)}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-                padding: '10px 14px', background: 'none', border: 'none',
-                cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-primary)', textAlign: 'left',
-              }}
+              onClick={() => shareViaWhatsapp(shareOpenId)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-primary)', textAlign: 'left' }}
             >
               <MessageCircle size={14} /> WhatsApp
             </button>
@@ -289,11 +273,10 @@ export default function InvoiceList() {
         </>
       )}
 
-      {/* Email Compose Modal */}
+      {/* Email Compose Modal — onSend removed, modal now sends itself client-side */}
       <EmailComposeModal
         isOpen={emailModal.open}
         onClose={() => setEmailModal({ ...emailModal, open: false })}
-        onSend={handleSendEmail}
         defaultTo={emailModal.to}
         defaultSubject={emailModal.subject}
         defaultBody={emailModal.body}
