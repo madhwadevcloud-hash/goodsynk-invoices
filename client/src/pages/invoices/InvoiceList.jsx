@@ -4,7 +4,6 @@ import { invoiceAPI } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { Plus, Pencil, Trash2, Eye, Send, Mail, MessageCircle, Loader2 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
 import { DEFAULT_COLORS } from './InvoiceForm';
 import EmailComposeModal from './EmailComposeModal';
 
