@@ -39,7 +39,17 @@ const PublicRoute = ({ children }) => {
 };
 
 // Requires authentication AND a complete profile (businessName set)
+// We removed the businessName check so users can skip profile setup.
 const ProfileGuard = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="page-loader"><div className="spinner" /></div>;
+  if (!user) return <Navigate to="/" replace />;
+  // Removed: if (!user.businessName) return <Navigate to="/profile-setup" replace />;
+  return children;
+};
+
+// Strict guard for generating invoices/quotations
+const RequireProfile = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div className="page-loader"><div className="spinner" /></div>;
   if (!user) return <Navigate to="/" replace />;
@@ -77,13 +87,13 @@ export default function App() {
           <Route path="templates" element={<Templates />} />
 
           <Route path="invoices" element={<InvoiceList />} />
-          <Route path="invoices/new" element={<InvoiceForm />} />
-          <Route path="invoices/:id/edit" element={<InvoiceForm />} />
+          <Route path="invoices/new" element={<RequireProfile><InvoiceForm /></RequireProfile>} />
+          <Route path="invoices/:id/edit" element={<RequireProfile><InvoiceForm /></RequireProfile>} />
           <Route path="invoices/:id" element={<InvoiceView />} />
 
           <Route path="quotations" element={<QuotationList />} />
-          <Route path="quotations/new" element={<InvoiceForm />} />
-          <Route path="quotations/:id/edit" element={<InvoiceForm />} />
+          <Route path="quotations/new" element={<RequireProfile><InvoiceForm /></RequireProfile>} />
+          <Route path="quotations/:id/edit" element={<RequireProfile><InvoiceForm /></RequireProfile>} />
           <Route path="quotations/:id" element={<InvoiceView />} />
 
           <Route path="clients" element={<ClientList />} />

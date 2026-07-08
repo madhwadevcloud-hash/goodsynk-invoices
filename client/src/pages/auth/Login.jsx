@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { LogIn, Receipt } from 'lucide-react';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../../config/firebase';
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
@@ -22,6 +24,25 @@ export default function Login() {
       navigate('/dashboard');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      await loginWithGoogle({
+        name: user.displayName,
+        email: user.email,
+        googleId: user.uid,
+      });
+      toast.success('Welcome back!');
+      navigate('/dashboard');
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Google login failed');
     } finally {
       setLoading(false);
     }
@@ -68,6 +89,23 @@ export default function Login() {
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
+        
+        <div className="mt-4" style={{ display: 'flex', alignItems: 'center', margin: '20px 0' }}>
+          <hr style={{ flex: 1, borderColor: '#eee' }} />
+          <span style={{ padding: '0 10px', color: '#888', fontSize: '14px' }}>OR</span>
+          <hr style={{ flex: 1, borderColor: '#eee' }} />
+        </div>
+
+        <button 
+          type="button" 
+          className="btn w-full btn-lg" 
+          onClick={handleGoogleLogin} 
+          disabled={loading}
+          style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', border: '1px solid #ddd', backgroundColor: '#fff', color: '#333' }}
+        >
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" style={{ width: '18px', height: '18px' }} />
+          Sign in with Google
+        </button>
 
         <p className="text-sm text-muted mt-4" style={{ textAlign: 'center' }}>
           Don't have an account?{' '}

@@ -3,14 +3,23 @@ import { Link, useNavigate } from 'react-router-dom';
 import { invoiceAPI } from '../../api/services';
 import toast from 'react-hot-toast';
 import { Plus, Pencil, Trash2, Eye } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const fmtCurrency = (n, currency = 'INR') =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 2 }).format(n || 0);
 
 export default function InvoiceList() {
+  const { user } = useAuth();
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  const handleCreate = (e) => {
+    if (!user?.businessName) {
+      e.preventDefault();
+      toast.error('Complete your profile to generate invoices');
+    }
+  };
 
   const fetchInvoices = () => {
     setLoading(true);
@@ -37,7 +46,7 @@ export default function InvoiceList() {
           <h1 className="page-title">Invoices</h1>
           <p className="page-subtitle">Manage all your invoices</p>
         </div>
-        <Link to="/invoices/new" className="btn btn-primary">
+        <Link to="/invoices/new" className="btn btn-primary" onClick={handleCreate}>
           <Plus size={16} /> New Invoice
         </Link>
       </div>
@@ -50,7 +59,7 @@ export default function InvoiceList() {
             <div className="empty-state-icon">📄</div>
             <div className="empty-state-title">No invoices found</div>
             <div className="empty-state-desc">Create your first invoice to start billing clients</div>
-            <Link to="/invoices/new" className="btn btn-primary"><Plus size={15} /> Create Invoice</Link>
+            <Link to="/invoices/new" className="btn btn-primary" onClick={handleCreate}><Plus size={15} /> Create Invoice</Link>
           </div>
         ) : (
           <div className="table-wrapper" style={{ border: 'none', borderRadius: 'var(--radius-lg)' }}>

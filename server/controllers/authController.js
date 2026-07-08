@@ -136,4 +136,46 @@ const deleteMe = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe, updateMe, changePassword, deleteMe };
+// @desc    Google login / register
+// @route   POST /api/auth/google
+// @access  Public
+const googleLogin = async (req, res) => {
+  try {
+    const { name, email, googleId } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Create new user if they don't exist
+      user = await User.create({
+        name: name || 'Google User',
+        email,
+        password: googleId || Math.random().toString(36).slice(-8), // Dummy password since they use Google
+      });
+    }
+
+    const token = generateToken(user._id);
+    res.json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        businessName: user.businessName,
+        businessLogo: user.businessLogo,
+        businessSignature: user.businessSignature,
+        address: user.address,
+        phone: user.phone,
+        gstin: user.gstin,
+        currency: user.currency,
+        bankDetails: user.bankDetails,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+module.exports = { register, login, getMe, updateMe, changePassword, deleteMe, googleLogin };

@@ -3,18 +3,21 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { UserPlus, Receipt } from 'lucide-react';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../../config/firebase';
 
 export default function Register() {
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.password) return toast.error('Name, email and password are required');
+    if (!form.name || !form.email || !form.password || !form.confirmPassword) return toast.error('All fields are required');
+    if (form.password !== form.confirmPassword) return toast.error('Passwords do not match');
     if (form.password.length < 6) return toast.error('Password must be at least 6 characters');
     setLoading(true);
     try {
@@ -23,6 +26,25 @@ export default function Register() {
       navigate('/profile-setup');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleRegister = async () => {
+    try {
+      setLoading(true);
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      await loginWithGoogle({
+        name: user.displayName,
+        email: user.email,
+        googleId: user.uid,
+      });
+      toast.success('Account created! Welcome.');
+      navigate('/profile-setup');
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Google registration failed');
     } finally {
       setLoading(false);
     }
@@ -55,11 +77,33 @@ export default function Register() {
             <input name="password" type="password" className="form-control" placeholder="Min. 6 characters" value={form.password} onChange={handleChange} />
           </div>
 
+          <div className="form-group">
+            <label className="form-label">Confirm Password *</label>
+            <input name="confirmPassword" type="password" className="form-control" placeholder="Confirm your password" value={form.confirmPassword} onChange={handleChange} />
+          </div>
+
           <button type="submit" className="btn btn-primary w-full btn-lg" disabled={loading}>
             <UserPlus size={16} />
             {loading ? 'Creating account…' : 'Create Account'}
           </button>
         </form>
+
+        <div className="mt-4" style={{ display: 'flex', alignItems: 'center', margin: '20px 0' }}>
+          <hr style={{ flex: 1, borderColor: '#eee' }} />
+          <span style={{ padding: '0 10px', color: '#888', fontSize: '14px' }}>OR</span>
+          <hr style={{ flex: 1, borderColor: '#eee' }} />
+        </div>
+
+        <button 
+          type="button" 
+          className="btn w-full btn-lg" 
+          onClick={handleGoogleRegister} 
+          disabled={loading}
+          style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', border: '1px solid #ddd', backgroundColor: '#fff', color: '#333' }}
+        >
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" style={{ width: '18px', height: '18px' }} />
+          Sign in with Google
+        </button>
 
         <p className="text-sm text-muted mt-4" style={{ textAlign: 'center' }}>
           Already have an account?{' '}

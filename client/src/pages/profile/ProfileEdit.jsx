@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../context/AuthContext';
@@ -71,7 +71,7 @@ export default function ProfileEdit() {
   };
 
   /* ── Profile form ── */
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm({
     defaultValues: {
       name:         user?.name         || '',
       businessName: user?.businessName || '',
@@ -89,6 +89,17 @@ export default function ProfileEdit() {
       branch:       user?.bankDetails?.branch || '',
     },
   });
+
+  const formValues = watch();
+
+  useEffect(() => {
+    if (!editing) return;
+    const handler = setTimeout(() => {
+      // Auto-save silently
+      handleSubmit((vals) => handleSave(vals, false))();
+    }, 1500); // 1.5s debounce
+    return () => clearTimeout(handler);
+  }, [formValues, editing]);
 
   /* ── Handle avatar upload → Cloudinary ── */
   const handleAvatarChange = async (e) => {
@@ -113,7 +124,7 @@ export default function ProfileEdit() {
   };
 
   /* ── Save profile ── */
-  const onSubmit = async (values) => {
+  const handleSave = async (values, isManual = true) => {
     try {
       const payload = {
         name:         values.name,
@@ -139,12 +150,19 @@ export default function ProfileEdit() {
       };
       const { data } = await authAPI.updateMe(payload);
       updateUser(data.user);
-      toast.success('Profile updated!');
-      setEditing(false);
+      
+      if (isManual) {
+        toast.success('Profile updated!');
+        setEditing(false);
+      } else {
+        toast.success('Changes auto-saved', { id: 'autosave', icon: '💾' });
+      }
     } catch {
-      toast.error('Failed to update profile.');
+      toast.error('Failed to update profile.', { id: 'autosave' });
     }
   };
+
+  const onSubmit = (values) => handleSave(values, true);
 
   /* ── Handle account deletion ── */
   const handleDeleteAccount = async () => {
@@ -210,11 +228,22 @@ export default function ProfileEdit() {
           <h1 className="page-title">My Profile</h1>
           <p className="page-subtitle">Manage your business information and account settings.</p>
         </div>
-        {!editing && (
-          <button className="btn btn-primary" onClick={() => setEditing(true)}>
-            <Pencil size={15} /> Edit Profile
-          </button>
-        )}
+        <div>
+          {!editing ? (
+            <button className="btn btn-primary" onClick={() => setEditing(true)}>
+              <Pencil size={15} /> Edit Profile
+            </button>
+          ) : (
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button type="button" className="btn btn-ghost" onClick={handleCancel}>
+                <X size={15} /> Cancel
+              </button>
+              <button type="submit" form="profile-form" className="btn btn-primary" disabled={isSubmitting}>
+                <Save size={15} /> {isSubmitting ? 'Saving…' : 'Save Changes'}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 24, alignItems: 'start' }}>
@@ -316,7 +345,7 @@ export default function ProfileEdit() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit(onSubmit)}>
+              <form id="profile-form" onSubmit={handleSubmit(onSubmit)}>
                 <SectionHeading icon={User} label="Personal" />
                 <div className="form-grid">
                   <div className="form-group">
@@ -409,12 +438,6 @@ export default function ProfileEdit() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-                  <button type="button" className="btn btn-ghost" onClick={handleCancel}><X size={15} /> Cancel</button>
-                  <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                    <Save size={15} /> {isSubmitting ? 'Saving…' : 'Save Changes'}
-                  </button>
-                </div>
               </form>
             </div>
 

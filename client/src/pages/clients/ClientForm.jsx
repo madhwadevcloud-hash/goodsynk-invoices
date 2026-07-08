@@ -101,12 +101,6 @@ export default function ClientForm() {
         </div>
       </div>
 
-      <div className="card">
-        <div className="form-group">
-          <label className="form-label">Notes</label>
-          <textarea className="form-control" rows={3} value={form.notes} onChange={(e) => setField('notes', e.target.value)} placeholder="Internal notes about this client…" />
-        </div>
-      </div>
     </form>
   );
 }

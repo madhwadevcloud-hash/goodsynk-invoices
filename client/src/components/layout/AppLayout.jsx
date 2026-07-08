@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useLocation, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -41,6 +42,15 @@ export default function AppLayout() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [showProfilePrompt, setShowProfilePrompt] = useState(false);
+
+  useEffect(() => {
+    if (user && !user.businessName) {
+      setShowProfilePrompt(true);
+    } else {
+      setShowProfilePrompt(false);
+    }
+  }, [user]);
 
   const handleLogout = () => { logout(); navigate('/'); };
 
@@ -104,6 +114,56 @@ export default function AppLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Profile Completion Popup */}
+      {showProfilePrompt && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'var(--bg-card)',
+            padding: '30px',
+            borderRadius: 'var(--radius-lg)',
+            maxWidth: '450px',
+            textAlign: 'center',
+            boxShadow: 'var(--shadow)',
+            position: 'relative'
+          }}>
+            <button 
+              onClick={() => setShowProfilePrompt(false)}
+              style={{
+                position: 'absolute', top: '10px', right: '15px', 
+                background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer',
+                color: 'var(--text-muted)'
+              }}
+            >&times;</button>
+            <div style={{
+              width: 50, height: 50, borderRadius: '50%', background: 'rgba(99,102,241,0.1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 20px', color: 'var(--primary)'
+            }}>
+              <UserCircle2 size={24} />
+            </div>
+            <h3 style={{ marginBottom: '15px', fontSize: '1.25rem' }}>Complete your profile</h3>
+            <p style={{ marginBottom: '25px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+              Complete your company details to be able to generate quotations and invoices.
+            </p>
+            <button className="btn btn-primary w-full btn-lg" style={{ justifyContent: 'center' }} onClick={() => {
+              setShowProfilePrompt(false);
+              navigate('/profile-setup');
+            }}>
+              Complete Profile
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

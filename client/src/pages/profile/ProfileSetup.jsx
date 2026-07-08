@@ -68,23 +68,28 @@ export default function ProfileSetup() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 65%), var(--bg)',
+      background: 'var(--bg)',
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'center',
-      padding: '40px 16px',
+      padding: '20px 40px',
       fontFamily: 'Inter, system-ui, sans-serif',
+      position: 'relative'
     }}>
-      {/* Card */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', marginBottom: '20px' }}>
+        <button 
+          onClick={() => navigate('/dashboard')}
+          className="btn btn-ghost"
+          style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}
+        >
+          Skip for now <ChevronRight size={16} />
+        </button>
+      </div>
+
+      {/* Content */}
       <div style={{
         width: '100%',
-        maxWidth: 560,
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-lg)',
-        padding: '40px 36px',
-        boxShadow: 'var(--shadow)',
-        margin: 'auto',
+        maxWidth: '1200px',
+        margin: '0 auto',
       }}>
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
