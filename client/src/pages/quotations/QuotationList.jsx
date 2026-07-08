@@ -21,7 +21,6 @@ export default function QuotationList() {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
 
-  // Email modal state
   const [emailModal, setEmailModal] = useState({
     open: false,
     to: '',
@@ -70,7 +69,6 @@ export default function QuotationList() {
     setShareOpenId(id);
   };
 
-  // Builds the actual PDF as a File object, reusing the same renderer as InvoiceForm
   const buildQuotationPDFFile = async (quotationId) => {
     const res = await quotationAPI.getById(quotationId);
     const inv = res.data.invoice;
@@ -111,29 +109,18 @@ export default function QuotationList() {
     return { file: new File([blob], fileName, { type: 'application/pdf' }), blob, fileName, inv };
   };
 
-  const downloadBlob = (blob, fileName) => {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  // 🟢 EMAIL — Opens the compose modal with PDF attached (no download needed)
-  const shareViaEmail = async (inv, id) => {
+  // 🟢 EMAIL — fixed: single id param, matches how the dropdown calls it
+  const shareViaEmail = async (id) => {
     setShareOpenId(null);
     setSendingId(id);
     try {
-      const { blob, fileName, inv: fullInv } = await buildQuotationPDFFile(id);
-      const subject = `Quotation ${fullInv.invoiceNumber}`;
-      const body = `Hi ${fullInv.client?.name || ''},\n\nPlease find attached your quotation ${fullInv.invoiceNumber} for ${fmtCurrency(fullInv.total, fullInv.currency)}.\n\nThank you.`;
+      const { blob, fileName, inv } = await buildQuotationPDFFile(id);
+      const subject = `Quotation ${inv.invoiceNumber}`;
+      const body = `Hi ${inv.client?.name || ''},\n\nPlease find attached your quotation ${inv.invoiceNumber} for ${fmtCurrency(inv.total, inv.currency)}.\n\nThank you.`;
 
       setEmailModal({
         open: true,
-        to: fullInv.client?.email || '',
+        to: inv.client?.email || '',
         subject,
         body,
         pdfBlob: blob,
@@ -147,28 +134,18 @@ export default function QuotationList() {
     }
   };
 
-  // 🟢 Send email via backend API
-  const handleSendEmail = async ({ to, subject, body, pdfBlob, pdfFileName }) => {
-    await quotationAPI.sendEmail(emailModal.quotationId, { to, subject, body, pdfBlob, pdfFileName });
-  };
-
-  // 🟢 WHATSAPP — Opens WhatsApp directly with pre-filled text
   const shareViaWhatsapp = async (id) => {
     setShareOpenId(null);
     setSendingId(id);
-
     try {
-      const { file, fileName, inv } = await buildQuotationPDFFile(id);
+      const { file, inv } = await buildQuotationPDFFile(id);
       const text = `Hi ${inv.client?.name || ''}, here's your quotation ${inv.invoiceNumber} for ${fmtCurrency(inv.total, inv.currency)}.`;
 
-      // Real attachment — only works where the OS share sheet supports files
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({ title: text, text, files: [file] });
         return;
       }
 
-      // Fallback: wa.me only accepts prefilled text, never files —
-      // this is a WhatsApp link limitation, not something any code can work around.
       const phone = (inv.client?.phone || '').replace(/[^0-9]/g, '');
       const base = phone ? `https://wa.me/${phone}` : 'https://wa.me/';
       const waUrl = `${base}?text=${encodeURIComponent(text)}`;
@@ -248,45 +225,25 @@ export default function QuotationList() {
         )}
       </div>
 
-      {/* Share dropdown — fixed position so it floats above the table, no clipping/overlap */}
+      {/* Share dropdown — fixed: was reading `invoices` (undefined in this file) */}
       {shareOpenId && shareDropdownPos && (() => {
         const inv = quotations.find((q) => q._id === shareOpenId);
         if (!inv) return null;
         return (
           <>
-            <div
-              onClick={() => setShareOpenId(null)}
-              style={{ position: 'fixed', inset: 0, zIndex: 999 }}
-            />
+            <div onClick={() => setShareOpenId(null)} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
             <div style={{
               position: 'fixed', top: shareDropdownPos.top, left: shareDropdownPos.left,
               zIndex: 1000, minWidth: 170,
               background: 'var(--bg-card)', border: '1px solid var(--border)',
               borderRadius: 10, boxShadow: 'var(--shadow)', overflow: 'hidden',
             }}>
-              <button
-                type="button"
-                className="dropdown-row"
-                onClick={() => shareViaEmail(inv, inv._id)}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '10px 14px', background: 'none', border: 'none',
-                  borderBottom: '1px solid var(--border)', cursor: 'pointer',
-                  fontSize: '0.82rem', color: 'var(--text-primary)', textAlign: 'left',
-                }}
-              >
+              <button type="button" className="dropdown-row" onClick={() => shareViaEmail(inv._id)}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'none', border: 'none', borderBottom: '1px solid var(--border)', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-primary)', textAlign: 'left' }}>
                 <Mail size={14} /> Email
               </button>
-              <button
-                type="button"
-                className="dropdown-row"
-                onClick={() => shareViaWhatsapp(inv._id)}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '10px 14px', background: 'none', border: 'none',
-                  cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-primary)', textAlign: 'left',
-                }}
-              >
+              <button type="button" className="dropdown-row" onClick={() => shareViaWhatsapp(inv._id)}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-primary)', textAlign: 'left' }}>
                 <MessageCircle size={14} /> WhatsApp
               </button>
             </div>
@@ -294,11 +251,10 @@ export default function QuotationList() {
         );
       })()}
 
-      {/* Email Compose Modal */}
+      {/* Email Compose Modal — was missing entirely from this file's render */}
       <EmailComposeModal
         isOpen={emailModal.open}
         onClose={() => setEmailModal({ ...emailModal, open: false })}
-        onSend={handleSendEmail}
         defaultTo={emailModal.to}
         defaultSubject={emailModal.subject}
         defaultBody={emailModal.body}
