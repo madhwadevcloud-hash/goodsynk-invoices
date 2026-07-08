@@ -4,9 +4,9 @@ import { invoiceAPI } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { Plus, Pencil, Trash2, Eye, Send, Mail, MessageCircle, Loader2 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { DEFAULT_COLORS } from './InvoiceForm';
+
 import EmailComposeModal from './EmailComposeModal';
+import { isProfileComplete, getMissingProfileField } from '../../utils/profileValidation';
 
 const fmtCurrency = (n, currency = 'INR') =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 2 }).format(n || 0);
@@ -34,8 +34,10 @@ export default function InvoiceList() {
   });
 
   const handleCreate = (e) => {
-    if (!user?.businessName) {
+    if (!isProfileComplete(user)) {
       e.preventDefault();
+      const missing = getMissingProfileField(user);
+      toast.error(`${missing} is missing, fill that to complete the profile`);
       setShowProfilePrompt(true);
     }
   };

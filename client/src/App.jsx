@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import { isProfileComplete } from './utils/profileValidation';
 
 // Auth pages
 const Login = lazy(() => import('./pages/auth/Login'));
@@ -27,15 +28,27 @@ const Home = lazy(() => import('./pages/home/Home'));
 // Requires authentication
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
   if (loading) return <div className="page-loader"><div className="spinner" /></div>;
-  return user ? children : <Navigate to="/" replace />;
+  if (!user) return <Navigate to="/" replace />;
+  // Allow login, register, and profile-setup pages for authenticated users
+  if (location.pathname !== '/login' && location.pathname !== '/register' && location.pathname !== '/profile-setup') {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return children;
 };
+
 
 // Public-only (redirect to /dashboard if already logged in)
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div className="page-loader"><div className="spinner" /></div>;
-  return !user ? children : <Navigate to="/dashboard" replace />;
+  if (user) {
+    // If user exists but businessName not set, redirect to profile setup
+    if (!user.businessName) return <Navigate to="/profile-setup" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
+  return children;
 };
 
 // Requires authentication AND a complete profile (businessName set)
@@ -53,7 +66,7 @@ const RequireProfile = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div className="page-loader"><div className="spinner" /></div>;
   if (!user) return <Navigate to="/" replace />;
-  if (!user.businessName) return <Navigate to="/profile-setup" replace />;
+  if (!isProfileComplete(user)) return <Navigate to="/profile" replace />;
   return children;
 };
 

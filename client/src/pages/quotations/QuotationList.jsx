@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { Plus, Pencil, Trash2, Eye, Send, Mail, MessageCircle, Loader2 } from 'lucide-react';
 import { DEFAULT_COLORS } from '../invoices/InvoiceForm';
 import EmailComposeModal from '../invoices/EmailComposeModal';
+import { isProfileComplete, getMissingProfileField } from '../../utils/profileValidation';
 
 const fmtCurrency = (n, currency = 'INR') =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 2 }).format(n || 0);
@@ -33,8 +34,10 @@ export default function QuotationList() {
   });
 
   const handleCreate = (e) => {
-    if (!user?.businessName) {
+    if (!isProfileComplete(user)) {
       e.preventDefault();
+      const missing = getMissingProfileField(user);
+      toast.error(`${missing} is missing, fill that to complete the profile`);
       setShowProfilePrompt(true);
     }
   };

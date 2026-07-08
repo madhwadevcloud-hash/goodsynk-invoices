@@ -135,7 +135,7 @@ export default function ProfileSetup() {
           <div className="form-grid">
             <div className="form-group">
               <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <Phone size={12} /> Phone
+                <Phone size={12} /> Phone <span style={{ color: 'var(--danger)' }}>*</span>
               </label>
               <input className="form-control" placeholder="+91 98765 43210" {...register('phone')} />
             </div>
@@ -164,23 +164,23 @@ export default function ProfileSetup() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Street / Area</label>
+            <label className="form-label">Street / Area <span style={{ color: 'var(--danger)' }}>*</span></label>
             <input className="form-control" placeholder="123, MG Road" {...register('street')} />
           </div>
 
           <div className="form-grid">
             <div className="form-group">
-              <label className="form-label">City</label>
+              <label className="form-label">City <span style={{ color: 'var(--danger)' }}>*</span></label>
               <input className="form-control" placeholder="Bengaluru" {...register('city')} />
             </div>
             <div className="form-group">
-              <label className="form-label">Pincode</label>
+              <label className="form-label">Pincode <span style={{ color: 'var(--danger)' }}>*</span></label>
               <input className="form-control" placeholder="560001" {...register('pincode')} />
             </div>
           </div>
 
           <div className="form-group">
-            <label className="form-label">State</label>
+            <label className="form-label">State <span style={{ color: 'var(--danger)' }}>*</span></label>
             <select className="form-control" {...register('state')}>
               <option value="">Select state</option>
               {INDIAN_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -196,24 +196,24 @@ export default function ProfileSetup() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Bank Name</label>
+            <label className="form-label">Bank Name <span style={{ color: 'var(--danger)' }}>*</span></label>
             <input className="form-control" placeholder="e.g. HDFC Bank" {...register('bankName')} />
           </div>
 
           <div className="form-grid">
             <div className="form-group">
-              <label className="form-label">Account Name</label>
+              <label className="form-label">Account Name <span style={{ color: 'var(--danger)' }}>*</span></label>
               <input className="form-control" placeholder="Acme Solutions" {...register('accountName')} />
             </div>
             <div className="form-group">
-              <label className="form-label">Account Number</label>
+              <label className="form-label">Account Number <span style={{ color: 'var(--danger)' }}>*</span></label>
               <input className="form-control" placeholder="50100XXXXXXX" {...register('accountNumber')} />
             </div>
           </div>
 
           <div className="form-grid-3">
             <div className="form-group">
-              <label className="form-label">IFSC Code</label>
+              <label className="form-label">IFSC Code <span style={{ color: 'var(--danger)' }}>*</span></label>
               <input className="form-control" placeholder="HDFC0001234" style={{ textTransform: 'uppercase' }} {...register('ifscCode')} />
             </div>
             <div className="form-group">

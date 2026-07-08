@@ -19,11 +19,17 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.email || !form.password) return toast.error('Please fill in all fields');
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) {
+      return toast.error('Please enter a valid email address format');
+    }
+
     setLoading(true);
     try {
       await login(form);
       toast.success('Welcome back!');
-      navigate('/dashboard');
+      navigate('/profile-setup');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed');
     } finally {
@@ -42,7 +48,7 @@ export default function Login() {
         googleId: user.uid,
       });
       toast.success('Welcome back!');
-      navigate('/dashboard');
+      navigate('/profile-setup');
     } catch (err) {
       toast.error(err.response?.data?.message || err.message || 'Google login failed');
     } finally {

@@ -13,6 +13,7 @@ import {
   Palette,
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import { isProfileComplete } from '../../utils/profileValidation';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -44,13 +45,14 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const [showProfilePrompt, setShowProfilePrompt] = useState(false);
 
-  useEffect(() => {
-    if (user && !user.businessName) {
-      setShowProfilePrompt(true);
-    } else {
-      setShowProfilePrompt(false);
-    }
-  }, [user]);
+  // Removed aggressive auto-popup on mount to avoid annoying users on every page load
+  // useEffect(() => {
+  //   if (user && !isProfileComplete(user)) {
+  //     setShowProfilePrompt(true);
+  //   } else {
+  //     setShowProfilePrompt(false);
+  //   }
+  // }, [user]);
 
   const handleLogout = () => { logout(); navigate('/'); };
 
@@ -157,7 +159,7 @@ export default function AppLayout() {
             </p>
             <button className="btn btn-primary w-full btn-lg" style={{ justifyContent: 'center' }} onClick={() => {
               setShowProfilePrompt(false);
-              navigate('/profile-setup');
+              navigate('/profile');
             }}>
               Complete Profile
             </button>

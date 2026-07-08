@@ -69,15 +69,16 @@ const checkImageHasBackground = (file) => {
 
 /* ── Small helper: info row in view mode ── */
 function InfoRow({ icon: Icon, label, value }) {
+  const isMissing = !value;
   return (
     <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '11px 0', borderBottom: '1px solid var(--border)' }}>
-      <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--primary-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
-        <Icon size={15} style={{ color: 'var(--primary-light)' }} />
+      <div style={{ width: 32, height: 32, borderRadius: 8, background: isMissing ? 'rgba(239, 68, 68, 0.1)' : 'var(--primary-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+        <Icon size={15} style={{ color: isMissing ? 'var(--danger)' : 'var(--primary-light)' }} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{label}</p>
-        <p style={{ fontSize: '0.875rem', color: value ? 'var(--text-primary)' : 'var(--text-muted)', fontStyle: value ? 'normal' : 'italic' }}>
-          {value || 'Not set'}
+        <p style={{ fontSize: '0.7rem', color: isMissing ? 'var(--danger)' : 'var(--text-muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{label}</p>
+        <p style={{ fontSize: '0.875rem', color: isMissing ? 'var(--danger)' : 'var(--text-primary)', fontStyle: isMissing ? 'italic' : 'normal', fontWeight: isMissing ? 600 : 400 }}>
+          {value || 'Not set (Missing)'}
         </p>
       </div>
     </div>
@@ -319,9 +320,11 @@ export default function ProfileEdit() {
         </div>
         <div>
           {!editing ? (
-            <button className="btn btn-primary" onClick={() => setEditing(true)}>
-              <Pencil size={15} /> Edit Profile
-            </button>
+            <>
+              <button className="btn btn-primary" onClick={() => setEditing(true)}>
+                <Pencil size={15} /> Edit Profile
+              </button>
+            </>
           ) : (
             <div style={{ display: 'flex', gap: 10 }}>
               <button type="button" className="btn btn-ghost" onClick={handleCancel}>
@@ -467,7 +470,7 @@ export default function ProfileEdit() {
                 </div>
                 <div className="form-grid">
                   <div className="form-group">
-                    <label className="form-label">Phone</label>
+                    <label className="form-label">Phone <span style={{ color: 'var(--danger)' }}>*</span></label>
                     <input className="form-control" placeholder="+91 98765 43210" {...register('phone')} />
                   </div>
                   <div className="form-group">
@@ -483,20 +486,20 @@ export default function ProfileEdit() {
 
                 <SectionHeading icon={MapPin} label="Address" />
                 <div className="form-group">
-                  <label className="form-label">Street / Area</label>
+                  <label className="form-label">Street / Area <span style={{ color: 'var(--danger)' }}>*</span></label>
                   <input className="form-control" placeholder="123, MG Road" {...register('street')} />
                 </div>
                 <div className="form-grid-3">
                   <div className="form-group">
-                    <label className="form-label">City</label>
+                    <label className="form-label">City <span style={{ color: 'var(--danger)' }}>*</span></label>
                     <input className="form-control" placeholder="Bengaluru" {...register('city')} />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Pincode</label>
+                    <label className="form-label">Pincode <span style={{ color: 'var(--danger)' }}>*</span></label>
                     <input className="form-control" placeholder="560001" {...register('pincode')} />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">State</label>
+                    <label className="form-label">State <span style={{ color: 'var(--danger)' }}>*</span></label>
                     <select className="form-control" {...register('state')}>
                       <option value="">Select state</option>
                       {INDIAN_STATES.map((st) => <option key={st} value={st}>{st}</option>)}
@@ -506,22 +509,22 @@ export default function ProfileEdit() {
 
                 <SectionHeading icon={Landmark} label="Banking Information" />
                 <div className="form-group">
-                  <label className="form-label">Bank Name</label>
+                  <label className="form-label">Bank Name <span style={{ color: 'var(--danger)' }}>*</span></label>
                   <input className="form-control" placeholder="e.g. HDFC Bank" {...register('bankName')} />
                 </div>
                 <div className="form-grid">
                   <div className="form-group">
-                    <label className="form-label">Account Name</label>
+                    <label className="form-label">Account Name <span style={{ color: 'var(--danger)' }}>*</span></label>
                     <input className="form-control" placeholder="Acme Solutions" {...register('accountName')} />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Account Number</label>
+                    <label className="form-label">Account Number <span style={{ color: 'var(--danger)' }}>*</span></label>
                     <input className="form-control" placeholder="50100XXXXXXX" {...register('accountNumber')} />
                   </div>
                 </div>
                 <div className="form-grid-3">
                   <div className="form-group">
-                    <label className="form-label">IFSC Code</label>
+                    <label className="form-label">IFSC Code <span style={{ color: 'var(--danger)' }}>*</span></label>
                     <input className="form-control" placeholder="HDFC0001234" style={{ textTransform: 'uppercase' }} {...register('ifscCode')} />
                   </div>
                   <div className="form-group">
@@ -562,25 +565,25 @@ export default function ProfileEdit() {
                   {user?.bankDetails?.accountNumber ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px 24px' }}>
                       <div>
-                        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Bank Name</p>
-                        <p style={{ fontWeight: 600, fontSize: '0.85rem' }}>{user.bankDetails.bankName || '—'}</p>
+                        <p style={{ fontSize: '0.7rem', color: !user.bankDetails.bankName ? 'var(--danger)' : 'var(--text-muted)' }}>Bank Name</p>
+                        <p style={{ fontWeight: 600, fontSize: '0.85rem', color: !user.bankDetails.bankName ? 'var(--danger)' : undefined, fontStyle: !user.bankDetails.bankName ? 'italic' : 'normal' }}>{user.bankDetails.bankName || 'Not set (Missing)'}</p>
                       </div>
                       <div>
-                        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Account Name</p>
-                        <p style={{ fontWeight: 600, fontSize: '0.85rem' }}>{user.bankDetails.accountName || '—'}</p>
+                        <p style={{ fontSize: '0.7rem', color: !user.bankDetails.accountName ? 'var(--danger)' : 'var(--text-muted)' }}>Account Name</p>
+                        <p style={{ fontWeight: 600, fontSize: '0.85rem', color: !user.bankDetails.accountName ? 'var(--danger)' : undefined, fontStyle: !user.bankDetails.accountName ? 'italic' : 'normal' }}>{user.bankDetails.accountName || 'Not set (Missing)'}</p>
                       </div>
                       <div>
-                        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Account Number</p>
-                        <p style={{ fontWeight: 600, fontSize: '0.85rem', fontFamily: 'monospace' }}>{user.bankDetails.accountNumber}</p>
+                        <p style={{ fontSize: '0.7rem', color: !user.bankDetails.accountNumber ? 'var(--danger)' : 'var(--text-muted)' }}>Account Number</p>
+                        <p style={{ fontWeight: 600, fontSize: '0.85rem', fontFamily: 'monospace', color: !user.bankDetails.accountNumber ? 'var(--danger)' : undefined, fontStyle: !user.bankDetails.accountNumber ? 'italic' : 'normal' }}>{user.bankDetails.accountNumber || 'Not set (Missing)'}</p>
                       </div>
                       <div>
-                        <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>IFSC</p>
-                        <p style={{ fontWeight: 600, fontSize: '0.85rem' }}>{user.bankDetails.ifscCode || '—'}</p>
+                        <p style={{ fontSize: '0.7rem', color: !user.bankDetails.ifscCode ? 'var(--danger)' : 'var(--text-muted)' }}>IFSC</p>
+                        <p style={{ fontWeight: 600, fontSize: '0.85rem', color: !user.bankDetails.ifscCode ? 'var(--danger)' : undefined, fontStyle: !user.bankDetails.ifscCode ? 'italic' : 'normal' }}>{user.bankDetails.ifscCode || 'Not set (Missing)'}</p>
                       </div>
                     </div>
                   ) : (
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                      No bank details added yet.
+                    <p style={{ fontSize: '0.8rem', color: 'var(--danger)', fontStyle: 'italic', fontWeight: 600 }}>
+                      No bank details added yet. (Missing)
                     </p>
                   )}
                 </div>

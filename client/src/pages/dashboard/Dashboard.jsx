@@ -4,6 +4,7 @@ import { invoiceAPI } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
 import { FileText, Users, DollarSign, TrendingUp, Plus, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { isProfileComplete, getMissingProfileField } from '../../utils/profileValidation';
 
 const formatINR = (n) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n || 0);
@@ -26,18 +27,10 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Validate profile completeness before allowing invoice creation
   const handleNewInvoice = () => {
-    const requiredFields = [
-      user?.businessName,
-      user?.businessLogo,
-      user?.address?.street,
-      user?.address?.city,
-      user?.address?.state,
-      user?.address?.pincode,
-    ];
-    const isComplete = requiredFields.every(Boolean);
-    if (!isComplete) {
+    if (!isProfileComplete(user)) {
+      const missing = getMissingProfileField(user);
+      toast.error(`${missing} is missing, fill that to complete the profile`);
       setShowProfileModal(true);
       return;
     }
@@ -128,10 +121,10 @@ export default function Dashboard() {
       </div>
     </div>
     {showProfileModal && (
-      <div className="modal-backdrop" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div className="modal" style={{ background: "white", padding: "20px", borderRadius: "8px", maxWidth: "400px", width: "100%" }}>
-          <h2 className="modal-title" style={{ marginBottom: "12px" }}>Complete Your Profile</h2>
-          <p className="modal-message" style={{ marginBottom: "20px" }}>
+      <div className="modal-backdrop" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+        <div className="modal" style={{ background: "var(--bg-card)", color: "var(--text-primary)", padding: "24px", borderRadius: "8px", maxWidth: "400px", width: "100%", boxShadow: "var(--shadow)" }}>
+          <h2 className="modal-title" style={{ marginBottom: "12px", fontSize: "1.25rem", fontWeight: "bold" }}>Complete Your Profile</h2>
+          <p className="modal-message" style={{ marginBottom: "20px", color: "var(--text-secondary)" }}>
             Please complete your business profile before creating an invoice.
           </p>
           <div className="modal-actions" style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
