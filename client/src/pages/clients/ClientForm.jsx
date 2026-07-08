@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { clientAPI } from '../../api/services';
 import toast from 'react-hot-toast';
 import { Save, ArrowLeft } from 'lucide-react';
 
-const INDIA_STATES = ['Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Delhi','Jammu & Kashmir','Ladakh','Puducherry'];
+const INDIA_STATES = ['Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Delhi', 'Jammu & Kashmir', 'Ladakh', 'Puducherry'];
 
 export default function ClientForm() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const isEdit = !!id;
+  const returnTo = location.state?.returnTo; // e.g. '/quotations/new', set by InvoiceForm's "Create Client"
+  const formDraft = location.state?.formDraft;
+
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     name: '', email: '', phone: '', gstin: '', pan: '', notes: '',
@@ -25,14 +29,33 @@ export default function ClientForm() {
   const setField = (key, val) => setForm((f) => ({ ...f, [key]: val }));
   const setAddr = (key, val) => setForm((f) => ({ ...f, address: { ...f.address, [key]: val } }));
 
+  const goBack = () => navigate(returnTo || '/clients', returnTo ? { state: { formDraft } } : undefined);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name) return toast.error('Client name is required');
     setSaving(true);
     try {
-      if (isEdit) { await clientAPI.update(id, form); toast.success('Client updated'); }
-      else { await clientAPI.create(form); toast.success('Client added'); }
-      navigate('/clients');
+      if (isEdit) {
+        await clientAPI.update(id, form);
+        toast.success('Client updated');
+        navigate('/clients');
+      } else {
+        const res = await clientAPI.create(form);
+        toast.success('Client added');
+        if (returnTo) {
+          // Send the new client back to the quotation/invoice form the user came from
+          navigate(returnTo, {
+            state: {
+              newClientId: res.data.client._id,
+              newClientName: res.data.client.name,
+              formDraft,
+            },
+          });
+        } else {
+          navigate('/clients');
+        }
+      }
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to save client'); }
     finally { setSaving(false); }
   };
@@ -41,7 +64,7 @@ export default function ClientForm() {
     <form onSubmit={handleSubmit}>
       <div className="page-header">
         <div className="flex gap-3" style={{ alignItems: 'center' }}>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate('/clients')}><ArrowLeft size={16} /></button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={goBack}><ArrowLeft size={16} /></button>
           <div>
             <h1 className="page-title">{isEdit ? 'Edit Client' : 'New Client'}</h1>
             <p className="page-subtitle">{isEdit ? 'Update client details' : 'Add a new client to your directory'}</p>

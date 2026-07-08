@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { usePDF } from '@react-pdf/renderer';
 import { Loader2 } from 'lucide-react';
 import InvoicePDF from './InvoicePDF';
@@ -8,7 +9,16 @@ import InvoicePDF from './InvoicePDF';
  * (a large library) is only downloaded when the user opens an invoice.
  */
 export default function PdfPane({ invoice }) {
-  const [instance] = usePDF({ document: <InvoicePDF invoice={invoice} /> });
+  const [instance, updateInstance] = usePDF({ document: <InvoicePDF invoice={invoice} /> });
+
+  // usePDF only renders once on mount — it doesn't watch `document` for changes.
+  // Since InvoiceView re-renders this component in place (rather than
+  // remounting it) when navigating between documents, we need to manually
+  // trigger a re-render whenever the invoice actually changes.
+  useEffect(() => {
+    updateInstance(<InvoicePDF invoice={invoice} />);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoice]);
 
   if (instance.loading) return (
     <div className="flex-center" style={{ height: '100%', flexDirection: 'column', gap: 10 }}>

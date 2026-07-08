@@ -64,7 +64,8 @@ const quotationSchema = new mongoose.Schema(
 );
 
 // Auto-generate quotation number (QT-0001 style)
-quotationSchema.pre('save', async function (next) {
+// Auto-generate quotation number (QT-0001 style)
+quotationSchema.pre('validate', async function (next) {
   if (!this.quotationNumber) {
     const count = await this.constructor.countDocuments({ user: this.user });
     this.quotationNumber = `QT-${String(count + 1).padStart(4, '0')}`;

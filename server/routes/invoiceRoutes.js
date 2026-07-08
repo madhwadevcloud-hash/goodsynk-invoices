@@ -1,4 +1,7 @@
 const express = require('express');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
+
 const router = express.Router();
 const {
   getInvoices,
@@ -8,14 +11,17 @@ const {
   updateInvoiceStatus,
   deleteInvoice,
   getStats,
-} = require('../controllers/invoiceController');
+} = require('../controllers/invoiceController'); // ← sendEmailWithPDF removed from here
+
+const { sendEmailWithPDF } = require('../controllers/emailController'); // ← only here now
 const { protect } = require('../middleware/authMiddleware');
 
-router.use(protect); // All invoice routes require authentication
+router.use(protect);
 
 router.get('/stats', getStats);
 router.route('/').get(getInvoices).post(createInvoice);
 router.route('/:id').get(getInvoice).put(updateInvoice).delete(deleteInvoice);
 router.patch('/:id/status', updateInvoiceStatus);
+router.post('/:id/send-email', upload.single('pdf'), sendEmailWithPDF);
 
 module.exports = router;

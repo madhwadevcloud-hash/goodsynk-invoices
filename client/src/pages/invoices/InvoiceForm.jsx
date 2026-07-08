@@ -2,11 +2,11 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { invoiceAPI, clientAPI, productAPI, quotationAPI } from '../../api/services';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, Save, Download, Loader2, X, ChevronDown, Percent, Tag } from 'lucide-react';
+import { Plus, Trash2, Save, Download, Loader2, X, ChevronDown, Percent, Tag, Lock, Landmark } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const defaultItem = () => ({
-  name: '', description: '', hsn: '', quantity: 1, unit: 'pcs',
+  productId: null, name: '', description: '', hsn: '', quantity: 1, unit: 'pcs',
   price: 0, discount: 0, cgstRate: 0, sgstRate: 0, igstRate: 0, vatRate: 0,
 });
 
@@ -43,6 +43,9 @@ export const DEFAULT_COLORS = {
   template6: { primary: '#E8662B', secondary: '#1C2541' }, // Orange, Navy
 };
 
+// Templates available on the free plan — everything else shows an "Upgrade" lock
+const FREE_TEMPLATES = ['template1', 'template2'];
+
 export default function InvoiceForm() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -62,11 +65,47 @@ export default function InvoiceForm() {
   const { user: currentUser } = useAuth();
   const [showHsn, setShowHsn] = useState(true);
 
+  // ── Client search-select state
+  const [clientQuery, setClientQuery] = useState('');
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
+
+  // ── Product typeahead state (per line item, keyed by index)
+  const [productQueries, setProductQueries] = useState({});
+  const [openProductIdx, setOpenProductIdx] = useState(null);
+  const [productDropdownPos, setProductDropdownPos] = useState({}); // { [idx]: {top, left, width} }
+
   // ── Configure Tax modal state
   const [taxModal, setTaxModal] = useState(false);
   const [taxDraft, setTaxDraft] = useState({ taxType: 'gst_india', placeOfSupply: 'Other Territory', gstType: 'cgst_sgst', reverseCharge: false });
 
-  // ── Number & Currency Format modal state — removed
+  const [newClientModal, setNewClientModal] = useState(false);
+  const [newClientForm, setNewClientForm] = useState({ name: '', email: '', phone: '', gstin: '' });
+  const [creatingClient, setCreatingClient] = useState(false);
+
+  const openNewClientModal = () => {
+    setNewClientForm({ name: clientQuery && !form.client ? clientQuery : '', email: '', phone: '', gstin: '' });
+    setClientDropdownOpen(false);
+    setNewClientModal(true);
+  };
+
+  const handleCreateClientSubmit = async () => {
+    if (!newClientForm.name) return toast.error('Client name is required');
+    setCreatingClient(true);
+    try {
+      const res = await clientAPI.create(newClientForm);
+      const created = res.data.client;
+      setClients((c) => [...c, created]);
+      setField('client', created._id);
+      setClientQuery(created.name);
+      toast.success('Client added');
+      setNewClientModal(false);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to create client');
+    } finally {
+      setCreatingClient(false);
+    }
+  };
+
 
   // ── Configure Discount modal state
   const [discModal, setDiscModal] = useState(false);
@@ -75,6 +114,8 @@ export default function InvoiceForm() {
     lines: [{ name: 'Discount', type: 'percent', value: 0 }],
   });
   const [discDraft, setDiscDraft] = useState(discConfig);
+
+  const [discAmtDraft, setDiscAmtDraft] = useState({});
 
   const openDiscModal = () => { setDiscDraft(JSON.parse(JSON.stringify(discConfig))); setDiscModal(true); };
   const saveDiscConfig = () => { setDiscConfig(discDraft); setDiscModal(false); };
@@ -96,13 +137,11 @@ export default function InvoiceForm() {
     setField('isInterstate', taxDraft.gstType === 'igst');
     setField('placeOfSupply', taxDraft.placeOfSupply);
     setField('taxType', taxDraft.taxType);
-    // If switching to No Tax, clear all tax rates
     if (taxDraft.taxType === 'none') {
       setForm(f => ({ ...f, items: f.items.map(item => ({ ...item, cgstRate: 0, sgstRate: 0, igstRate: 0, vatRate: 0 })) }));
     }
     setTaxModal(false);
   };
-
 
   const [form, setForm] = useState({
     client: '',
@@ -147,6 +186,7 @@ export default function InvoiceForm() {
           templateColors: inv.templateColors || null,
           items: inv.items?.length ? inv.items : [defaultItem()],
         });
+        setClientQuery(inv.client?.name || '');
       }).catch(() => toast.error('Failed to load invoice'))
         .finally(() => setLoading(false));
     } else if (currentUser) {
@@ -161,20 +201,35 @@ export default function InvoiceForm() {
     }
   }, [id, currentUser]);
 
+  // ── Restore form + newly-created client after returning from /clients/new
+  useEffect(() => {
+    if (location.state?.newClientId) {
+      setForm(f => ({ ...(location.state.formDraft || f), client: location.state.newClientId }));
+      setClientQuery(location.state.newClientName || '');
+      clientAPI.getAll().then((r) => setClients(r.data.clients)).catch(() => { });
+      // Clear the navigation state so a refresh doesn't re-trigger this
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const setField = (key, val) => setForm((f) => ({ ...f, [key]: val }));
 
   const setItem = (idx, key, val) =>
     setForm((f) => ({ ...f, items: f.items.map((item, i) => i === idx ? { ...item, [key]: val } : item) }));
 
   const addItem = () => setForm((f) => ({ ...f, items: [...f.items, defaultItem()] }));
-  const removeItem = (idx) => setForm((f) => ({ ...f, items: f.items.filter((_, i) => i !== idx) }));
+  const removeItem = (idx) => {
+    setForm((f) => ({ ...f, items: f.items.filter((_, i) => i !== idx) }));
+    setProductQueries((q) => { const c = { ...q }; delete c[idx]; return c; });
+  };
 
   const fillFromProduct = (idx, productId) => {
     const p = products.find((pr) => pr._id === productId);
     if (!p) return;
     setForm((f) => ({
       ...f, items: f.items.map((item, i) =>
-        i === idx ? { ...item, name: p.name, description: p.description, price: p.price, unit: p.unit, hsn: p.hsn, cgstRate: p.cgstRate, sgstRate: p.sgstRate, igstRate: p.igstRate } : item
+        i === idx ? { ...item, productId: p._id, name: p.name, description: p.description, price: p.price, unit: p.unit, hsn: p.hsn, cgstRate: p.cgstRate, sgstRate: p.sgstRate, igstRate: p.igstRate } : item
       ),
     }));
   };
@@ -206,7 +261,6 @@ export default function InvoiceForm() {
       },
       { subtotal: 0, itemDiscount: 0, tax: 0, taxableTotal: 0 }
     );
-    // Apply overall discounts to (subtotal - item discounts)
     const afterItemDisc = discConfig.mode === 'item' ? base.subtotal - base.itemDiscount : base.subtotal;
     let overallDiscTotal = 0;
     if (discConfig.mode === 'overall') {
@@ -231,15 +285,15 @@ export default function InvoiceForm() {
     try {
       const docTpt = (invoiceData.template || form.template || '').toLowerCase();
       const resolvedTpt = (docTpt || currentUser?.invoiceTemplate || 'template1').toLowerCase();
-      
+
       let invoiceForPDF = {
         ...invoiceData,
         user: currentUser,
         invoiceType: docType,
-        templateColors: form.templateColors || 
-                        invoiceData.templateColors || 
-                        (docTpt ? (DEFAULT_COLORS[docTpt] || null) : currentUser?.invoiceTemplateColors) || 
-                        DEFAULT_COLORS[resolvedTpt],
+        templateColors: form.templateColors ||
+          invoiceData.templateColors ||
+          (docTpt ? (DEFAULT_COLORS[docTpt] || null) : currentUser?.invoiceTemplateColors) ||
+          DEFAULT_COLORS[resolvedTpt],
         _discConfig: discConfig,
         _currency: form.currency || 'INR',
         _taxType: form.taxType,
@@ -285,6 +339,7 @@ export default function InvoiceForm() {
   const handleSubmit = async (e, shouldDownload = false) => {
     e.preventDefault();
     if (!form.client) return toast.error('Please select a client');
+    if (!form.dueDate) return toast.error('Please select a validity date');
 
     setSaving(true);
     if (shouldDownload) setDownloading(true);
@@ -319,6 +374,22 @@ export default function InvoiceForm() {
   };
 
   const fmt = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: form.currency || 'INR', maximumFractionDigits: 2 }).format(n || 0);
+
+
+  const filteredClients = clients.filter((c) =>
+    c.name?.toLowerCase().includes(clientQuery.toLowerCase()) ||
+    c.email?.toLowerCase().includes(clientQuery.toLowerCase()) ||
+    c.gstin?.toLowerCase().includes(clientQuery.toLowerCase())
+  );
+
+  // Resolve banking details from the logged-in user's profile
+  const bank = currentUser?.bankDetails || {
+    bankName: currentUser?.bankName,
+    accountName: currentUser?.accountName,
+    accountNumber: currentUser?.accountNumber,
+    ifsc: currentUser?.ifsc,
+  };
+  const hasBankDetails = bank && (bank.bankName || bank.accountName || bank.accountNumber || bank.ifsc);
 
   if (loading) return <div className="flex-center" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
 
@@ -360,29 +431,89 @@ export default function InvoiceForm() {
             <input type="date" className="form-control" value={form.issueDate} onChange={(e) => setField('issueDate', e.target.value)} />
           </div>
           <div className="form-group">
-            <label className="form-label">Due Date</label>
-            <input type="date" className="form-control" value={form.dueDate} onChange={(e) => setField('dueDate', e.target.value)} />
+            <label className="form-label">Validity <span style={{ color: 'var(--danger)' }}>*</span></label>
+            <input type="date" className="form-control" required value={form.dueDate} onChange={(e) => setField('dueDate', e.target.value)} />
           </div>
         </div>
 
         <div className="form-grid">
-          <div className="form-group">
+          {/* ── Client search-select ── */}
+          <div className="form-group" style={{ position: 'relative' }}>
             <label className="form-label">Client *</label>
-            <select className="form-control" value={form.client} onChange={(e) => setField('client', e.target.value)}>
-              <option value="">— Select a client —</option>
-              {clients.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
-            </select>
+            <input
+              className="form-control"
+              placeholder="Search customers by name, company, GSTIN, tags…"
+              value={clientQuery}
+              onChange={(e) => {
+                setClientQuery(e.target.value);
+                setField('client', '');
+                setClientDropdownOpen(true);
+              }}
+              onFocus={() => setClientDropdownOpen(true)}
+              onBlur={() => setTimeout(() => setClientDropdownOpen(false), 150)}
+            />
+            {clientDropdownOpen && (
+              <div style={{
+                position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 30,
+                background: 'var(--bg-card)', border: '1px solid var(--border)',
+                borderRadius: 10, marginTop: 4, maxHeight: 280, overflowY: 'auto',
+                boxShadow: 'var(--shadow)',
+              }}>
+                {filteredClients.length === 0 ? (
+                  <div style={{ padding: '12px 14px', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                    No clients found{clientQuery ? ` for "${clientQuery}"` : ''}
+                  </div>
+                ) : (
+                  filteredClients.map((c) => (
+                    <div
+                      key={c._id}
+                      className="dropdown-row"
+                      onMouseDown={() => {
+                        setField('client', c._id);
+                        setClientQuery(c.name);
+                        setClientDropdownOpen(false);
+                      }}
+                      style={{ padding: '10px 14px', cursor: 'pointer', fontSize: '0.85rem', borderBottom: '1px solid var(--border)' }}
+                    >
+                      <div style={{ fontWeight: 600 }}>{c.name}</div>
+                      {(c.email || c.gstin) && (
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                          {[c.email, c.gstin].filter(Boolean).join(' · ')}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+                <button
+                  type="button"
+                  onMouseDown={openNewClientModal}
+                  style={{
+                    width: '100%', textAlign: 'center', padding: '12px 14px',
+                    background: 'var(--bg-elevated)', border: 'none', borderTop: '1px solid var(--border)',
+                    cursor: 'pointer', color: 'var(--primary)', fontWeight: 700,
+                    fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  }}
+                >
+                  <Plus size={14} /> Create Client
+                </button>
+              </div>
+            )}
           </div>
           <div className="form-group">
-            <label className="form-label">{docLabel} # (auto-generated if blank)</label>
-            <input className="form-control" placeholder="INV-0001" value={form.invoiceNumber} onChange={(e) => setField('invoiceNumber', e.target.value)} />
+            <label className="form-label">{docLabel} #</label>
+            <input
+              className="form-control"
+              placeholder="Auto-generated on save"
+              value={form.invoiceNumber}
+              disabled
+              readOnly
+              style={{ opacity: 0.7, cursor: 'not-allowed' }}
+            />
           </div>
         </div>
-
         {/* ── Configure Tax / Currency / Format toolbar ── */}
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
 
-          {/* Configure Tax */}
           <button
             type="button"
             onClick={openTaxModal}
@@ -404,7 +535,6 @@ export default function InvoiceForm() {
                   : <span style={{ fontSize: '0.7rem', color: 'var(--primary-light)', marginLeft: 2 }}>(CGST+SGST)</span>}
           </button>
 
-          {/* Currency Selector */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Currency <span style={{ color: 'var(--danger)' }}>*</span>
@@ -422,7 +552,6 @@ export default function InvoiceForm() {
             </div>
           </div>
 
-          {/* Configure Discount */}
           <button
             type="button"
             onClick={openDiscModal}
@@ -470,11 +599,12 @@ export default function InvoiceForm() {
                 <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Qty</th>
                 <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Unit</th>
                 <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Price</th>
-                {/* Only show Disc% column in item-wise mode */}
                 {discConfig.mode === 'item' && (
-                  <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Disc %</th>
+                  <>
+                    <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Disc %</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Disc Amt</th>
+                  </>
                 )}
-                {/* No Discount mode: no Disc% column at all */}
                 {form.taxType !== 'none' && (
                   form.taxType === 'vat' ? (
                     <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>VAT%</th>
@@ -494,14 +624,69 @@ export default function InvoiceForm() {
             <tbody>
               {form.items.map((item, idx) => {
                 const line = computeLine(item, form.isInterstate, form.taxType);
+                const lineSubtotal = (item.price || 0) * (item.quantity || 0);
+                const computedAmt = Number(((lineSubtotal * (item.discount || 0)) / 100).toFixed(2));
+                const amtDisplayValue = discAmtDraft[idx] !== undefined ? discAmtDraft[idx] : computedAmt; const productFilterQuery = productQueries[idx];
+                const selectedProductName = products.find((p) => p._id === item.productId)?.name;
+                const filteredProducts = products.filter((p) =>
+                  p.name.toLowerCase().includes((productFilterQuery ?? '').toLowerCase())
+                ).slice(0, 8);
+
                 return (
                   <tr key={idx}>
-                    <td style={{ padding: '6px 4px' }}>
-                      <select className="form-control" style={{ minWidth: '120px', padding: '6px 8px' }}
-                        onChange={(e) => fillFromProduct(idx, e.target.value)} defaultValue="">
-                        <option value="">— Pick —</option>
-                        {products.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
-                      </select>
+                    <td style={{ padding: '6px 4px', position: 'relative' }}>
+                      <input
+                        className="form-control"
+                        style={{ minWidth: '140px', padding: '6px 8px' }}
+                        placeholder="Search or type product"
+                        value={productFilterQuery ?? (selectedProductName || '')}
+                        onChange={(e) => {
+                          setProductQueries((q) => ({ ...q, [idx]: e.target.value }));
+                          setOpenProductIdx(idx);
+                        }}
+                        onFocus={(e) => {
+                          setProductQueries((q) => ({ ...q, [idx]: q[idx] ?? (selectedProductName || '') }));
+                          setOpenProductIdx(idx);
+                          const rect = e.target.getBoundingClientRect();
+                          setProductDropdownPos((p) => ({
+                            ...p,
+                            [idx]: { top: rect.bottom + 4, left: rect.left, width: Math.max(rect.width, 220) },
+                          }));
+                        }}
+                        onBlur={() => setTimeout(() => setOpenProductIdx((o) => (o === idx ? null : o)), 150)}
+                      />
+                      {openProductIdx === idx && productDropdownPos[idx] && (
+                        <div style={{
+                          position: 'fixed',
+                          top: productDropdownPos[idx].top,
+                          left: productDropdownPos[idx].left,
+                          width: productDropdownPos[idx].width,
+                          zIndex: 9999,
+                          background: 'var(--bg-card)', border: '1px solid var(--border)',
+                          borderRadius: 8, maxHeight: 220, overflowY: 'auto',
+                          boxShadow: 'var(--shadow)',
+                        }}>
+                          {filteredProducts.length === 0 ? (
+                            <div style={{ padding: '10px 12px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              No matching products — keep typing to use as a custom line item
+                            </div>
+                          ) : filteredProducts.map((p) => (
+                            <div
+                              key={p._id}
+                              className="dropdown-row"
+                              onMouseDown={() => {
+                                fillFromProduct(idx, p._id);
+                                setProductQueries((q) => ({ ...q, [idx]: p.name }));
+                                setOpenProductIdx(null);
+                              }}
+                              style={{ padding: '9px 12px', cursor: 'pointer', fontSize: '0.8rem', borderBottom: '1px solid var(--border)' }}
+                            >
+                              <div style={{ fontWeight: 600 }}>{p.name}</div>
+                              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{fmt(p.price)}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </td>
                     <td style={{ padding: '6px 4px' }}>
                       <input className="form-control" style={{ minWidth: '150px', padding: '6px 8px' }} placeholder="Item name" value={item.name} onChange={(e) => setItem(idx, 'name', e.target.value)} />
@@ -531,12 +716,61 @@ export default function InvoiceForm() {
                       </div>
                     </td>
                     <td style={{ padding: '6px 4px' }}>
-                      <input type="number" className="form-control" style={{ width: '90px', padding: '6px 8px' }} value={item.price} min={0} onChange={(e) => setItem(idx, 'price', parseFloat(e.target.value) || 0)} />
+                      <input
+                        type="number"
+                        className="form-control"
+                        style={{ width: '90px', padding: '6px 8px' }}
+                        value={item.price === 0 ? '' : item.price}
+                        min={0}
+                        placeholder="0"
+                        onChange={(e) => setItem(idx, 'price', e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
+                      />
                     </td>
                     {discConfig.mode === 'item' && (
-                      <td style={{ padding: '6px 4px' }}>
-                        <input type="number" className="form-control" style={{ width: '70px', padding: '6px 8px' }} value={item.discount} min={0} max={100} onChange={(e) => setItem(idx, 'discount', parseFloat(e.target.value) || 0)} />
-                      </td>
+                      <>
+                        <td style={{ padding: '6px 4px' }}>
+                          <input
+                            type="number"
+                            className="form-control"
+                            placeholder="0"
+                            style={{ width: '65px', padding: '6px 8px' }}
+                            value={item.discount === 0 ? '' : item.discount}
+                            min={0}
+                            max={100}
+                            onChange={(e) => {
+                              setDiscAmtDraft((d) => { const c = { ...d }; delete c[idx]; return c; });
+                              setItem(idx, 'discount', e.target.value === '' ? 0 : Math.min(parseFloat(e.target.value) || 0, 100));
+                            }}
+                          />
+                        </td>
+                        <td style={{ padding: '6px 4px' }}>
+                          <input
+                            type="number"
+                            className="form-control"
+                            placeholder="0"
+                            title="Discount amount"
+                            style={{ width: '80px', padding: '6px 8px' }}
+                            value={amtDisplayValue}
+                            min={0}
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              // Keep showing exactly what the user typed while they're typing —
+                              // don't let the controlled value snap back to a recomputed number.
+                              setDiscAmtDraft((d) => ({ ...d, [idx]: raw }));
+                              const amt = parseFloat(raw) || 0;
+                              if (lineSubtotal > 0) {
+                                setItem(idx, 'discount', Math.min((amt / lineSubtotal) * 100, 100));
+                              }
+                              // If lineSubtotal is 0 (no price/qty yet), we can't derive a %,
+                              // so the typed value just sits in the draft until price/qty is set.
+                            }}
+                            onBlur={() => {
+                              // Once focus leaves, snap back to the canonical value derived from %
+                              setDiscAmtDraft((d) => { const c = { ...d }; delete c[idx]; return c; });
+                            }}
+                          />
+                        </td>
+                      </>
                     )}
                     {form.taxType !== 'none' && (
                       form.taxType === 'vat' ? (
@@ -574,19 +808,16 @@ export default function InvoiceForm() {
         {/* Totals summary */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
           <div style={{ minWidth: '280px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {/* Subtotal */}
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Subtotal</span>
               <span>{fmt(totals.subtotal)}</span>
             </div>
-            {/* Item-wise discount total (informational) */}
             {discConfig.mode === 'item' && totals.itemDiscount > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Item Discount</span>
                 <span style={{ color: 'var(--danger)' }}>- {fmt(totals.itemDiscount)}</span>
               </div>
             )}
-            {/* Overall discount lines */}
             {discConfig.mode === 'overall' && discConfig.lines.map((l, i) => {
               const base = i === 0 ? totals.subtotal : totals.subtotal - discConfig.lines.slice(0, i).reduce((acc, prev) => acc + (prev.type === 'percent' ? (totals.subtotal * (prev.value || 0)) / 100 : (prev.value || 0)), 0);
               const amt = l.type === 'percent' ? (base * (l.value || 0)) / 100 : (l.value || 0);
@@ -597,14 +828,12 @@ export default function InvoiceForm() {
                 </div>
               );
             })}
-            {/* Tax */}
             {totals.tax > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Tax</span>
                 <span>{fmt(totals.tax)}</span>
               </div>
             )}
-            {/* Grand Total */}
             <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '8px', fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>
               <span>Grand Total</span>
               <span>{fmt(totals.total)}</span>
@@ -612,6 +841,44 @@ export default function InvoiceForm() {
           </div>
         </div>
       </div>
+
+      {/* Banking Details (from profile) */}
+      {hasBankDetails && (
+        <div className="card mb-4">
+          <div className="flex gap-2" style={{ alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ padding: 8, background: 'var(--primary-bg)', borderRadius: 8, color: 'var(--primary)' }}>
+              <Landmark size={18} />
+            </div>
+            <h2 className="card-title" style={{ margin: 0 }}>Banking Details</h2>
+          </div>
+          <div className="form-grid">
+            {bank.bankName && (
+              <div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Bank Name</div>
+                <div style={{ fontWeight: 600, marginTop: 4 }}>{bank.bankName}</div>
+              </div>
+            )}
+            {bank.accountName && (
+              <div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Account Name</div>
+                <div style={{ fontWeight: 600, marginTop: 4 }}>{bank.accountName}</div>
+              </div>
+            )}
+            {bank.accountNumber && (
+              <div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Account Number</div>
+                <div style={{ fontWeight: 600, marginTop: 4 }}>{bank.accountNumber}</div>
+              </div>
+            )}
+            {bank.ifscCode && (
+              <div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>IFSC</div>
+                <div style={{ fontWeight: 600, marginTop: 4 }}>{bank.ifscCode}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Notes */}
       <div className="card">
@@ -653,14 +920,17 @@ export default function InvoiceForm() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginTop: 8 }}>
                 {TEMPLATES.map((t) => {
                   const isSelected = (form.template || '') === t.id;
+                  const isLocked = t.id && !FREE_TEMPLATES.includes(t.id);
                   return (
                     <button
                       key={t.id}
                       type="button"
                       onClick={() => {
+                        if (isLocked) {
+                          toast('Upgrade your plan to unlock this template', { icon: '🔒' });
+                          return;
+                        }
                         setField('template', t.id);
-                        // If choosing 'Account Default', clear invoice colors so it inherits business defaults.
-                        // If choosing a specific template, start with its own default colors for isolated styling.
                         if (!t.id) {
                           setField('templateColors', null);
                         } else {
@@ -676,6 +946,7 @@ export default function InvoiceForm() {
                         overflow: 'hidden',
                         boxShadow: isSelected ? '0 0 0 3px rgba(var(--primary-rgb, 59,130,246),0.18)' : 'none',
                         transition: 'border 0.15s, box-shadow 0.15s',
+                        opacity: isLocked ? 0.85 : 1,
                       }}
                     >
                       <div style={{ position: 'relative' }}>
@@ -692,6 +963,21 @@ export default function InvoiceForm() {
                             fontSize: '0.6rem', fontWeight: 700,
                             padding: '2px 5px', borderRadius: 4,
                           }}>DEFAULT</span>
+                        )}
+                        {isLocked && (
+                          <div style={{
+                            position: 'absolute', inset: 0, background: 'rgba(20,20,30,0.45)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <span style={{
+                              display: 'flex', alignItems: 'center', gap: 4,
+                              background: '#fff', color: '#111',
+                              fontSize: '0.62rem', fontWeight: 700,
+                              padding: '3px 8px', borderRadius: 20,
+                            }}>
+                              <Lock size={10} /> Upgrade
+                            </span>
+                          </div>
                         )}
                       </div>
                       <div style={{
@@ -726,16 +1012,16 @@ export default function InvoiceForm() {
                   <div>
                     <h4 style={{ fontSize: '0.875rem', fontWeight: 700, margin: 0 }}>Customize Template Colors</h4>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
-                      {form.template 
-                        ? 'Tailor this specific invoice' 
+                      {form.template
+                        ? 'Tailor this specific invoice'
                         : `Using ${effectiveTemplate} Account Defaults`}
                     </p>
                   </div>
                 </div>
 
-                <div style={{ 
-                  display: 'flex', 
-                  gap: 24, 
+                <div style={{
+                  display: 'flex',
+                  gap: 24,
                   flexWrap: 'wrap',
                   opacity: form.template ? 1 : 0.6,
                   pointerEvents: form.template ? 'auto' : 'none'
@@ -771,13 +1057,13 @@ export default function InvoiceForm() {
                       </div>
                     </div>
                   )}
-                  
+
                   {!form.template ? (
                     <div style={{ marginTop: 'auto', marginBottom: 6, fontSize: '0.7rem', fontStyle: 'italic', color: 'var(--primary)' }}>
                       Inherited from account settings
                     </div>
                   ) : (
-                    <button 
+                    <button
                       type="button"
                       className="btn btn-ghost btn-sm"
                       style={{ marginTop: 'auto', marginBottom: 6, fontSize: '0.7rem' }}
@@ -792,7 +1078,6 @@ export default function InvoiceForm() {
           })()}
         </div>
       </div>
-
       {/* ══ Configure Tax Modal ══ */}
       {taxModal && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(3px)' }}>
@@ -802,7 +1087,6 @@ export default function InvoiceForm() {
               <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setTaxModal(false)}><X size={18} /></button>
             </div>
 
-            {/* 1. Tax Type */}
             <div className="form-group">
               <label className="form-label"><strong>1. Select Tax Type</strong> <span style={{ color: 'var(--danger)' }}>*</span></label>
               <select className="form-control" value={taxDraft.taxType} onChange={(e) => setTaxDraft(d => ({ ...d, taxType: e.target.value }))}>
@@ -812,7 +1096,6 @@ export default function InvoiceForm() {
               </select>
             </div>
 
-            {/* 2. Place of Supply — only for GST */}
             {taxDraft.taxType === 'gst_india' && (
               <div className="form-group">
                 <label className="form-label"><strong>2. Place of Supply</strong> <span style={{ color: 'var(--danger)' }}>*</span></label>
@@ -822,7 +1105,6 @@ export default function InvoiceForm() {
               </div>
             )}
 
-            {/* 3. GST Type — only for GST */}
             {taxDraft.taxType === 'gst_india' && (
               <div className="form-group">
                 <label className="form-label"><strong>3. GST Type</strong> <span style={{ color: 'var(--danger)' }}>*</span></label>
@@ -844,7 +1126,6 @@ export default function InvoiceForm() {
               </div>
             )}
 
-            {/* 4. Other Options */}
             <div className="form-group">
               <label className="form-label"><strong>4. Other Options</strong></label>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
@@ -876,12 +1157,11 @@ export default function InvoiceForm() {
               <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setDiscModal(false)}><X size={18} /></button>
             </div>
 
-            {/* Mode */}
             <div className="form-group">
               <label className="form-label"><strong>Discount Type</strong></label>
               <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
                 {[
-                  ['item', 'Item-wise', 'Disc % column per line item'],
+                  ['item', 'Item-wise', 'Disc % / Amt columns per line item'],
                   ['overall', 'Subtotal Discount', 'One or more discounts after subtotal'],
                   ['none', 'No Discount', 'No discount applied — column hidden'],
                 ].map(([val, title, desc]) => (
@@ -900,7 +1180,6 @@ export default function InvoiceForm() {
               </div>
             </div>
 
-            {/* Discount lines — only in overall mode */}
             {discDraft.mode === 'overall' && (
               <div className="form-group">
                 <label className="form-label" style={{ marginBottom: 8 }}><strong>Discount Lines</strong></label>
@@ -936,7 +1215,48 @@ export default function InvoiceForm() {
           </div>
         </div>
       )}
+
+      {/* ══ Create Client Modal ══ */}
+      {newClientModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(3px)' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '28px 28px 20px', width: 440, maxWidth: '95vw', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h3 style={{ fontWeight: 700, fontSize: '1rem' }}>Create Client</h3>
+              <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setNewClientModal(false)}><X size={18} /></button>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Client / Business Name *</label>
+              <input className="form-control" autoFocus value={newClientForm.name} onChange={(e) => setNewClientForm((f) => ({ ...f, name: e.target.value }))} placeholder="Acme Corp" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Email</label>
+              <input type="email" className="form-control" value={newClientForm.email} onChange={(e) => setNewClientForm((f) => ({ ...f, email: e.target.value }))} placeholder="client@example.com" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Phone</label>
+              <input className="form-control" value={newClientForm.phone} onChange={(e) => setNewClientForm((f) => ({ ...f, phone: e.target.value }))} placeholder="+91 9876543210" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">GSTIN</label>
+              <input className="form-control" value={newClientForm.gstin} onChange={(e) => setNewClientForm((f) => ({ ...f, gstin: e.target.value.toUpperCase() }))} placeholder="22AAAAA0000A1Z5" />
+            </div>
+
+            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: -6, marginBottom: 4 }}>
+              You can add address, PAN and notes later from the Clients page.
+            </p>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+              <button type="button" className="btn btn-ghost" onClick={() => setNewClientModal(false)}>Cancel</button>
+              <button type="button" className="btn btn-primary" disabled={creatingClient} onClick={handleCreateClientSubmit}>
+                {creatingClient ? 'Creating…' : 'Create Client'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
     </form>
   );
 }
-
