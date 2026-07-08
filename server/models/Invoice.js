@@ -96,7 +96,8 @@ const invoiceSchema = new mongoose.Schema(
 );
 
 // Auto-generate invoice number if not set (INV-0001 style)
-invoiceSchema.pre('save', async function (next) {
+// Auto-generate invoice number if not set (INV-0001 style)
+invoiceSchema.pre('validate', async function (next) {
   if (!this.invoiceNumber || this.invoiceNumber === 'PENDING') {
     const count = await this.constructor.countDocuments({ user: this.user });
     const prefix = this.invoiceType === 'quotation' ? 'QT' : this.invoiceType === 'proforma' ? 'PI' : 'INV';

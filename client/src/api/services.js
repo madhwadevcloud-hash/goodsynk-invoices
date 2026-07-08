@@ -26,6 +26,19 @@ export const invoiceAPI = {
   updateStatus: (id, data) => api.patch(`/invoices/${id}/status`, data),
   delete: (id) => api.delete(`/invoices/${id}`),
   getStats: () => api.get('/invoices/stats'),
+
+
+  sendEmail: (id, { to, subject, body, pdfBlob, pdfFileName }) => {
+    const form = new FormData();
+    form.append('to', to);
+    form.append('subject', subject);
+    form.append('body', body);
+    form.append('pdf', pdfBlob, pdfFileName);
+    return api.post(`/invoices/${id}/send-email`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
 };
 
 // ─── Quotations ───────────────────────────────────────────────────────────────
@@ -37,6 +50,18 @@ export const quotationAPI = {
   updateStatus: (id, data) => api.patch(`/quotations/${id}/status`, data),
   delete: (id) => api.delete(`/quotations/${id}`),
   convert: (id) => api.post(`/quotations/${id}/convert`),
+
+  sendEmail: (id, { to, subject, body, pdfBlob, pdfFileName }) => {
+    const form = new FormData();
+    form.append('to', to);
+    form.append('subject', subject);
+    form.append('body', body);
+    form.append('pdf', pdfBlob, pdfFileName);
+    return api.post(`/quotations/${id}/send-email`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
 };
 
 // ─── Clients ──────────────────────────────────────────────────────────────────

@@ -86,10 +86,10 @@ export default function InvoiceView() {
 
   const currency = invoice.currency || 'INR';
   const effectiveTemplate = invoice.template || invoice.user?.invoiceTemplate || 'template1';
-  const colors = invoice.templateColors || 
-                 (invoice.template ? (DEFAULT_COLORS[invoice.template.toLowerCase()] || null) : invoice.user?.invoiceTemplateColors) || 
-                 DEFAULT_COLORS[(effectiveTemplate || 'template1').toLowerCase()];
-  
+  const colors = invoice.templateColors ||
+    (invoice.template ? (DEFAULT_COLORS[invoice.template.toLowerCase()] || null) : invoice.user?.invoiceTemplateColors) ||
+    DEFAULT_COLORS[(effectiveTemplate || 'template1').toLowerCase()];
+
   const invoiceForPDF = {
     ...invoice,
     invoiceType: isQuotation ? 'quotation' : 'invoice',
