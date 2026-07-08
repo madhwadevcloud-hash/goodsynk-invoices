@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
-import { UserPlus, Receipt } from 'lucide-react';
+import { UserPlus, Receipt, Eye, EyeOff } from 'lucide-react';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../../config/firebase';
 
@@ -11,6 +11,8 @@ export default function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -63,9 +65,9 @@ export default function Register() {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-              <label className="form-label">Your Name *</label>
-              <input name="name" className="form-control" placeholder="John Doe" value={form.name} onChange={handleChange} />
-            </div>
+            <label className="form-label">Your Name *</label>
+            <input name="name" className="form-control" placeholder="John Doe" value={form.name} onChange={handleChange} />
+          </div>
 
           <div className="form-group">
             <label className="form-label">Email Address *</label>
@@ -74,12 +76,68 @@ export default function Register() {
 
           <div className="form-group">
             <label className="form-label">Password *</label>
-            <input name="password" type="password" className="form-control" placeholder="Min. 6 characters" value={form.password} onChange={handleChange} />
+            <div style={{ position: 'relative' }}>
+              <input
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                className="form-control"
+                placeholder="Min. 6 characters"
+                value={form.password}
+                onChange={handleChange}
+                style={{ paddingRight: '40px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                  background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', padding: 0,
+                  display: 'flex', alignItems: 'center'
+                }}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <div className="form-group">
             <label className="form-label">Confirm Password *</label>
-            <input name="confirmPassword" type="password" className="form-control" placeholder="Confirm your password" value={form.confirmPassword} onChange={handleChange} />
+
+            <div style={{ position: 'relative' }}>
+              <input
+                name="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                className="form-control"
+                placeholder="Confirm your password"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                style={{ paddingRight: '40px' }}
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#888',
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff size={18} />
+                ) : (
+                  <Eye size={18} />
+                )}
+              </button>
+            </div>
           </div>
 
           <button type="submit" className="btn btn-primary w-full btn-lg" disabled={loading}>
@@ -94,10 +152,10 @@ export default function Register() {
           <hr style={{ flex: 1, borderColor: '#eee' }} />
         </div>
 
-        <button 
-          type="button" 
-          className="btn w-full btn-lg" 
-          onClick={handleGoogleRegister} 
+        <button
+          type="button"
+          className="btn w-full btn-lg"
+          onClick={handleGoogleRegister}
           disabled={loading}
           style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', border: '1px solid #ddd', backgroundColor: '#fff', color: '#333' }}
         >

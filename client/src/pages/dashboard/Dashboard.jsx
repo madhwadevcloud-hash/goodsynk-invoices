@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { invoiceAPI } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
 import { FileText, Users, DollarSign, TrendingUp, Plus, Clock } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const formatINR = (n) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n || 0);
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [stats, setStats] = useState(null);
   const [recentInvoices, setRecentInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +26,24 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Validate profile completeness before allowing invoice creation
+  const handleNewInvoice = () => {
+    const requiredFields = [
+      user?.businessName,
+      user?.businessLogo,
+      user?.address?.street,
+      user?.address?.city,
+      user?.address?.state,
+      user?.address?.pincode,
+    ];
+    const isComplete = requiredFields.every(Boolean);
+    if (!isComplete) {
+      setShowProfileModal(true);
+      return;
+    }
+    navigate('/invoices/new');
+  };
+
   const statCards = [
     { label: 'Total Invoices', value: stats?.totalInvoices ?? 0, icon: FileText, color: 'var(--primary)', bg: 'var(--primary-bg)' },
     { label: 'Total Revenue', value: formatINR(stats?.totalRevenue), icon: DollarSign, color: 'var(--success)', bg: 'var(--success-bg)' },
@@ -32,7 +53,7 @@ export default function Dashboard() {
 
   const statusBadge = (s) => <span className={`badge badge-${s}`}>{s}</span>;
 
-  return (
+  return (<>
     <div>
       {/* Welcome */}
       <div className="mb-4">
@@ -59,9 +80,9 @@ export default function Dashboard() {
       <div className="card">
         <div className="card-header">
           <h2 className="card-title">Recent Invoices</h2>
-          <Link to="/invoices/new" className="btn btn-primary btn-sm">
+          <button type="button" className="btn btn-primary btn-sm" onClick={handleNewInvoice}>
             <Plus size={14} /> New Invoice
-          </Link>
+          </button>
         </div>
         {loading ? (
           <div className="flex-center" style={{ padding: '40px' }}><div className="spinner" /></div>
@@ -70,9 +91,9 @@ export default function Dashboard() {
             <div className="empty-state-icon">📄</div>
             <div className="empty-state-title">No invoices yet</div>
             <div className="empty-state-desc">Create your first invoice to get started</div>
-            <Link to="/invoices/new" className="btn btn-primary">
+            <button type="button" className="btn btn-primary" onClick={handleNewInvoice}>
               <Plus size={15} /> Create Invoice
-            </Link>
+            </button>
           </div>
         ) : (
           <div className="table-wrapper">
@@ -106,5 +127,23 @@ export default function Dashboard() {
         )}
       </div>
     </div>
-  );
-}
+    {showProfileModal && (
+      <div className="modal-backdrop" style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div className="modal" style={{ background: "white", padding: "20px", borderRadius: "8px", maxWidth: "400px", width: "100%" }}>
+          <h2 className="modal-title" style={{ marginBottom: "12px" }}>Complete Your Profile</h2>
+          <p className="modal-message" style={{ marginBottom: "20px" }}>
+            Please complete your business profile before creating an invoice.
+          </p>
+          <div className="modal-actions" style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+            <button className="btn btn-primary" onClick={() => { setShowProfileModal(false); navigate('/profile'); }}>
+              Go to Profile
+            </button>
+            <button className="btn btn-ghost" onClick={() => setShowProfileModal(false)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </>)
+};

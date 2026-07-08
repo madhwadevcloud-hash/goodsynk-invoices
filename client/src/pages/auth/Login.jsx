@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
-import { LogIn, Receipt } from 'lucide-react';
+import { LogIn, Receipt, Eye, EyeOff } from 'lucide-react';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../../config/firebase';
 
@@ -11,6 +11,8 @@ export default function Login() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -74,14 +76,40 @@ export default function Login() {
 
           <div className="form-group">
             <label className="form-label">Password</label>
-            <input
-              name="password"
-              type="password"
-              className="form-control"
-              placeholder="••••••••"
-              value={form.password}
-              onChange={handleChange}
-            />
+
+            <div style={{ position: 'relative' }}>
+              <input
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                className="form-control"
+                placeholder="••••••••"
+                value={form.password}
+                onChange={handleChange}
+                style={{
+                  paddingRight: '45px'
+                }}
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#888',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button type="submit" className="btn btn-primary w-full btn-lg" disabled={loading}>
@@ -89,17 +117,17 @@ export default function Login() {
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
-        
+
         <div className="mt-4" style={{ display: 'flex', alignItems: 'center', margin: '20px 0' }}>
           <hr style={{ flex: 1, borderColor: '#eee' }} />
           <span style={{ padding: '0 10px', color: '#888', fontSize: '14px' }}>OR</span>
           <hr style={{ flex: 1, borderColor: '#eee' }} />
         </div>
 
-        <button 
-          type="button" 
-          className="btn w-full btn-lg" 
-          onClick={handleGoogleLogin} 
+        <button
+          type="button"
+          className="btn w-full btn-lg"
+          onClick={handleGoogleLogin}
           disabled={loading}
           style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', border: '1px solid #ddd', backgroundColor: '#fff', color: '#333' }}
         >
@@ -108,8 +136,7 @@ export default function Login() {
         </button>
 
         <p className="text-sm text-muted mt-4" style={{ textAlign: 'center' }}>
-          Don't have an account?{' '}
-          <Link to="/register" className="auth-link">Register here</Link>
+          Don't have an account?{' '}<Link to="/register" className="auth-link">Register here</Link>
         </p>
       </div>
     </div>

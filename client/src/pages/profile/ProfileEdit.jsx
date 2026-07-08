@@ -7,16 +7,65 @@ import toast from 'react-hot-toast';
 import SignaturePicker from '../../components/SignaturePicker';
 import {
   Building2, Phone, FileText, MapPin, Lock, Save, Pencil, X,
-  Camera, Mail, User, CheckCircle, Shield, Loader2, Trash2, AlertTriangle, Landmark, PenLine
+  Camera, Mail, User, CheckCircle, Shield, Loader2, Trash2,
+  AlertTriangle, Landmark, PenLine, Eye, EyeOff
 } from 'lucide-react';
 
 const INDIAN_STATES = [
-  'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat',
-  'Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh',
-  'Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab',
-  'Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand',
-  'West Bengal','Delhi','Jammu & Kashmir','Ladakh','Puducherry','Chandigarh',
-];
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat',
+  'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh',
+  'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+  'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand',
+  'West Bengal', 'Delhi', 'Jammu & Kashmir', 'Ladakh', 'Puducherry', 'Chandigarh']
+const checkImageHasBackground = (file) => {
+  return new Promise((resolve) => {
+    // Check for transparent pixels (background) for all supported image formats
+
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      // Resize if too large, max 500x500 to keep base64 size manageable
+      const MAX_SIZE = 500;
+      let width = img.width;
+      let height = img.height;
+      if (width > MAX_SIZE || height > MAX_SIZE) {
+        const ratio = Math.min(MAX_SIZE / width, MAX_SIZE / height);
+        width = width * ratio;
+        height = height * ratio;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      ctx.drawImage(img, 0, 0, width, height);
+      const imageData = ctx.getImageData(0, 0, width, height);
+      const data = imageData.data;
+
+      let hasTransparentPixels = false;
+      for (let i = 3; i < data.length; i += 4) {
+        if (data[i] < 255) {
+          hasTransparentPixels = true;
+          break;
+        }
+      }
+
+      // Get base64 string
+      const dataUrl = canvas.toDataURL('image/png');
+
+      // If no transparent pixels are found, it has a solid background
+      resolve({ hasBackground: !hasTransparentPixels, dataUrl });
+    };
+
+    img.onerror = () => resolve({ hasBackground: false, dataUrl: null });
+    img.src = url;
+  });
+};
 
 /* ── Small helper: info row in view mode ── */
 function InfoRow({ icon: Icon, label, value }) {
@@ -52,6 +101,9 @@ export default function ProfileEdit() {
   const [avatarPreview, setAvatarPreview] = useState(user?.businessLogo || null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [pwdOpen, setPwdOpen] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -73,20 +125,20 @@ export default function ProfileEdit() {
   /* ── Profile form ── */
   const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm({
     defaultValues: {
-      name:         user?.name         || '',
+      name: user?.name || '',
       businessName: user?.businessName || '',
-      phone:        user?.phone        || '',
-      gstin:        user?.gstin        || '',
-      street:       user?.address?.street  || '',
-      city:         user?.address?.city    || '',
-      state:        user?.address?.state   || '',
-      pincode:      user?.address?.pincode || '',
-      bankName:     user?.bankDetails?.bankName || '',
-      accountName:  user?.bankDetails?.accountName || '',
-      accountNumber:user?.bankDetails?.accountNumber || '',
-      ifscCode:     user?.bankDetails?.ifscCode || '',
-      swiftCode:    user?.bankDetails?.swiftCode || '',
-      branch:       user?.bankDetails?.branch || '',
+      phone: user?.phone || '',
+      gstin: user?.gstin || '',
+      street: user?.address?.street || '',
+      city: user?.address?.city || '',
+      state: user?.address?.state || '',
+      pincode: user?.address?.pincode || '',
+      bankName: user?.bankDetails?.bankName || '',
+      accountName: user?.bankDetails?.accountName || '',
+      accountNumber: user?.bankDetails?.accountNumber || '',
+      ifscCode: user?.bankDetails?.ifscCode || '',
+      swiftCode: user?.bankDetails?.swiftCode || '',
+      branch: user?.bankDetails?.branch || '',
     },
   });
 
@@ -101,18 +153,50 @@ export default function ProfileEdit() {
     return () => clearTimeout(handler);
   }, [formValues, editing]);
 
-  /* ── Handle avatar upload → Cloudinary ── */
+  /* ── Handle avatar upload → Base64 ── */
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) { toast.error('Image must be less than 2 MB'); return; }
-    // Optimistic local preview
-    const localUrl = URL.createObjectURL(file);
-    setAvatarPreview(localUrl);
+
+    // Allow PNG and JPEG formats
+    if (!['image/png', 'image/jpeg', 'image/jpg'].includes(file.type)) { toast.error('Only PNG or JPEG images are allowed'); return; }
+
+    const { hasBackground, dataUrl } = await checkImageHasBackground(file);
+    if (hasBackground) {
+      toast.error('Image contains background, so remove background and upload');
+      if (fileRef.current) fileRef.current.value = '';
+      return;
+    }
+    if (!dataUrl) {
+      toast.error('Failed to process image');
+      return;
+    }
+
+    // Optimistic preview
+    setAvatarPreview(dataUrl);
     setAvatarUploading(true);
     try {
-      const { data } = await authAPI.uploadAvatar(file);
-      setAvatarPreview(data.url);
+      const { data } = await authAPI.updateMe({ businessLogo: dataUrl });
+      updateUser(data.user);
+      toast.success('Profile picture updated!');
+    } catch {
+      toast.error('Upload failed. Please try again.');
+      setAvatarPreview(user?.businessLogo || null);
+    } finally {
+      setAvatarUploading(false);
+    }
+
+    if (!dataUrl) {
+      toast.error('Failed to process image');
+      return;
+    }
+
+    // Optimistic local preview
+    setAvatarPreview(dataUrl);
+    setAvatarUploading(true);
+    try {
+      const { data } = await authAPI.updateMe({ businessLogo: dataUrl });
       updateUser(data.user);
       toast.success('Profile picture updated!');
     } catch {
@@ -127,15 +211,15 @@ export default function ProfileEdit() {
   const handleSave = async (values, isManual = true) => {
     try {
       const payload = {
-        name:         values.name,
+        name: values.name,
         businessName: values.businessName,
-        phone:        values.phone,
-        gstin:        values.gstin,
+        phone: values.phone,
+        gstin: values.gstin,
         businessLogo: avatarPreview || '',
         address: {
-          street:  values.street,
-          city:    values.city,
-          state:   values.state,
+          street: values.street,
+          city: values.city,
+          state: values.state,
           pincode: values.pincode,
           country: 'India',
         },
@@ -150,7 +234,7 @@ export default function ProfileEdit() {
       };
       const { data } = await authAPI.updateMe(payload);
       updateUser(data.user);
-      
+
       if (isManual) {
         toast.success('Profile updated!');
         setEditing(false);
@@ -182,20 +266,20 @@ export default function ProfileEdit() {
   /* Cancel edit — reset form back to user values */
   const handleCancel = () => {
     reset({
-      name:         user?.name         || '',
+      name: user?.name || '',
       businessName: user?.businessName || '',
-      phone:        user?.phone        || '',
-      gstin:        user?.gstin        || '',
-      street:       user?.address?.street  || '',
-      city:         user?.address?.city    || '',
-      state:        user?.address?.state   || '',
-      pincode:      user?.address?.pincode || '',
-      bankName:     user?.bankDetails?.bankName || '',
-      accountName:  user?.bankDetails?.accountName || '',
-      accountNumber:user?.bankDetails?.accountNumber || '',
-      ifscCode:     user?.bankDetails?.ifscCode || '',
-      swiftCode:    user?.bankDetails?.swiftCode || '',
-      branch:       user?.bankDetails?.branch || '',
+      phone: user?.phone || '',
+      gstin: user?.gstin || '',
+      street: user?.address?.street || '',
+      city: user?.address?.city || '',
+      state: user?.address?.state || '',
+      pincode: user?.address?.pincode || '',
+      bankName: user?.bankDetails?.bankName || '',
+      accountName: user?.bankDetails?.accountName || '',
+      accountNumber: user?.bankDetails?.accountNumber || '',
+      ifscCode: user?.bankDetails?.ifscCode || '',
+      swiftCode: user?.bankDetails?.swiftCode || '',
+      branch: user?.bankDetails?.branch || '',
     });
     setAvatarPreview(user?.businessLogo || null);
     setEditing(false);
@@ -205,12 +289,17 @@ export default function ProfileEdit() {
   const { register: rp, handleSubmit: hp, reset: rpr, watch: wp, formState: { errors: pe, isSubmitting: ps } } = useForm();
   const onChangePwd = async (v) => {
     try {
-      await authAPI.changePassword({ currentPassword: v.current, newPassword: v.newPwd });
+      const { data } = await authAPI.changePassword({ currentPassword: v.current, newPassword: v.newPwd });
+      // Store the new JWT token after password change
+      if (data?.token) {
+        localStorage.setItem('token', data.token);
+      }
       toast.success('Password changed!');
       rpr();
       setPwdOpen(false);
-    } catch {
-      toast.error('Incorrect current password.');
+    } catch (err) {
+      const message = err?.response?.data?.message || 'Incorrect current password.';
+      toast.error(message);
     }
   };
 
@@ -273,7 +362,14 @@ export default function ProfileEdit() {
               {editing && (
                 <button
                   type="button"
-                  onClick={() => !avatarUploading && fileRef.current?.click()}
+                  onClick={() => {
+                    if (!avatarUploading) {
+                      const confirmUpload = window.confirm("Images should not contain background. Do you want to proceed?");
+                      if (confirmUpload) {
+                        fileRef.current?.click();
+                      }
+                    }
+                  }}
                   disabled={avatarUploading}
                   title="Change photo"
                   style={{
@@ -290,7 +386,7 @@ export default function ProfileEdit() {
                     : <Camera size={14} />}
                 </button>
               )}
-              <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
+              <input ref={fileRef} type="file" accept="image/png, image/jpeg" style={{ display: 'none' }} onChange={handleAvatarChange} />
             </div>
 
             <h2 style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: 4 }}>{user?.businessName || user?.name}</h2>
@@ -307,7 +403,7 @@ export default function ProfileEdit() {
 
             {editing && (
               <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 12 }}>
-                Click the camera icon to change photo.<br />Max 2 MB.
+                Click the camera icon to change photo.<br />Max 2 MB.<br />Allowed formats: PNG, JPEG.
               </p>
             )}
           </div>
@@ -317,8 +413,8 @@ export default function ProfileEdit() {
             <p style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)', marginBottom: 12 }}>Account</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
-                { icon: Mail,  label: 'Email',   val: user?.email },
-                { icon: User,  label: 'Name',    val: user?.name  },
+                { icon: Mail, label: 'Email', val: user?.email },
+                { icon: User, label: 'Name', val: user?.name },
               ].map(({ icon: Icon, label, val }) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Icon size={14} style={{ color: 'var(--primary-light)', flexShrink: 0 }} />
@@ -452,10 +548,10 @@ export default function ProfileEdit() {
                   </button>
                 </div>
                 <InfoRow icon={Building2} label="Business Name" value={user?.businessName} />
-                <InfoRow icon={Phone}     label="Phone"         value={user?.phone} />
-                <InfoRow icon={FileText}  label="GSTIN"         value={user?.gstin} />
-                <InfoRow icon={MapPin}    label="Address"       value={addr || null} />
-                
+                <InfoRow icon={Phone} label="Phone" value={user?.phone} />
+                <InfoRow icon={FileText} label="GSTIN" value={user?.gstin} />
+                <InfoRow icon={MapPin} label="Address" value={addr || null} />
+
                 <div style={{ marginTop: 24, padding: '20px 20px 10px', background: 'var(--bg-elevated)', borderRadius: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
                     <div style={{ width: 28, height: 28, background: 'var(--primary-bg)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -520,22 +616,107 @@ export default function ProfileEdit() {
                 <div className="form-grid-3">
                   <div className="form-group">
                     <label className="form-label">Current Password</label>
-                    <input type="password" className={`form-control${pe.current ? ' error' : ''}`}
-                      placeholder="••••••••" {...rp('current', { required: 'Required' })} />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showCurrentPassword ? 'text' : 'password'}
+                        className={`form-control${pe.current ? ' error' : ''}`}
+                        placeholder="••••••••"
+                        style={{ paddingRight: '45px' }}
+                        {...rp('current', { required: 'Required' })}
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#888',
+                          cursor: 'pointer',
+                          padding: 0,
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                     {pe.current && <p className="form-error">{pe.current.message}</p>}
                   </div>
                   <div className="form-group">
                     <label className="form-label">New Password</label>
-                    <input type="password" className={`form-control${pe.newPwd ? ' error' : ''}`}
-                      placeholder="••••••••"
-                      {...rp('newPwd', { required: 'Required', minLength: { value: 6, message: 'Min 6 chars' } })} />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        className={`form-control${pe.newPwd ? ' error' : ''}`}
+                        placeholder="••••••••"
+                        style={{ paddingRight: '45px' }}
+                        {...rp('newPwd', {
+                          required: 'Required',
+                          minLength: { value: 6, message: 'Min 6 chars' }
+                        })}
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#888',
+                          cursor: 'pointer',
+                          padding: 0,
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                     {pe.newPwd && <p className="form-error">{pe.newPwd.message}</p>}
                   </div>
                   <div className="form-group">
                     <label className="form-label">Confirm Password</label>
-                    <input type="password" className={`form-control${pe.confirm ? ' error' : ''}`}
-                      placeholder="••••••••"
-                      {...rp('confirm', { required: 'Required', validate: (v) => v === wp('newPwd') || 'Passwords do not match' })} />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        className={`form-control${pe.confirm ? ' error' : ''}`}
+                        placeholder="••••••••"
+                        style={{ paddingRight: '45px' }}
+                        {...rp('confirm', {
+                          required: 'Required',
+                          validate: (v) => v === wp('newPwd') || 'Passwords do not match'
+                        })}
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#888',
+                          cursor: 'pointer',
+                          padding: 0,
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                     {pe.confirm && <p className="form-error">{pe.confirm.message}</p>}
                   </div>
                 </div>

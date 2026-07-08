@@ -111,7 +111,7 @@ export default function AppLayout() {
           <ThemeToggle />
         </header>
         <main className="page-container">
-          <Outlet />
+          <Outlet context={{ setShowProfilePrompt }} />
         </main>
       </div>
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { quotationAPI } from '../../api/services';
 import toast from 'react-hot-toast';
 import { Plus, Pencil, Trash2, Eye } from 'lucide-react';
@@ -10,6 +10,7 @@ const fmtCurrency = (n, currency = 'INR') =>
 
 export default function QuotationList() {
   const { user } = useAuth();
+  const { setShowProfilePrompt } = useOutletContext();
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ export default function QuotationList() {
   const handleCreate = (e) => {
     if (!user?.businessName) {
       e.preventDefault();
-      toast.error('Complete your profile to generate quotations');
+      setShowProfilePrompt(true);
     }
   };
 
