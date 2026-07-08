@@ -95,7 +95,7 @@ const invoiceSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Auto-generate invoice number if not set (INV-0001 style)
+
 // Auto-generate invoice number if not set (INV-0001 style)
 invoiceSchema.pre('validate', async function (next) {
   if (!this.invoiceNumber || this.invoiceNumber === 'PENDING') {
