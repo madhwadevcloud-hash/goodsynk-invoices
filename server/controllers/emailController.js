@@ -59,6 +59,10 @@ const sendDocumentEmail = async (req, res, { Model, docLabel, numberField, dueDa
             body,
         });
 
+        console.log("EMAIL_SERVICE:", process.env.EMAIL_SERVICE);
+        console.log("SMTP_USER:", process.env.SMTP_USER);
+        console.log("PUBLIC_CLIENT_URL:", process.env.PUBLIC_CLIENT_URL);
+
         await transporter.sendMail({
             from: `${businessName} <${FROM_EMAIL}>`,
             to,
