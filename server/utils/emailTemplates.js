@@ -36,6 +36,12 @@ const buildDocumentEmailHTML = ({
         </a>
       </td>
     </tr>
+    <tr>
+      <td style="padding: 10px 0 4px; font-size: 13px; color: #64748b;">
+        If you're having trouble with the button above, use the URL below.<br/>
+        <a href="${viewUrl}" style="color:#4A72D4; word-break:break-all;">${viewUrl}</a>
+      </td>
+    </tr>
   ` : '';
 
   return `
