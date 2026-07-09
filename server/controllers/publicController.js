@@ -11,6 +11,15 @@ const buildInvoiceForPDF = (doc, docLabel) => ({
     _taxType: doc.taxType,
 });
 
+// Helper: collect a readable stream into a Buffer
+const streamToBuffer = (stream) =>
+    new Promise((resolve, reject) => {
+        const chunks = [];
+        stream.on('data', (chunk) => chunks.push(chunk));
+        stream.on('end', () => resolve(Buffer.concat(chunks)));
+        stream.on('error', reject);
+    });
+
 // ── Raw PDF stream (used by the Download button) ──
 const streamDocumentPdf = async (req, res, { Model, docLabel, numberField }) => {
     try {
@@ -21,17 +30,20 @@ const streamDocumentPdf = async (req, res, { Model, docLabel, numberField }) => 
         if (!doc) return res.status(404).send('Document not found or link expired');
 
         const invoiceForPDF = buildInvoiceForPDF(doc, docLabel);
-        const instance = pdf(React.createElement(InvoicePDF, { invoice: invoiceForPDF }));
-        const buffer = await instance.toBuffer();
+        // In @react-pdf/renderer v4, toBuffer() returns a readable stream — collect it into a Buffer
+        const pdfStream = await pdf(React.createElement(InvoicePDF, { invoice: invoiceForPDF })).toBuffer();
+        const buffer = await streamToBuffer(pdfStream);
 
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `inline; filename="${docLabel}-${doc[numberField]}.pdf"`);
+        res.setHeader('Content-Disposition', `attachment; filename="${docLabel}-${doc[numberField]}.pdf"`);
+        res.setHeader('Content-Length', buffer.length);
         res.send(buffer);
     } catch (err) {
         console.error(`Public ${docLabel} PDF error:`, err);
         res.status(500).send('Failed to generate PDF');
     }
 };
+
 
 // ── JSON summary (used by the public share page) ──
 const getPublicDocument = async (req, res, { Model, docLabel, numberField, dueDateField }) => {

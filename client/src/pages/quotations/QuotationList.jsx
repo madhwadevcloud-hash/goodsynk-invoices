@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { Plus, Pencil, Trash2, Eye, Send, Mail, MessageCircle, Loader2 } from 'lucide-react';
 import { DEFAULT_COLORS } from '../invoices/InvoiceForm';
-import EmailComposeModal from '../invoices/EmailComposeModal';
 import { isProfileComplete, getMissingProfileField } from '../../utils/profileValidation';
 
 const fmtCurrency = (n, currency = 'INR') =>
@@ -21,16 +20,6 @@ export default function QuotationList() {
   const [sendingId, setSendingId] = useState(null);
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-
-  const [emailModal, setEmailModal] = useState({
-    open: false,
-    to: '',
-    subject: '',
-    body: '',
-    pdfBlob: null,
-    pdfFileName: '',
-    quotationId: null,
-  });
 
   const handleCreate = (e) => {
     if (!isProfileComplete(user)) {
