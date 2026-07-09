@@ -842,7 +842,7 @@ export default function InvoiceForm() {
         </div>
       </div>
 
-      {/* Banking Details (from profile)
+      {/* Banking Details (from profile) */}
       {hasBankDetails && (
         <div className="card mb-4">
           <div className="flex gap-2" style={{ alignItems: 'center', marginBottom: '16px' }}>
@@ -878,7 +878,7 @@ export default function InvoiceForm() {
             )}
           </div>
         </div>
-      )} */}
+      )}
 
       {/* Notes */}
       <div className="card">
