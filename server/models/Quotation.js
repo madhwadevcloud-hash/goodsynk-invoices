@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const { generateShareToken } = require('../utils/shareToken');
+
 
 // ─── Line Item Sub-schema ─────────────────────────────────────────────────────
 const lineItemSchema = new mongoose.Schema(
@@ -68,6 +70,9 @@ const quotationSchema = new mongoose.Schema(
 // Auto-generate quotation number (QT-0001 style)
 // Auto-generate quotation number (QT-0001 style)
 quotationSchema.pre('validate', async function (next) {
+  if (!this.shareToken) {
+    this.shareToken = generateShareToken();
+  }
   if (!this.quotationNumber) {
     const count = await this.constructor.countDocuments({ user: this.user });
     this.quotationNumber = `QT-${String(count + 1).padStart(4, '0')}`;

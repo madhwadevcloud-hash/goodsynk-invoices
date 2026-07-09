@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const { generateShareToken } = require('../utils/shareToken');
+
 
 // ─── Line Item Sub-schema ─────────────────────────────────────────────────────
 const lineItemSchema = new mongoose.Schema(
@@ -99,6 +101,9 @@ const invoiceSchema = new mongoose.Schema(
 
 // Auto-generate invoice number if not set (INV-0001 style)
 invoiceSchema.pre('validate', async function (next) {
+  if (!this.shareToken) {
+    this.shareToken = generateShareToken();
+  }
   if (!this.invoiceNumber || this.invoiceNumber === 'PENDING') {
     const count = await this.constructor.countDocuments({ user: this.user });
     const prefix = this.invoiceType === 'quotation' ? 'QT' : this.invoiceType === 'proforma' ? 'PI' : 'INV';

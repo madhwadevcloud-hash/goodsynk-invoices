@@ -6,6 +6,8 @@ import toast from 'react-hot-toast';
 import { Plus, Pencil, Trash2, Eye, Send, Mail, MessageCircle, Loader2 } from 'lucide-react';
 import { DEFAULT_COLORS } from '../invoices/InvoiceForm';
 import { isProfileComplete, getMissingProfileField } from '../../utils/profileValidation';
+import { getQuotationMessage } from '../../utils/whatsappTemplates';
+import EmailComposeModal from '../../components/EmailComposeModal';
 
 const fmtCurrency = (n, currency = 'INR') =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 2 }).format(n || 0);
@@ -18,6 +20,8 @@ export default function QuotationList() {
   const [shareOpenId, setShareOpenId] = useState(null);
   const [shareDropdownPos, setShareDropdownPos] = useState(null);
   const [sendingId, setSendingId] = useState(null);
+  const [whatsappModalData, setWhatsappModalData] = useState(null);
+  const [emailModalData, setEmailModalData] = useState(null);
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
 
@@ -101,39 +105,54 @@ export default function QuotationList() {
     return { file: new File([blob], fileName, { type: 'application/pdf' }), blob, fileName, inv };
   };
 
-  // 🟢 EMAIL — asks for/confirms recipient, then sends via backend
+  const downloadBlob = (blob, fileName) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // 🟢 EMAIL — opens custom compose modal
   const shareViaEmail = async (id) => {
     setShareOpenId(null);
     setSendingId(id);
     try {
       const { blob, fileName, inv } = await buildQuotationPDFFile(id);
-      const to = window.prompt('Send quotation to email:');
-      if (!to || !to.trim()) {
-        setSendingId(null);
-        return; // user cancelled or left it blank
-      }
-      const subject = `Quotation #${inv.invoiceNumber} from ${currentUser?.businessName || 'your business'}`;
-      await quotationAPI.sendEmail(id, { to: to.trim(), subject, pdfBlob: blob, pdfFileName: fileName });
-      toast.success(`Quotation emailed to ${to.trim()}`);
+      setEmailModalData({ inv, id, blob, fileName });
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'Failed to send quotation email');
+      toast.error('Failed to prepare quotation for email');
     } finally {
       setSendingId(null);
     }
   };
 
-  // 🟢 WHATSAPP — always opens WhatsApp directly (wa.me), never the OS share sheet
+  const handleSendEmail = async ({ to, cc, subject, body }) => {
+    if (!emailModalData) return;
+    const { id, blob, fileName, inv } = emailModalData;
+    const viewUrl = `${window.location.origin}/share/quotation/${inv.shareToken}`;
+    await quotationAPI.sendEmail(id, { to, cc, subject, body, pdfBlob: blob, pdfFileName: fileName, viewUrl });
+  };
+
+  // 🟢 WHATSAPP — triggers modal to review/edit message before opening WhatsApp
   const shareViaWhatsapp = async (id) => {
     setShareOpenId(null);
     setSendingId(id);
     try {
-      const { inv } = await buildQuotationPDFFile(id);
-      const text = `Hi ${inv.client?.name || ''}, here's your quotation ${inv.invoiceNumber} for ${fmtCurrency(inv.total, inv.currency)}.`;
-
-      const phone = (inv.client?.phone || '').replace(/[^0-9]/g, '');
-      const base = phone ? `https://wa.me/${phone}` : 'https://wa.me/';
-      const waUrl = `${base}?text=${encodeURIComponent(text)}`;
-      window.open(waUrl, '_blank');
+      const { blob, fileName, inv } = await buildQuotationPDFFile(id);
+      const shareUrl = `${window.location.origin}/share/quotation/${inv.shareToken}`;
+      const text = getQuotationMessage(inv, shareUrl, fmtCurrency);
+      const phone = inv.client?.phone || '';
+      
+      setWhatsappModalData({
+        phone,
+        text,
+        blob,
+        fileName
+      });
     } catch (err) {
       toast.error('Failed to prepare quotation for WhatsApp');
     } finally {
@@ -234,6 +253,118 @@ export default function QuotationList() {
           </>
         );
       })()}
+
+      {/* WhatsApp customization modal */}
+      {whatsappModalData && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1100,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)'
+        }}>
+          <div className="card" style={{
+            width: '90%', maxWidth: '500px', padding: '24px',
+            background: 'var(--bg-card)', border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)'
+          }}>
+            <h3 style={{ marginTop: 0, marginBottom: '8px', fontSize: '1.2rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+              Customize WhatsApp Message
+            </h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '16px', lineHeight: '1.4' }}>
+              Review and edit the message template before sending it to WhatsApp. The PDF will also download automatically.
+            </p>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '6px', color: 'var(--text-secondary)' }}>
+                Recipient Phone Number
+              </label>
+              <input
+                type="text"
+                value={whatsappModalData.phone}
+                onChange={(e) => setWhatsappModalData({ ...whatsappModalData, phone: e.target.value })}
+                placeholder="e.g. 919876543210"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid var(--border)',
+                  borderRadius: '8px',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.9rem',
+                  outline: 'none',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '6px', color: 'var(--text-secondary)' }}>
+                Message Text
+              </label>
+              <textarea
+                rows={6}
+                value={whatsappModalData.text}
+                onChange={(e) => setWhatsappModalData({ ...whatsappModalData, text: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid var(--border)',
+                  borderRadius: '8px',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.9rem',
+                  outline: 'none',
+                  fontFamily: 'inherit',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => setWhatsappModalData(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  // Trigger PDF download
+                  downloadBlob(whatsappModalData.blob, whatsappModalData.fileName);
+                  
+                  // Open WhatsApp
+                  const phone = whatsappModalData.phone.replace(/[^0-9]/g, '');
+                  const base = phone ? `https://wa.me/${phone}` : 'https://wa.me/';
+                  const waUrl = `${base}?text=${encodeURIComponent(whatsappModalData.text)}`;
+                  window.open(waUrl, '_blank');
+                  
+                  // Close modal
+                  setWhatsappModalData(null);
+                }}
+              >
+                Send & Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Email compose modal */}
+      {emailModalData && (
+        <EmailComposeModal
+          isOpen={!!emailModalData}
+          onClose={() => setEmailModalData(null)}
+          onSend={handleSendEmail}
+          defaultTo={emailModalData.inv?.client?.email || ''}
+          defaultCc={currentUser?.email || ''}
+          defaultSubject={`Quotation #${emailModalData.inv?.invoiceNumber || ''} from ${currentUser?.businessName || 'your business'} is Ready`}
+          defaultBody={`Hello ${emailModalData.inv?.client?.name || 'Customer'},\n\nThank you for choosing ${currentUser?.businessName || 'your business'}.\n\nQuotation Details\n• Quotation No: ${emailModalData.inv?.invoiceNumber || ''}\n• Quotation Date: ${emailModalData.inv?.issueDate ? new Date(emailModalData.inv.issueDate).toLocaleDateString('en-IN') : ''}\n• Valid Until: ${emailModalData.inv?.dueDate ? new Date(emailModalData.inv.dueDate).toLocaleDateString('en-IN') : ''}\n• Amount: ${emailModalData.inv?.currency === 'INR' || !emailModalData.inv?.currency ? '₹' : (emailModalData.inv?.currency || '')}${Number(emailModalData.inv?.total || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}\n{{ViewQuotationButton}}\nA PDF copy of your quotation is attached to this email for your convenience.\n\nFor any queries regarding this quotation, please contact ${currentUser?.email || ''}.\n\nThank you for your business.\n\nRegards,\n${currentUser?.businessName || 'Your Business'}`}
+          pdfFileName={emailModalData.fileName}
+          title="Quotation"
+        />
+      )}
     </div>
   );
 }

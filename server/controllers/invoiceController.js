@@ -65,6 +65,14 @@ const getInvoice = async (req, res) => {
       .populate('client')
       .populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors');
     if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
+
+    // Ensure shareToken exists
+    if (!invoice.shareToken) {
+      const { generateShareToken } = require('../utils/shareToken');
+      invoice.shareToken = generateShareToken();
+      await invoice.save();
+    }
+
     res.json({ success: true, invoice });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

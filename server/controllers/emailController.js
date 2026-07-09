@@ -20,7 +20,7 @@ const FROM_EMAIL = process.env.SMTP_USER;
 
 const sendDocumentEmail = async (req, res, { Model, docLabel, numberField, dueDateField, dueDateLabel }) => {
     try {
-        const { to, subject, viewUrl } = req.body;
+        const { to, cc, subject, body, viewUrl } = req.body;
         const pdfFile = req.file;
 
         if (!to || !pdfFile) {
@@ -56,11 +56,13 @@ const sendDocumentEmail = async (req, res, { Model, docLabel, numberField, dueDa
             viewUrl: publicViewUrl,
             replyToEmail: req.user.email,
             clientName: doc.client?.name,
+            body,
         });
 
         await transporter.sendMail({
             from: `${businessName} <${FROM_EMAIL}>`,
             to,
+            cc: cc !== undefined ? cc : req.user.email,
             replyTo: req.user.email,
             subject: subject || `${docLabel} #${docNumber} from ${businessName}`,
             html,

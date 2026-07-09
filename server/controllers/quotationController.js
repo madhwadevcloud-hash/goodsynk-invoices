@@ -76,6 +76,13 @@ const getQuotation = async (req, res) => {
       .populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors');
     if (!quotation) return res.status(404).json({ success: false, message: 'Quotation not found' });
     
+    // Ensure shareToken exists
+    if (!quotation.shareToken) {
+      const { generateShareToken } = require('../utils/shareToken');
+      quotation.shareToken = generateShareToken();
+      await quotation.save();
+    }
+
     const out = quotation.toObject();
     out.invoiceNumber = out.quotationNumber;
     out.dueDate = out.validUntil;

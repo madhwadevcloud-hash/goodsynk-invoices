@@ -28,10 +28,12 @@ export const invoiceAPI = {
   delete: (id) => api.delete(`/invoices/${id}`),
   getStats: () => api.get('/invoices/stats'),
 
-  sendEmail: (id, { to, subject, pdfBlob, pdfFileName, viewUrl }) => {
+  sendEmail: (id, { to, cc, subject, body, pdfBlob, pdfFileName, viewUrl }) => {
     const form = new FormData();
     form.append('to', to);
+    if (cc) form.append('cc', cc);
     form.append('subject', subject);
+    if (body) form.append('body', body);
     if (viewUrl) form.append('viewUrl', viewUrl);
     form.append('pdf', pdfBlob, pdfFileName);
     return api.post(`/invoices/${id}/send-email`, form, {
@@ -51,10 +53,12 @@ export const quotationAPI = {
   delete: (id) => api.delete(`/quotations/${id}`),
   convert: (id) => api.post(`/quotations/${id}/convert`),
 
-  sendEmail: (id, { to, subject, pdfBlob, pdfFileName, viewUrl }) => {
+  sendEmail: (id, { to, cc, subject, body, pdfBlob, pdfFileName, viewUrl }) => {
     const form = new FormData();
     form.append('to', to);
+    if (cc) form.append('cc', cc);
     form.append('subject', subject);
+    if (body) form.append('body', body);
     if (viewUrl) form.append('viewUrl', viewUrl);
     form.append('pdf', pdfBlob, pdfFileName);
     return api.post(`/quotations/${id}/send-email`, form, {
