@@ -86,6 +86,7 @@ const invoiceSchema = new mongoose.Schema(
     termsAndConditions: { type: String, default: '' },
     paymentInfo: { type: String, default: '' },
 
+    shareToken: { type: String, default: null, index: true },
     // Payment tracking
     paidAmount: { type: Number, default: 0 },
     paidDate: { type: Date },

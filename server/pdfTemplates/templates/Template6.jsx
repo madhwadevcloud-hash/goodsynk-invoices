@@ -1,0 +1,280 @@
+import React from 'react';
+import { Document, Page, Text, View, StyleSheet, Font, Image, Svg, Polygon } from '@react-pdf/renderer';
+
+Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
+Font.register({ family: 'Inter-SemiBold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
+Font.register({ family: 'Inter-Bold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYMZhrib2Bg-4.ttf' });
+
+const B = 'Inter-Bold';
+const M = 'Inter-SemiBold';
+
+export default function Template6({ invoice }) {
+  const { client, user: biz } = invoice;
+  const colors = invoice.templateColors || { primary: '#E8662B', secondary: '#1C2541' };
+  const ORANGE = colors.primary;
+  const NAVY = colors.secondary;
+
+  const s = StyleSheet.create({
+    page: { paddingBottom: 60, fontFamily: 'Inter', color: '#000' },
+
+    headerContainer: { height: 160, position: 'relative' },
+    headerContent: { position: 'absolute', top: 0, left: 0, right: 0, height: 160, flexDirection: 'row', paddingTop: 30, paddingHorizontal: 40 },
+
+    headerLeft: { width: '30%', paddingTop: 0 },
+    bizNameHeader: { fontSize: 15, fontFamily: B, color: '#FFF', textTransform: 'uppercase', marginBottom: 2 },
+    bizSubTextHeader: { fontSize: 8.5, color: '#ffffffff', lineHeight: 1.3 },
+    logoImgHeader: { height: 40, maxWidth: 120, objectFit: 'contain', marginBottom: 6 },
+
+    headerRight: { width: '70%', alignItems: 'flex-end', paddingTop: 25 },
+    invoiceTitleHeader: { fontSize: 28, fontFamily: B, color: '#FFF', letterSpacing: 2, marginBottom: 12 },
+    headerTextRow: { flexDirection: 'row', marginBottom: 4, justifyContent: 'flex-end' },
+    headerTextLabel: { fontSize: 8.5, color: '#B0C4DE', marginRight: 6 },
+    headerTextValue: { fontSize: 8.5, color: '#FFF', fontFamily: M },
+
+    metaSection: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 40, marginTop: 25, marginBottom: 25 },
+    billToTitle: { fontSize: 10, textTransform: 'uppercase', marginBottom: 6, color: '#333', fontFamily: B },
+    billToName: { fontSize: 13, fontFamily: B, color: '#000', marginBottom: 2 },
+    billToRole: { fontSize: 9, color: '#666', marginBottom: 2 },
+    billToText: { fontSize: 9, color: '#444', lineHeight: 1.4 },
+
+    paymentInfoBlock: { width: '50%', alignItems: 'flex-end' },
+    paymentTitle: { fontSize: 10, fontFamily: B, color: NAVY, marginBottom: 6, textAlign: 'right' },
+    payRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 3 },
+    payLabel: { fontSize: 9, color: '#555', width: 80, textAlign: 'right' },
+    payVal: { fontSize: 9, color: '#000', fontFamily: M, width: 140 },
+
+    table: { width: '100%', paddingHorizontal: 40, marginBottom: 20 },
+    tHead: { flexDirection: 'row', backgroundColor: ORANGE, paddingVertical: 8 },
+    th: { fontSize: 9, fontFamily: B, color: '#FFF', textTransform: 'uppercase', textAlign: 'center' },
+
+    tRow: { flexDirection: 'row', paddingVertical: 10, borderBottom: '1pt solid #DDD' },
+    td: { fontSize: 9, color: '#000', textAlign: 'center' },
+
+    colNo: { flex: 0.4 },
+    colDesc: { flex: 2.2, textAlign: 'left', paddingLeft: 10 },
+    colHsn: { flex: 0.8, textAlign: 'center' },
+    colQty: { flex: 0.9, textAlign: 'center' },
+    colPrice: { flex: 1.1, textAlign: 'right' },
+    colDisc: { flex: 0.7, textAlign: 'center' },
+    colTax: { flex: 0.8, textAlign: 'center' },
+    colTotal: { flex: 1.2, textAlign: 'right', paddingRight: 10 },
+
+    bottomGrid: { flexDirection: 'row', paddingHorizontal: 40, marginTop: 10 },
+    leftBottom: { width: '55%' },
+    rightBottom: { width: '45%' },
+
+    termsTitle: { fontSize: 10, fontFamily: B, color: '#000', marginBottom: 4 },
+    termsText: { fontSize: 8, color: '#444', lineHeight: 1.4 },
+
+    calcRow: { flexDirection: 'row', paddingVertical: 4, justifyContent: 'space-between' },
+    calcLabel: { fontSize: 9.5, color: '#222' },
+    calcVal: { fontSize: 9.5, color: '#222' },
+
+    grandTotalWrap: { backgroundColor: ORANGE, flexDirection: 'row', padding: 8, justifyContent: 'space-between', marginTop: 4 },
+    grandTotalLabel: { fontSize: 10, fontFamily: B, color: '#FFF' },
+    grandTotalVal: { fontSize: 10, fontFamily: B, color: '#FFF' },
+
+    signatureBlock: { marginTop: 25, alignItems: 'flex-end' },
+    sigLine: { width: 150, height: 1, backgroundColor: '#DDD', marginBottom: 4 },
+    sigText: { fontSize: 9, fontFamily: M, color: '#444' },
+
+    thankYou: { fontSize: 9, marginTop: 20, textAlign: 'center' },
+    footerContactBox: { position: 'absolute', bottom: 55, left: 40 },
+    contactLine: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+    contactIconCircle: { width: 14, height: 14, borderRadius: 7, backgroundColor: ORANGE, marginRight: 8, position: 'relative' },
+    contactIconBg: { position: 'absolute', top: 3, left: 3, width: 8, height: 8, borderRadius: 4, backgroundColor: '#FFF' },
+    contactText: { fontSize: 8.5, color: '#444' },
+  });
+
+  const currency = invoice._currency || invoice.currency || 'INR';
+  const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency, currencyDisplay: 'code' }).format(n || 0).replace(currency, '').trim();
+  const bizName = biz?.businessName || biz?.name || '';
+  const isQuotation = invoice.invoiceType === 'quotation';
+
+  const showCGST = invoice.cgstTotal > 0;
+  const showSGST = invoice.sgstTotal > 0;
+  const showIGST = invoice.igstTotal > 0;
+  const showVAT = invoice.vatTotal > 0;
+  const hasTax = showCGST || showSGST || showIGST || showVAT;
+  const hasHsn = invoice.items?.some(i => i.hsn);
+  const hasDiscount = invoice.items?.some(i => i.discount > 0);
+
+  return (
+    <Document>
+      <Page size="A4" style={s.page}>
+
+        {/* Header with SVG Angles */}
+        <View style={s.headerContainer}>
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 160 }}>
+            <Svg viewBox="0 0 800 160" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
+              <Polygon points="0,0 380,0 260,160 0,160" fill={ORANGE} />
+              <Polygon points="400,0 420,0 300,160 280,160" fill={ORANGE} />
+              <Polygon points="440,50 800,50 800,160 357.5,160" fill={NAVY} />
+            </Svg>
+          </View>
+
+          <View style={s.headerContent}>
+            <View style={s.headerLeft}>
+              {biz?.businessLogo && <Image src={biz.businessLogo} style={s.logoImgHeader} />}
+              <Text style={s.bizNameHeader}>{bizName}</Text>
+              <Text style={s.bizSubTextHeader}>
+                {biz?.address?.street && `${biz.address.street}\n`}
+                {biz?.address?.city && `${biz.address.city}, ${biz.address.state} ${biz.address.pincode || ''}\n`}
+                {biz?.gstin && `GSTIN: ${biz.gstin}`}
+              </Text>
+            </View>
+
+            <View style={s.headerRight}>
+              <Text style={s.invoiceTitleHeader}>{isQuotation ? 'QUOTATION' : 'INVOICE'}</Text>
+              <View style={s.headerTextRow}>
+                <Text style={s.headerTextLabel}>{isQuotation ? 'No' : 'Invoice No'}</Text>
+                <Text style={s.headerTextValue}>{invoice.invoiceNumber || invoice.quotationNumber}</Text>
+              </View>
+              <View style={s.headerTextRow}>
+                <Text style={s.headerTextLabel}>Date</Text>
+                <Text style={s.headerTextValue}>{new Date(invoice.issueDate).toLocaleDateString()}</Text>
+              </View>
+              {invoice.dueDate && (
+                <View style={s.headerTextRow}>
+                  <Text style={s.headerTextLabel}>Due Date</Text>
+                  <Text style={s.headerTextValue}>{new Date(invoice.dueDate).toLocaleDateString()}</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+
+        {/* Bill To & Payment Info */}
+        <View style={s.metaSection}>
+          <View>
+            <Text style={s.billToTitle}>{isQuotation ? 'QUOTATION TO.' : 'INVOICE TO.'}</Text>
+            <Text style={s.billToName}>{client?.name}</Text>
+            {client?.email && <Text style={s.billToRole}>{client.email}</Text>}
+            {client?.phone && <Text style={s.billToText}>Phone: {client.phone}</Text>}
+            {client?.address?.street && <Text style={s.billToText}>{client.address.street}</Text>}
+            {client?.address?.city && <Text style={s.billToText}>{client.address.city}, {client.address.state} {client.address.pincode}</Text>}
+          </View>
+
+          <View style={s.paymentInfoBlock}>
+            {(!isQuotation && biz?.bankDetails?.accountNumber) ? (
+              <>
+                <Text style={s.paymentTitle}>Payment Info :</Text>
+                <View style={s.payRow}><Text style={s.payLabel}>Account No</Text><Text style={s.payVal}>: {biz.bankDetails.accountNumber}</Text></View>
+                <View style={s.payRow}><Text style={s.payLabel}>A/C Name</Text><Text style={s.payVal}>: {biz.bankDetails.accountName}</Text></View>
+                {biz.bankDetails.bankName && <View style={s.payRow}><Text style={s.payLabel}>Bank Name</Text><Text style={s.payVal}>: {biz.bankDetails.bankName}</Text></View>}
+                {biz.bankDetails.ifscCode && <View style={s.payRow}><Text style={s.payLabel}>IFSC Code</Text><Text style={s.payVal}>: {biz.bankDetails.ifscCode}</Text></View>}
+              </>
+            ) : invoice.paymentInfo ? (
+              <>
+                <Text style={s.paymentTitle}>Payment Info :</Text>
+                <Text style={s.payVal}>{invoice.paymentInfo}</Text>
+              </>
+            ) : null}
+          </View>
+        </View>
+
+        {/* Table */}
+        <View style={s.table}>
+          <View style={s.tHead}>
+            <Text style={[s.th, s.colNo]}>#</Text>
+            <Text style={[s.th, s.colDesc]}>Description</Text>
+            {hasHsn && <Text style={[s.th, s.colHsn]}>HSN</Text>}
+            <Text style={[s.th, s.colQty]}>Qty</Text>
+            <Text style={[s.th, s.colPrice]}>Price</Text>
+            {hasDiscount && <Text style={[s.th, s.colDisc]}>Disc%</Text>}
+            {showCGST && <Text style={[s.th, s.colTax]}>CGST</Text>}
+            {showSGST && <Text style={[s.th, s.colTax]}>SGST</Text>}
+            {showIGST && <Text style={[s.th, s.colTax]}>IGST</Text>}
+            {showVAT && <Text style={[s.th, s.colTax]}>VAT</Text>}
+            <Text style={[s.th, s.colTotal]}>Total</Text>
+          </View>
+          {invoice.items?.map((item, i) => (
+            <View key={i} style={s.tRow}>
+              <Text style={[s.td, s.colNo]}>{i + 1}</Text>
+              <View style={s.colDesc}>
+                <Text style={[s.td, { fontFamily: B, textAlign: 'left' }]}>{item.name}</Text>
+                {item.description && <Text style={{ fontSize: 7.5, color: '#555', marginTop: 2, textAlign: 'left' }}>{item.description}</Text>}
+              </View>
+              {hasHsn && <Text style={[s.td, s.colHsn]}>{item.hsn || '—'}</Text>}
+              <Text style={[s.td, s.colQty]}>{item.quantity}{item.unit ? ` ${item.unit}` : ''}</Text>
+              <Text style={[s.td, s.colPrice]}>{fmt(item.price)}</Text>
+              {hasDiscount && <Text style={[s.td, s.colDisc]}>{item.discount || 0}%</Text>}
+              {showCGST && <Text style={[s.td, s.colTax]}>{item.cgstRate || 0}%</Text>}
+              {showSGST && <Text style={[s.td, s.colTax]}>{item.sgstRate || 0}%</Text>}
+              {showIGST && <Text style={[s.td, s.colTax]}>{item.igstRate || 0}%</Text>}
+              {showVAT && <Text style={[s.td, s.colTax]}>{item.vatRate || 0}%</Text>}
+              <Text style={[s.td, s.colTotal, { fontFamily: B }]}>{fmt(item.total)}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Lower Grid */}
+        <View style={s.bottomGrid}>
+          <View style={s.leftBottom}>
+            {invoice.termsAndConditions ? (
+              <View style={{ marginBottom: 20 }}>
+                <Text style={s.termsTitle}>Terms & Condition</Text>
+                <Text style={s.termsText}>{invoice.termsAndConditions}</Text>
+              </View>
+            ) : invoice.notes ? (
+              <View style={{ marginBottom: 20 }}>
+                <Text style={s.termsTitle}>Notes</Text>
+                <Text style={s.termsText}>{invoice.notes}</Text>
+              </View>
+            ) : null}
+          </View>
+
+          <View style={s.rightBottom}>
+            <View style={s.calcRow}>
+              <Text style={s.calcLabel}>Sub Total</Text>
+              <Text style={s.calcVal}>{currency} {fmt(invoice.subtotal)}</Text>
+            </View>
+            {invoice.discountAmount > 0 && <View style={s.calcRow}><Text style={s.calcLabel}>Discount</Text><Text style={s.calcVal}>-{fmt(invoice.discountAmount)}</Text></View>}
+            {invoice.taxTotal > 0 && <View style={s.calcRow}><Text style={s.calcLabel}>Tax</Text><Text style={s.calcVal}>{currency} {fmt(invoice.taxTotal)}</Text></View>}
+
+            <View style={s.grandTotalWrap}>
+              <Text style={s.grandTotalLabel}>Grand Total</Text>
+              <Text style={s.grandTotalVal}>{currency} {fmt(invoice.total)}</Text>
+            </View>
+
+            <View style={s.signatureBlock}>
+              {biz?.businessSignature && (
+                <Image src={biz.businessSignature} style={{ width: 160, height: 55, objectFit: 'contain', marginBottom: 4 }} />
+              )}
+              <View style={s.sigLine} />
+              <Text style={s.sigText}>Authorised Signature</Text>
+            </View>
+          </View>
+        </View>
+
+        <Text style={s.thankYou}>Thank you for your business</Text>
+
+        {/* Fixed Footer Contact Info */}
+        <View style={s.footerContactBox} fixed>
+          {biz?.phone && (
+            <View style={s.contactLine}>
+              <View style={s.contactIconCircle}><View style={s.contactIconBg} /></View>
+              <Text style={s.contactText}>{biz.phone}</Text>
+            </View>
+          )}
+          {biz?.email && (
+            <View style={s.contactLine}>
+              <View style={s.contactIconCircle}><View style={s.contactIconBg} /></View>
+              <Text style={s.contactText}>{biz.email}</Text>
+            </View>
+          )}
+
+        </View>
+
+        {/* Bottom Design Decor */}
+        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 40 }} fixed>
+          <Svg viewBox="0 0 800 40" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
+            <Polygon points="0,40 400,40 440,0 0,0" fill={NAVY} />
+            <Polygon points="420,40 800,40 800,0 460,0" fill={ORANGE} />
+          </Svg>
+        </View>
+
+      </Page>
+    </Document>
+  );
+}

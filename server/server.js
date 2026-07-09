@@ -1,5 +1,7 @@
+require('./babel-register');
 require('dotenv').config();
 require('colors');
+
 
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '1.1.1.1']);
@@ -17,6 +19,7 @@ const app = express();
 // Body parser
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
 
 // CORS — allow requests from React dev server and any configured origin
 app.use(
@@ -42,6 +45,7 @@ app.use('/api/invoices', require('./routes/invoiceRoutes'));
 app.use('/api/quotations', require('./routes/quotationRoutes'));
 app.use('/api/clients', require('./routes/clientRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
+app.use('/api/public', require('./routes/publicRoutes'));
 
 // Health check
 app.get('/api/health', (_req, res) => res.json({ status: 'OK', timestamp: new Date() }));

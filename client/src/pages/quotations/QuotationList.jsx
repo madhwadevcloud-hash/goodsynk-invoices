@@ -112,49 +112,41 @@ export default function QuotationList() {
     return { file: new File([blob], fileName, { type: 'application/pdf' }), blob, fileName, inv };
   };
 
-  // 🟢 EMAIL — fixed: single id param, matches how the dropdown calls it
+  // 🟢 EMAIL — asks for/confirms recipient, then sends via backend
   const shareViaEmail = async (id) => {
     setShareOpenId(null);
     setSendingId(id);
     try {
       const { blob, fileName, inv } = await buildQuotationPDFFile(id);
-      const subject = `Quotation ${inv.invoiceNumber}`;
-      const body = `Hi ${inv.client?.name || ''},\n\nPlease find attached your quotation ${inv.invoiceNumber} for ${fmtCurrency(inv.total, inv.currency)}.\n\nThank you.`;
-
-      setEmailModal({
-        open: true,
-        to: inv.client?.email || '',
-        subject,
-        body,
-        pdfBlob: blob,
-        pdfFileName: fileName,
-        quotationId: id,
-      });
+      const to = window.prompt('Send quotation to email:');
+      if (!to || !to.trim()) {
+        setSendingId(null);
+        return; // user cancelled or left it blank
+      }
+      const subject = `Quotation #${inv.invoiceNumber} from ${currentUser?.businessName || 'your business'}`;
+      await quotationAPI.sendEmail(id, { to: to.trim(), subject, pdfBlob: blob, pdfFileName: fileName });
+      toast.success(`Quotation emailed to ${to.trim()}`);
     } catch (err) {
-      if (err?.name !== 'AbortError') toast.error('Failed to prepare quotation');
+      toast.error(err?.response?.data?.message || 'Failed to send quotation email');
     } finally {
       setSendingId(null);
     }
   };
 
+  // 🟢 WHATSAPP — always opens WhatsApp directly (wa.me), never the OS share sheet
   const shareViaWhatsapp = async (id) => {
     setShareOpenId(null);
     setSendingId(id);
     try {
-      const { file, inv } = await buildQuotationPDFFile(id);
+      const { inv } = await buildQuotationPDFFile(id);
       const text = `Hi ${inv.client?.name || ''}, here's your quotation ${inv.invoiceNumber} for ${fmtCurrency(inv.total, inv.currency)}.`;
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ title: text, text, files: [file] });
-        return;
-      }
 
       const phone = (inv.client?.phone || '').replace(/[^0-9]/g, '');
       const base = phone ? `https://wa.me/${phone}` : 'https://wa.me/';
       const waUrl = `${base}?text=${encodeURIComponent(text)}`;
       window.open(waUrl, '_blank');
     } catch (err) {
-      if (err?.name !== 'AbortError') toast.error('Failed to prepare quotation for WhatsApp');
+      toast.error('Failed to prepare quotation for WhatsApp');
     } finally {
       setSendingId(null);
     }
@@ -228,7 +220,7 @@ export default function QuotationList() {
         )}
       </div>
 
-      {/* Share dropdown — fixed: was reading `invoices` (undefined in this file) */}
+      {/* Share dropdown */}
       {shareOpenId && shareDropdownPos && (() => {
         const inv = quotations.find((q) => q._id === shareOpenId);
         if (!inv) return null;
@@ -253,18 +245,6 @@ export default function QuotationList() {
           </>
         );
       })()}
-
-      {/* Email Compose Modal — was missing entirely from this file's render */}
-      <EmailComposeModal
-        isOpen={emailModal.open}
-        onClose={() => setEmailModal({ ...emailModal, open: false })}
-        defaultTo={emailModal.to}
-        defaultSubject={emailModal.subject}
-        defaultBody={emailModal.body}
-        pdfBlob={emailModal.pdfBlob}
-        pdfFileName={emailModal.pdfFileName}
-        title="Quotation"
-      />
     </div>
   );
 }
