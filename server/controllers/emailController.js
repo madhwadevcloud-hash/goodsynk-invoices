@@ -4,17 +4,15 @@ const Quotation = require('../models/Quotation');
 const { generateShareToken } = require('../utils/shareToken');
 const { buildDocumentEmailHTML, CURRENCY_SYMBOLS } = require('../utils/emailTemplates');
 
-const transporter = process.env.EMAIL_SERVICE
-    ? nodemailer.createTransport({
-        service: process.env.EMAIL_SERVICE,
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    })
-    : nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT) || 587,
-        secure: Number(process.env.SMTP_PORT) === 465,
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    });
+const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+    },
+});
 
 const FROM_EMAIL = process.env.SMTP_USER;
 
@@ -62,6 +60,10 @@ const sendDocumentEmail = async (req, res, { Model, docLabel, numberField, dueDa
         console.log("EMAIL_SERVICE:", process.env.EMAIL_SERVICE);
         console.log("SMTP_USER:", process.env.SMTP_USER);
         console.log("PUBLIC_CLIENT_URL:", process.env.PUBLIC_CLIENT_URL);
+
+        console.log("Verifying SMTP connection...");
+        await transporter.verify();
+        console.log("SMTP connection verified successfully");
 
         await transporter.sendMail({
             from: `${businessName} <${FROM_EMAIL}>`,
