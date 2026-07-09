@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
+const { sendInvoiceEmail } = require('../controllers/emailController');
 
 const router = express.Router();
 const {
@@ -22,5 +23,6 @@ router.get('/stats', getStats);
 router.route('/').get(getInvoices).post(createInvoice);
 router.route('/:id').get(getInvoice).put(updateInvoice).delete(deleteInvoice);
 router.patch('/:id/status', updateInvoiceStatus);
+router.post('/:id/send-email', upload.single('pdf'), sendInvoiceEmail);
 
 module.exports = router;

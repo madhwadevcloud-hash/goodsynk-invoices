@@ -22,6 +22,9 @@ const ProfileSetup = lazy(() => import('./pages/profile/ProfileSetup'));
 const Templates = lazy(() => import('./pages/settings/Templates'));
 const Home = lazy(() => import('./pages/home/Home'));
 
+// Public share page — no auth required
+const PublicDocumentView = lazy(() => import('./pages/public/PublicDocumentView'));
+
 // ── Guards ──────────────────────────────────────────────────────────────────
 
 // Requires authentication
@@ -63,6 +66,9 @@ export default function App() {
         {/* Public auth routes */}
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+
+        {/* Public share page — no login, no guard, anyone with the link can view */}
+        <Route path="/share/:docType/:token" element={<PublicDocumentView />} />
 
         {/* Profile setup — requires token but not a complete profile */}
         <Route

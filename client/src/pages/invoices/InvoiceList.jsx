@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { Plus, Pencil, Trash2, Eye, Send, Mail, MessageCircle, Loader2 } from 'lucide-react';
 import { DEFAULT_COLORS } from './InvoiceForm';
-import EmailComposeModal from './EmailComposeModal';
+
 
 const fmtCurrency = (n, currency = 'INR') =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 2 }).format(n || 0);
@@ -18,17 +18,6 @@ export default function InvoiceList() {
   const [sendingId, setSendingId] = useState(null);
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-
-  // Email modal state
-  const [emailModal, setEmailModal] = useState({
-    open: false,
-    to: '',
-    subject: '',
-    body: '',
-    pdfBlob: null,
-    pdfFileName: '',
-    invoiceId: null,
-  });
 
   const fetchInvoices = () => {
     setLoading(true);
@@ -110,56 +99,46 @@ export default function InvoiceList() {
     URL.revokeObjectURL(url);
   };
 
-  // 🟢 EMAIL — Opens the compose modal with PDF attached (no download needed)
+  // 🟢 EMAIL — asks for/confirms recipient, then sends via backend
   const shareViaEmail = async (id) => {
     setShareOpenId(null);
     setSendingId(id);
     try {
       const { blob, fileName, inv } = await buildInvoicePDFFile(id);
-      const subject = `Invoice ${inv.invoiceNumber}`;
-      const body = `Hi ${inv.client?.name || ''},\n\nPlease find attached your invoice ${inv.invoiceNumber} for ${fmtCurrency(inv.total, inv.currency)}.\n\nThank you.`;
-
-      setEmailModal({
-        open: true,
-        to: inv.client?.email || '',
-        subject,
-        body,
-        pdfBlob: blob,
-        pdfFileName: fileName,
-        invoiceId: id,
-      });
+      const to = window.prompt('Send invoice to email:');
+      if (!to || !to.trim()) {
+        setSendingId(null);
+        return; // user cancelled or left it blank
+      }
+      const subject = `Invoice #${inv.invoiceNumber} from ${currentUser?.businessName || 'your business'}`;
+      await invoiceAPI.sendEmail(id, { to: to.trim(), subject, pdfBlob: blob, pdfFileName: fileName });
+      toast.success(`Invoice emailed to ${to.trim()}`);
     } catch (err) {
-      if (err?.name !== 'AbortError') toast.error('Failed to prepare invoice');
+      toast.error(err?.response?.data?.message || 'Failed to send invoice email');
     } finally {
       setSendingId(null);
     }
   };
 
-
-
-  // 🟢 WHATSAPP — fixed: was calling buildQuotationPDFFile (doesn't exist here)
+  // 🟢 WHATSAPP — always opens WhatsApp directly (wa.me), never the OS share sheet
   const shareViaWhatsapp = async (id) => {
     setShareOpenId(null);
     setSendingId(id);
     try {
-      const { file, inv } = await buildInvoicePDFFile(id);
+      const { inv } = await buildInvoicePDFFile(id);
       const text = `Hi ${inv.client?.name || ''}, here's your invoice ${inv.invoiceNumber} for ${fmtCurrency(inv.total, inv.currency)}.`;
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ title: text, text, files: [file] });
-        return;
-      }
 
       const phone = (inv.client?.phone || '').replace(/[^0-9]/g, '');
       const base = phone ? `https://wa.me/${phone}` : 'https://wa.me/';
       const waUrl = `${base}?text=${encodeURIComponent(text)}`;
       window.open(waUrl, '_blank');
     } catch (err) {
-      if (err?.name !== 'AbortError') toast.error('Failed to prepare invoice for WhatsApp');
+      toast.error('Failed to prepare invoice for WhatsApp');
     } finally {
       setSendingId(null);
     }
   };
+
   return (
     <div>
       <div className="page-header">
@@ -260,18 +239,6 @@ export default function InvoiceList() {
           </div>
         </>
       )}
-
-      {/* Email Compose Modal — onSend removed, modal now sends itself client-side */}
-      <EmailComposeModal
-        isOpen={emailModal.open}
-        onClose={() => setEmailModal({ ...emailModal, open: false })}
-        defaultTo={emailModal.to}
-        defaultSubject={emailModal.subject}
-        defaultBody={emailModal.body}
-        pdfBlob={emailModal.pdfBlob}
-        pdfFileName={emailModal.pdfFileName}
-        title="Invoice"
-      />
     </div>
   );
 }

@@ -55,6 +55,8 @@ const quotationSchema = new mongoose.Schema(
     isInterstate: { type: Boolean, default: false },
     placeOfSupply: { type: String, default: '' },
 
+    shareToken: { type: String, default: null, index: true },
+
     notes: { type: String, default: '' },
     termsAndConditions: { type: String, default: '' },
     template: { type: String, default: 'template1' },
