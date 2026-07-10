@@ -72,7 +72,7 @@ export default function PublicDocumentView() {
     return (
         <div style={{ minHeight: '100vh', background: '#eef0f5', fontFamily: '-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif' }}>
             {/* Header banner — wavy SVG + avatar pinned to bottom center */}
-            <div style={{ position: 'relative', width: '100%', height: 280, background: 'linear-gradient(155deg, #cdd8ed 0%, #dfe7f5 40%, #edf1f9 100%)' }}>
+            <div style={{ position: 'relative', width: '100%', height: 120, background: 'linear-gradient(155deg, #cdd8ed 0%, #dfe7f5 40%, #edf1f9 100%)' }}>
                 <svg viewBox="0 0 1440 280" preserveAspectRatio="none"
                     style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
                     <defs>
@@ -92,8 +92,8 @@ export default function PublicDocumentView() {
 
                 {/* Avatar — absolute, bottom-center, half outside header */}
                 <div style={{
-                    position: 'absolute', bottom: -55, left: '50%', transform: 'translateX(-50%)',
-                    width: 110, height: 110, borderRadius: '50%', background: '#fff',
+                    position: 'absolute', bottom: -40, left: '50%', transform: 'translateX(-50%)',
+                    width: 90, height: 90, borderRadius: '50%', background: '#fff',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     boxShadow: '0 8px 28px rgba(0,0,0,0.12)', overflow: 'hidden',
                     border: '4px solid #fff',
@@ -108,7 +108,7 @@ export default function PublicDocumentView() {
             {/* Content below header */}
             <div style={{ maxWidth: 540, margin: '0 auto', padding: '0 16px' }}>
                 {/* Business name — spaced to clear the avatar */}
-                <div style={{ textAlign: 'center', paddingTop: 72, marginBottom: 24 }}>
+                <div style={{ textAlign: 'center', paddingTop: 50, marginBottom: 16 }}>
                     <h2 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#0f172a', letterSpacing: '0.04em', textTransform: 'uppercase' }}>{doc.businessName}</h2>
                 </div>
 
@@ -170,7 +170,7 @@ export default function PublicDocumentView() {
                     </div>
                 </div>
 
-                <div style={{ textAlign: 'center', fontSize: 11.5, color: '#94a3b8', margin: '20px 0 48px' }}>
+                <div style={{ textAlign: 'center', fontSize: 11.5, color: '#94a3b8', margin: '12px 0 12px' }}>
                     Powered by <span style={{ color: '#4A72D4' }}>Goodsynk Invoices</span>
                 </div>
             </div>

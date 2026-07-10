@@ -248,14 +248,25 @@ export default function InvoiceList() {
             <div className="empty-state-icon">📄</div>
 
             <div className="empty-state-title">
-              {statusFilter === 'all'
-                ? 'No invoices found'
-                : `No ${statusFilter} invoices found`}
+              {search || statusFilter !== 'all'
+                ? 'No invoices match your search'
+                : 'No invoices found'}
             </div>
 
             <div className="empty-state-desc">
-              No invoices match the selected filter
+              {search || statusFilter !== 'all'
+                ? 'Try changing the search text or status filter'
+                : 'Create your first invoice to share with clients'}
             </div>
+
+            <Link
+              to="/invoices/new"
+              className="btn btn-primary"
+              onClick={handleCreate}
+            >
+              <Plus size={15} />
+              {' '}Create Invoice
+            </Link>
           </div>
         ) : (
           <div

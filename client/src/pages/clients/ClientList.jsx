@@ -6,6 +6,7 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 
 export default function ClientList() {
   const [clients, setClients] = useState([]);
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -15,6 +16,12 @@ export default function ClientList() {
   };
 
   useEffect(fetchClients, []);
+
+  const filteredClients = clients.filter((c) =>
+    c.name?.toLowerCase().includes(search.toLowerCase()) ||
+    c.email?.toLowerCase().includes(search.toLowerCase()) ||
+    c.phone?.includes(search)
+  );
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this client?')) return;
@@ -36,13 +43,34 @@ export default function ClientList() {
       </div>
 
       <div className="card" style={{ padding: 0 }}>
+        <div
+          style={{
+            padding: '16px',
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search client..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: '350px' }}
+          />
+        </div>
         {loading ? (
           <div className="flex-center" style={{ padding: '60px' }}><div className="spinner" /></div>
-        ) : clients.length === 0 ? (
+        ) : filteredClients.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">👥</div>
-            <div className="empty-state-title">No clients yet</div>
-            <div className="empty-state-desc">Add your first client to start creating invoices</div>
+            <div className="empty-state-title">
+              No clients found
+            </div>
+
+            <div className="empty-state-desc">
+              No clients match your search
+            </div>
             <Link to="/clients/new" className="btn btn-primary"><Plus size={15} /> Add Client</Link>
           </div>
         ) : (
@@ -52,7 +80,7 @@ export default function ClientList() {
                 <tr><th>Name</th><th>Email</th><th>Phone</th><th>GSTIN</th><th>City</th><th>Actions</th></tr>
               </thead>
               <tbody>
-                {clients.map((c) => (
+                {filteredClients.map((c) => (
                   <tr key={c._id}>
                     <td style={{ fontWeight: 600 }}>{c.name}</td>
                     <td className="text-muted">{c.email || '—'}</td>
