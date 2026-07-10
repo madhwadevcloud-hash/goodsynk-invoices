@@ -12,6 +12,16 @@ import EmailComposeModal from '../../components/EmailComposeModal';
 const fmtCurrency = (n, currency = 'INR') =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 2 }).format(n || 0);
 
+const normalizeBankAccounts = (user) => {
+  const accounts = Array.isArray(user?.bankAccounts) ? user.bankAccounts.filter(Boolean) : [];
+  if (accounts.length) return accounts;
+  const legacy = user?.bankDetails;
+  if (legacy && (legacy.bankName || legacy.accountName || legacy.accountNumber || legacy.ifscCode)) {
+    return [{ label: 'Primary', ...legacy, isPrimary: true }];
+  }
+  return [];
+};
+
 export default function QuotationList() {
   const { user } = useAuth();
   const { setShowProfilePrompt } = useOutletContext();
@@ -102,7 +112,8 @@ export default function QuotationList() {
     // account default (inv.user.invoiceTemplate), NOT the currently logged-in
     // user's preference — so the selected template is always honoured.
     const resolvedTpt = (inv.template || inv.user?.invoiceTemplate || currentUser?.invoiceTemplate || 'template1').toLowerCase();
-    let userForPdf = currentUser;
+    const bankForPdf = normalizeBankAccounts(currentUser)[inv.selectedBankIndex || 0] || currentUser?.bankDetails;
+    let userForPdf = { ...currentUser, bankDetails: bankForPdf };
     if (currentUser?.businessLogo) {
       try {
         const jpgUrl = currentUser.businessLogo.includes('cloudinary.com')
@@ -115,7 +126,7 @@ export default function QuotationList() {
           reader.onloadend = () => resolve(reader.result);
           reader.readAsDataURL(blob);
         });
-        userForPdf = { ...currentUser, businessLogo: base64Logo };
+        userForPdf = { ...userForPdf, businessLogo: base64Logo };
       } catch (e) { /* logo fetch is best-effort */ }
     }
 

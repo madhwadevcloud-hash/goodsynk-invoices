@@ -170,7 +170,7 @@ export default function ProfileEdit() {
   };
 
   /* ── Profile form ── */
-  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
     defaultValues: {
       name: user?.name || '',
       businessName: user?.businessName || '',
@@ -189,16 +189,13 @@ export default function ProfileEdit() {
     },
   });
 
-  const formValues = watch();
 
   useEffect(() => {
-    if (!editing) return;
-    const handler = setTimeout(() => {
-      // Auto-save silently
-      handleSubmit((vals) => handleSave(vals, false))();
-    }, 1500); // 1.5s debounce
-    return () => clearTimeout(handler);
-  }, [formValues, editing]);
+    setBankAccounts(normalizeBankAccounts(user));
+  }, [user]);
+
+  // Auto-save disabled: profile changes are persisted only when the user clicks Save Changes.
+  // This avoids the repeated "Changes auto-saved" popup and prevents partial drafts from being saved.
 
   /* ── Handle avatar upload → Base64 ── */
   const handleAvatarChange = async (e) => {
@@ -291,14 +288,14 @@ export default function ProfileEdit() {
       const { data } = await authAPI.updateMe(payload);
       updateUser(data.user);
 
+      setBankAccounts(normalizeBankAccounts(data.user));
+
       if (isManual) {
         toast.success('Profile updated!');
         setEditing(false);
-      } else {
-        toast.success('Changes auto-saved', { id: 'autosave', icon: '💾' });
       }
     } catch {
-      toast.error('Failed to update profile.', { id: 'autosave' });
+      if (isManual) toast.error('Failed to update profile.');
     }
   };
 

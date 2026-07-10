@@ -6,7 +6,7 @@ import { Plus, Trash2, Save, Download, Loader2, X, ChevronDown, Percent, Tag, Lo
 import { useAuth } from '../../context/AuthContext';
 
 const defaultItem = () => ({
-  productId: null, name: '', description: '', hsn: '', quantity: 1, unit: 'pcs',
+  productId: null, itemType: 'Product', name: '', description: '', hsn: '', quantity: 1, unit: 'pcs',
   price: 0, discount: 0, cgstRate: 0, sgstRate: 0, igstRate: 0, vatRate: 0,
 });
 
@@ -271,7 +271,7 @@ export default function InvoiceForm() {
     if (!p) return;
     setForm((f) => ({
       ...f, items: f.items.map((item, i) =>
-        i === idx ? { ...item, productId: p._id, name: p.name, description: p.description, price: p.price, unit: p.unit, hsn: p.hsn, cgstRate: p.cgstRate, sgstRate: p.sgstRate, igstRate: p.igstRate } : item
+        i === idx ? { ...item, productId: p._id, itemType: p.isService ? 'Service' : 'Product', name: p.name, description: p.description, price: p.price, unit: p.isService ? 'hr' : (p.unit || 'pcs'), hsn: p.hsn, cgstRate: p.cgstRate, sgstRate: p.sgstRate, igstRate: p.igstRate } : item
       ),
     }));
   };
@@ -282,10 +282,11 @@ export default function InvoiceForm() {
     const line = {
       ...defaultItem(),
       productId: product._id,
+      itemType: product.isService ? 'Service' : 'Product',
       name: product.name || '',
       description: product.description || '',
       price: product.price || 0,
-      unit: product.unit || 'pcs',
+      unit: product.isService ? 'hr' : (product.unit || 'pcs'),
       hsn: product.hsn || '',
       cgstRate: product.cgstRate || 0,
       sgstRate: product.sgstRate || 0,
@@ -302,7 +303,7 @@ export default function InvoiceForm() {
 
   const openNewItemPanel = (type) => {
     setNewItemType(type);
-    setNewItemDraft({ ...defaultItem(), unit: type === 'Service' ? 'hr' : 'pcs' });
+    setNewItemDraft({ ...defaultItem(), itemType: type, unit: type === 'Service' ? 'hr' : 'pcs' });
     setAddItemMenuOpen(false);
   };
 
@@ -438,7 +439,12 @@ export default function InvoiceForm() {
     setSaving(true);
     if (shouldDownload) setDownloading(true);
 
-    const body = { ...form, notes: serializeNotes(parseNotes(form.notes)), selectedBankIndex: Number(form.selectedBankIndex || 0) };
+    const body = {
+      ...form,
+      notes: serializeNotes(parseNotes(form.notes)),
+      selectedBankIndex: Number(form.selectedBankIndex || 0),
+      items: form.items.map(({ itemType, ...item }) => item),
+    };
 
     try {
       let savedInvoice;
@@ -721,10 +727,14 @@ export default function InvoiceForm() {
             <div className="form-grid-3">
               <input className="form-control" placeholder="Name" value={newItemDraft.name} onChange={(e) => setNewItemDraft((d) => ({ ...d, name: e.target.value }))} />
               <input className="form-control" placeholder="Description" value={newItemDraft.description} onChange={(e) => setNewItemDraft((d) => ({ ...d, description: e.target.value }))} />
-              <input className="form-control" placeholder="HSN/SAC" value={newItemDraft.hsn} onChange={(e) => setNewItemDraft((d) => ({ ...d, hsn: e.target.value }))} />
+              <input className="form-control" value={newItemType} disabled style={{ opacity: 0.7 }} />
               <input type="number" className="form-control" placeholder="Qty" value={newItemDraft.quantity} onChange={(e) => setNewItemDraft((d) => ({ ...d, quantity: parseFloat(e.target.value) || 0 }))} />
               <select className="form-control" value={newItemDraft.unit} onChange={(e) => setNewItemDraft((d) => ({ ...d, unit: e.target.value }))}>{UNITS.map((u) => <option key={u} value={u}>{u}</option>)}</select>
               <input type="number" className="form-control" placeholder="Price" value={newItemDraft.price || ''} onChange={(e) => setNewItemDraft((d) => ({ ...d, price: parseFloat(e.target.value) || 0 }))} />
+              <input className="form-control" placeholder={newItemType === 'Service' ? 'SAC' : 'HSN'} value={newItemDraft.hsn} onChange={(e) => setNewItemDraft((d) => ({ ...d, hsn: e.target.value }))} />
+              <input type="number" className="form-control" placeholder="CGST %" value={newItemDraft.cgstRate || ''} onChange={(e) => setNewItemDraft((d) => ({ ...d, cgstRate: parseFloat(e.target.value) || 0 }))} />
+              <input type="number" className="form-control" placeholder="SGST %" value={newItemDraft.sgstRate || ''} onChange={(e) => setNewItemDraft((d) => ({ ...d, sgstRate: parseFloat(e.target.value) || 0 }))} />
+              <input type="number" className="form-control" placeholder="IGST %" value={newItemDraft.igstRate || ''} onChange={(e) => setNewItemDraft((d) => ({ ...d, igstRate: parseFloat(e.target.value) || 0 }))} />
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 10 }}>
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNewItemType(null)}>Cancel</button>
@@ -737,8 +747,8 @@ export default function InvoiceForm() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
             <thead>
               <tr>
-                <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Product</th>
-                <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Name / Description</th>
+                <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Name</th>
+                <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Description</th>
                 {showHsn && (
                   <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>
                     HSN
@@ -782,63 +792,11 @@ export default function InvoiceForm() {
 
                 return (
                   <tr key={idx}>
-                    <td style={{ padding: '6px 4px', position: 'relative' }}>
-                      <input
-                        className="form-control"
-                        style={{ minWidth: '140px', padding: '6px 8px' }}
-                        placeholder="Search or type product"
-                        value={productFilterQuery ?? (selectedProductName || '')}
-                        onChange={(e) => {
-                          setProductQueries((q) => ({ ...q, [idx]: e.target.value }));
-                          setOpenProductIdx(idx);
-                        }}
-                        onFocus={(e) => {
-                          setProductQueries((q) => ({ ...q, [idx]: q[idx] ?? (selectedProductName || '') }));
-                          setOpenProductIdx(idx);
-                          const rect = e.target.getBoundingClientRect();
-                          setProductDropdownPos((p) => ({
-                            ...p,
-                            [idx]: { top: rect.bottom + 4, left: rect.left, width: Math.max(rect.width, 220) },
-                          }));
-                        }}
-                        onBlur={() => setTimeout(() => setOpenProductIdx((o) => (o === idx ? null : o)), 150)}
-                      />
-                      {openProductIdx === idx && productDropdownPos[idx] && (
-                        <div style={{
-                          position: 'fixed',
-                          top: productDropdownPos[idx].top,
-                          left: productDropdownPos[idx].left,
-                          width: productDropdownPos[idx].width,
-                          zIndex: 9999,
-                          background: 'var(--bg-card)', border: '1px solid var(--border)',
-                          borderRadius: 8, maxHeight: 220, overflowY: 'auto',
-                          boxShadow: 'var(--shadow)',
-                        }}>
-                          {filteredProducts.length === 0 ? (
-                            <div style={{ padding: '10px 12px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                              No matching products — keep typing to use as a custom line item
-                            </div>
-                          ) : filteredProducts.map((p) => (
-                            <div
-                              key={p._id}
-                              className="dropdown-row"
-                              onMouseDown={() => {
-                                fillFromProduct(idx, p._id);
-                                setProductQueries((q) => ({ ...q, [idx]: p.name }));
-                                setOpenProductIdx(null);
-                              }}
-                              style={{ padding: '9px 12px', cursor: 'pointer', fontSize: '0.8rem', borderBottom: '1px solid var(--border)' }}
-                            >
-                              <div style={{ fontWeight: 600 }}>{p.name}</div>
-                              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{fmt(p.price)}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                    <td style={{ padding: '6px 4px' }}>
+                      <input className="form-control" style={{ minWidth: '150px', padding: '6px 8px' }} placeholder="Item name" value={item.name} onChange={(e) => setItem(idx, 'name', e.target.value)} />
                     </td>
                     <td style={{ padding: '6px 4px' }}>
-                      <input className="form-control" style={{ minWidth: '170px', padding: '6px 8px', marginBottom: 4 }} placeholder="Item name" value={item.name} onChange={(e) => setItem(idx, 'name', e.target.value)} />
-                      <input className="form-control" style={{ minWidth: '170px', padding: '6px 8px', fontSize: '0.74rem' }} placeholder="Description" value={item.description || ''} onChange={(e) => setItem(idx, 'description', e.target.value)} />
+                      <input className="form-control" style={{ minWidth: '170px', padding: '6px 8px' }} placeholder="Description" value={item.description || ''} onChange={(e) => setItem(idx, 'description', e.target.value)} />
                     </td>
                     {showHsn && (
                       <td style={{ padding: '6px 4px' }}>
@@ -973,10 +931,21 @@ export default function InvoiceForm() {
                 <span>{fmt(totals.tax)}</span>
               </div>
             )}
-            <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, paddingTop: 4, cursor: 'pointer' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, paddingTop: 4 }}>
               <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Round off</span>
-              <input type="checkbox" checked={!!form.roundOff} onChange={(e) => setField('roundOff', e.target.checked)} style={{ accentColor: 'var(--primary)' }} />
-            </label>
+              <button
+                type="button"
+                onClick={() => setField('roundOff', !form.roundOff)}
+                aria-pressed={!!form.roundOff}
+                style={{
+                  width: 46, height: 24, borderRadius: 999, border: 'none', padding: 2,
+                  background: form.roundOff ? 'var(--primary)' : 'var(--border)',
+                  cursor: 'pointer', transition: 'background 0.15s ease',
+                }}
+              >
+                <span style={{ display: 'block', width: 20, height: 20, borderRadius: '50%', background: '#fff', transform: form.roundOff ? 'translateX(22px)' : 'translateX(0)', transition: 'transform 0.15s ease', boxShadow: '0 1px 4px rgba(0,0,0,0.2)' }} />
+              </button>
+            </div>
             {form.roundOff && Math.abs(totals.roundOffDiff) > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Round Off</span>
@@ -990,6 +959,37 @@ export default function InvoiceForm() {
           </div>
         </div>
       </div>
+
+
+      {/* Banking Details (from profile) */}
+      {hasBankDetails && (
+        <div className="card mb-4">
+          <div className="flex gap-2" style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div className="flex gap-2" style={{ alignItems: 'center' }}>
+              <div style={{ padding: 8, background: 'var(--primary-bg)', borderRadius: 8, color: 'var(--primary)' }}>
+                <Landmark size={18} />
+              </div>
+              <h2 className="card-title" style={{ margin: 0 }}>Banking Details</h2>
+            </div>
+            {bankAccounts.length > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700 }}>Switch Bank</span>
+                <select className="form-control" style={{ width: 220 }} value={selectedBankIndex} onChange={(e) => setField('selectedBankIndex', Number(e.target.value))}>
+                  {bankAccounts.map((account, idx) => (
+                    <option key={`${account.accountNumber || account.bankName}-${idx}`} value={idx}>{account.label || account.bankName || `Bank ${idx + 1}`}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+          <div className="form-grid">
+            {bank.bankName && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Bank Name</div><div style={{ fontWeight: 600, marginTop: 4 }}>{bank.bankName}</div></div>}
+            {bank.accountName && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Account Name</div><div style={{ fontWeight: 600, marginTop: 4 }}>{bank.accountName}</div></div>}
+            {bank.accountNumber && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Account Number</div><div style={{ fontWeight: 600, marginTop: 4 }}>{bank.accountNumber}</div></div>}
+            {bank.ifscCode && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>IFSC</div><div style={{ fontWeight: 600, marginTop: 4 }}>{bank.ifscCode}</div></div>}
+          </div>
+        </div>
+      )}
 
       {/* Notes */}
       <div className="card">
