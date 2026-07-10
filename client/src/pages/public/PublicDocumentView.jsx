@@ -72,7 +72,7 @@ export default function PublicDocumentView() {
     return (
         <div style={{ minHeight: '100vh', background: '#eef0f5', fontFamily: '-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif' }}>
             {/* Header banner — wavy SVG + avatar pinned to bottom center */}
-            <div style={{ position: 'relative', width: '100%', height: 280, background: 'linear-gradient(155deg, #cdd8ed 0%, #dfe7f5 40%, #edf1f9 100%)' }}>
+            <div style={{ position: 'relative', width: '100%', height: 150, background: 'linear-gradient(155deg, #cdd8ed 0%, #dfe7f5 40%, #edf1f9 100%)' }}>
                 <svg viewBox="0 0 1440 280" preserveAspectRatio="none"
                     style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
                     <defs>
