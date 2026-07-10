@@ -74,7 +74,7 @@ export default function AppLayout() {
           <div className="sidebar-logo-icon">
             <Receipt size={18} />
           </div>
-          <span className="sidebar-logo-text">InvoiceGen</span>
+          <span className="sidebar-logo-text">Goodsynk</span>
         </Link>
 
         <nav className="sidebar-nav">
@@ -138,10 +138,10 @@ export default function AppLayout() {
             boxShadow: 'var(--shadow)',
             position: 'relative'
           }}>
-            <button 
+            <button
               onClick={() => setShowProfilePrompt(false)}
               style={{
-                position: 'absolute', top: '10px', right: '15px', 
+                position: 'absolute', top: '10px', right: '15px',
                 background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer',
                 color: 'var(--text-muted)'
               }}

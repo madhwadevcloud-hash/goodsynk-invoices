@@ -6,11 +6,11 @@ import toast from 'react-hot-toast';
 import { Receipt, Building2, Phone, FileText, MapPin, ChevronRight, Landmark } from 'lucide-react';
 
 const INDIAN_STATES = [
-  'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat',
-  'Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh',
-  'Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab',
-  'Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand',
-  'West Bengal','Delhi','Jammu & Kashmir','Ladakh','Puducherry','Chandigarh',
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat',
+  'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh',
+  'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+  'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand',
+  'West Bengal', 'Delhi', 'Jammu & Kashmir', 'Ladakh', 'Puducherry', 'Chandigarh',
 ];
 
 export default function ProfileSetup() {
@@ -76,7 +76,7 @@ export default function ProfileSetup() {
       position: 'relative'
     }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', marginBottom: '20px' }}>
-        <button 
+        <button
           onClick={() => navigate('/dashboard')}
           className="btn btn-ghost"
           style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}
@@ -105,7 +105,7 @@ export default function ProfileSetup() {
             fontSize: '1.1rem', fontWeight: 700,
             background: 'linear-gradient(135deg, var(--primary-light), #fff)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          }}>InvoiceGen</span>
+          }}>Goodsynk</span>
         </div>
 
         <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: 6 }}>Complete your profile</h1>

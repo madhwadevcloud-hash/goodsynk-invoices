@@ -57,7 +57,7 @@ export default function Register() {
       <div className="auth-card">
         <div className="auth-logo">
           <div className="auth-logo-icon"><Receipt size={24} /></div>
-          <span className="auth-logo-text">InvoiceGen</span>
+          <span className="auth-logo-text">Goodsynk</span>
         </div>
 
         <h1 className="auth-heading">Create account</h1>
