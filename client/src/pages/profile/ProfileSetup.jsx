@@ -6,11 +6,11 @@ import toast from 'react-hot-toast';
 import { Receipt, Building2, Phone, FileText, MapPin, ChevronRight, Landmark } from 'lucide-react';
 
 const INDIAN_STATES = [
-  'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat',
-  'Haryana','Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh',
-  'Maharashtra','Manipur','Meghalaya','Mizoram','Nagaland','Odisha','Punjab',
-  'Rajasthan','Sikkim','Tamil Nadu','Telangana','Tripura','Uttar Pradesh','Uttarakhand',
-  'West Bengal','Delhi','Jammu & Kashmir','Ladakh','Puducherry','Chandigarh',
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat',
+  'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh',
+  'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+  'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand',
+  'West Bengal', 'Delhi', 'Jammu & Kashmir', 'Ladakh', 'Puducherry', 'Chandigarh',
 ];
 
 export default function ProfileSetup() {
@@ -55,6 +55,16 @@ export default function ProfileSetup() {
           swiftCode: values.swiftCode,
           branch: values.branch,
         },
+        bankAccounts: values.accountNumber || values.bankName ? [{
+          label: 'Primary',
+          bankName: values.bankName,
+          accountName: values.accountName,
+          accountNumber: values.accountNumber,
+          ifscCode: values.ifscCode,
+          swiftCode: values.swiftCode,
+          branch: values.branch,
+          isPrimary: true,
+        }] : [],
       };
       const { data } = await authAPI.updateMe(payload);
       updateUser(data.user);
@@ -76,7 +86,7 @@ export default function ProfileSetup() {
       position: 'relative'
     }}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', marginBottom: '20px' }}>
-        <button 
+        <button
           onClick={() => navigate('/dashboard')}
           className="btn btn-ghost"
           style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}

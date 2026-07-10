@@ -4,7 +4,7 @@ import { quotationAPI } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { Plus, Pencil, Trash2, Eye, Send, Mail, MessageCircle, Loader2 } from 'lucide-react';
-import { DEFAULT_COLORS } from '../invoices/InvoiceForm';
+import { DEFAULT_COLORS, resolveTemplateColors } from '../invoices/InvoiceForm';
 import { isProfileComplete, getMissingProfileField } from '../../utils/profileValidation';
 import { getQuotationMessage } from '../../utils/whatsappTemplates';
 import EmailComposeModal from '../../components/EmailComposeModal';
@@ -69,7 +69,10 @@ export default function QuotationList() {
     const res = await quotationAPI.getById(quotationId);
     const inv = res.data.invoice;
 
-    const resolvedTpt = (inv.template || currentUser?.invoiceTemplate || 'template1').toLowerCase();
+    // Use the template stored on the quotation; fall back to the quotation owner's
+    // account default (inv.user.invoiceTemplate), NOT the currently logged-in
+    // user's preference — so the selected template is always honoured.
+    const resolvedTpt = (inv.template || inv.user?.invoiceTemplate || currentUser?.invoiceTemplate || 'template1').toLowerCase();
     let userForPdf = currentUser;
     if (currentUser?.businessLogo) {
       try {
@@ -90,17 +93,18 @@ export default function QuotationList() {
     const invoiceForPDF = {
       ...inv,
       user: userForPdf,
+      template: resolvedTpt,
       invoiceType: 'quotation',
-      templateColors: inv.templateColors || DEFAULT_COLORS[resolvedTpt],
+      templateColors: resolveTemplateColors(resolvedTpt, inv.templateColors),
       _currency: inv.currency || 'INR',
       _taxType: inv.taxType,
     };
 
-    const [{ pdf }, { default: InvoicePDF }] = await Promise.all([
+    const [{ pdf }, { default: TemplateResolver }] = await Promise.all([
       import('@react-pdf/renderer'),
-      import('../invoices/InvoicePDF'),
+      import('../invoices/templates/TemplateResolver'),
     ]);
-    const blob = await pdf(<InvoicePDF invoice={invoiceForPDF} />).toBlob();
+    const blob = await pdf(<TemplateResolver invoice={invoiceForPDF} />).toBlob();
     const fileName = `Quotation-${inv.invoiceNumber}.pdf`;
     return { file: new File([blob], fileName, { type: 'application/pdf' }), blob, fileName, inv };
   };
@@ -146,7 +150,7 @@ export default function QuotationList() {
       const shareUrl = `${window.location.origin}/share/quotation/${inv.shareToken}`;
       const text = getQuotationMessage(inv, shareUrl, fmtCurrency);
       const phone = inv.client?.phone || '';
-      
+
       setWhatsappModalData({
         phone,
         text,
@@ -272,7 +276,7 @@ export default function QuotationList() {
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '16px', lineHeight: '1.4' }}>
               Review and edit the message template before sending it to WhatsApp. The PDF will also download automatically.
             </p>
-            
+
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '6px', color: 'var(--text-secondary)' }}>
                 Recipient Phone Number
@@ -333,13 +337,13 @@ export default function QuotationList() {
                 onClick={() => {
                   // Trigger PDF download
                   downloadBlob(whatsappModalData.blob, whatsappModalData.fileName);
-                  
+
                   // Open WhatsApp
                   const phone = whatsappModalData.phone.replace(/[^0-9]/g, '');
                   const base = phone ? `https://wa.me/${phone}` : 'https://wa.me/';
                   const waUrl = `${base}?text=${encodeURIComponent(whatsappModalData.text)}`;
                   window.open(waUrl, '_blank');
-                  
+
                   // Close modal
                   setWhatsappModalData(null);
                 }}

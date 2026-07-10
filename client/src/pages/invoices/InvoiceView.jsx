@@ -94,6 +94,8 @@ export default function InvoiceView() {
     ...invoice,
     invoiceType: isQuotation ? 'quotation' : 'invoice',
     _currency: currency,
+    // Always resolve the effective template so '' (account default) renders correctly
+    template: effectiveTemplate,
     templateColors: colors,
     user: logoBase64 ? { ...invoice.user, businessLogo: logoBase64 } : invoice.user
   };
@@ -150,11 +152,12 @@ export default function InvoiceView() {
             onClick={async (e) => {
               e.preventDefault();
               try {
-                const [{ pdf }, { default: InvoicePDF }] = await Promise.all([
+                // Use TemplateResolver (same as PdfPane) so download matches preview
+                const [{ pdf }, { default: TemplateResolver }] = await Promise.all([
                   import('@react-pdf/renderer'),
-                  import('./InvoicePDF'),
+                  import('./templates/TemplateResolver'),
                 ]);
-                const blob = await pdf(<InvoicePDF invoice={invoiceForPDF} />).toBlob();
+                const blob = await pdf(<TemplateResolver invoice={invoiceForPDF} />).toBlob();
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;

@@ -2,8 +2,7 @@ const React = require('react');
 const { pdf } = require('@react-pdf/renderer');
 const Invoice = require('../models/Invoice');
 const Quotation = require('../models/Quotation');
-const InvoicePDF = require('../pdfTemplates/InvoicePDF.jsx').default;
-
+const TemplateResolver = require('../pdfTemplates/templates/TemplateResolver.jsx').default;
 const buildInvoiceForPDF = (doc, docLabel) => ({
     ...doc.toObject(),
     invoiceType: docLabel.toLowerCase(),
@@ -31,7 +30,7 @@ const streamDocumentPdf = async (req, res, { Model, docLabel, numberField }) => 
 
         const invoiceForPDF = buildInvoiceForPDF(doc, docLabel);
         // In @react-pdf/renderer v4, toBuffer() returns a readable stream — collect it into a Buffer
-        const pdfStream = await pdf(React.createElement(InvoicePDF, { invoice: invoiceForPDF })).toBuffer();
+        const pdfStream = await pdf(React.createElement(TemplateResolver, { invoice: invoiceForPDF })).toBuffer();
         const buffer = await streamToBuffer(pdfStream);
 
         res.setHeader('Content-Type', 'application/pdf');

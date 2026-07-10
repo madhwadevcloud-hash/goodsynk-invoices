@@ -95,6 +95,50 @@ function SectionHeading({ icon: Icon, label }) {
   );
 }
 
+
+const emptyBankAccount = () => ({
+  label: '', bankName: '', accountName: '', accountNumber: '', ifscCode: '', swiftCode: '', branch: '', isPrimary: false,
+});
+
+const normalizeBankAccounts = (user) => {
+  const accounts = Array.isArray(user?.bankAccounts) ? user.bankAccounts.filter(Boolean) : [];
+  if (accounts.length) return accounts.map((account, index) => ({ ...emptyBankAccount(), ...account, isPrimary: account.isPrimary || index === 0 }));
+  const legacy = user?.bankDetails;
+  if (legacy && (legacy.bankName || legacy.accountName || legacy.accountNumber || legacy.ifscCode)) {
+    return [{ ...emptyBankAccount(), label: 'Primary', ...legacy, isPrimary: true }];
+  }
+  return [];
+};
+
+function BankCard({ bank, index, editing, onEdit, onDelete, onPrimary }) {
+  return (
+    <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, background: 'var(--bg-card)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <strong>{bank.label || bank.bankName || `Bank ${index + 1}`}</strong>
+            {bank.isPrimary && <span style={{ fontSize: '0.65rem', background: 'var(--primary-bg)', color: 'var(--primary)', padding: '2px 7px', borderRadius: 999 }}>⭐ Primary</span>}
+          </div>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{bank.bankName || 'Bank name not set'}</p>
+        </div>
+        {editing && (
+          <div style={{ display: 'flex', gap: 6 }}>
+            {!bank.isPrimary && <button type="button" className="btn btn-ghost btn-sm" onClick={() => onPrimary(index)}>Make Primary</button>}
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => onEdit(index)}><Pencil size={13} /></button>
+            <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => onDelete(index)}><Trash2 size={13} /></button>
+          </div>
+        )}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px 18px', fontSize: '0.8rem' }}>
+        <div><p style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>Account Name</p><p style={{ fontWeight: 600 }}>{bank.accountName || '—'}</p></div>
+        <div><p style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>Account Number</p><p style={{ fontWeight: 600, fontFamily: 'monospace' }}>{bank.accountNumber || '—'}</p></div>
+        <div><p style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>IFSC</p><p style={{ fontWeight: 600 }}>{bank.ifscCode || '—'}</p></div>
+        <div><p style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>Branch</p><p style={{ fontWeight: 600 }}>{bank.branch || '—'}</p></div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProfileEdit() {
   const { user, updateUser, logout } = useAuth();
   const navigate = useNavigate();
@@ -110,6 +154,8 @@ export default function ProfileEdit() {
   const [deleting, setDeleting] = useState(false);
   const fileRef = useRef();
   const [signatureImg, setSignatureImg] = useState(user?.businessSignature || '');
+  const [bankAccounts, setBankAccounts] = useState(() => normalizeBankAccounts(user));
+  const [bankModal, setBankModal] = useState({ open: false, index: null, draft: emptyBankAccount() });
 
   /* ── Save signature immediately ── */
   const handleSignatureSave = async (dataUrl) => {
@@ -211,6 +257,14 @@ export default function ProfileEdit() {
   /* ── Save profile ── */
   const handleSave = async (values, isManual = true) => {
     try {
+      const normalizedBanks = bankAccounts.length
+        ? bankAccounts.map((bank, index) => ({ ...bank, isPrimary: bank.isPrimary || (!bankAccounts.some((b) => b.isPrimary) && index === 0) }))
+        : (values.bankName || values.accountNumber ? [{
+          label: 'Primary', bankName: values.bankName, accountName: values.accountName,
+          accountNumber: values.accountNumber, ifscCode: values.ifscCode,
+          swiftCode: values.swiftCode, branch: values.branch, isPrimary: true,
+        }] : []);
+      const primaryBank = normalizedBanks.find((bank) => bank.isPrimary) || normalizedBanks[0] || emptyBankAccount();
       const payload = {
         name: values.name,
         businessName: values.businessName,
@@ -225,13 +279,14 @@ export default function ProfileEdit() {
           country: 'India',
         },
         bankDetails: {
-          bankName: values.bankName,
-          accountName: values.accountName,
-          accountNumber: values.accountNumber,
-          ifscCode: values.ifscCode,
-          swiftCode: values.swiftCode,
-          branch: values.branch,
+          bankName: primaryBank.bankName,
+          accountName: primaryBank.accountName,
+          accountNumber: primaryBank.accountNumber,
+          ifscCode: primaryBank.ifscCode,
+          swiftCode: primaryBank.swiftCode,
+          branch: primaryBank.branch,
         },
+        bankAccounts: normalizedBanks,
       };
       const { data } = await authAPI.updateMe(payload);
       updateUser(data.user);
@@ -248,6 +303,45 @@ export default function ProfileEdit() {
   };
 
   const onSubmit = (values) => handleSave(values, true);
+
+
+  const persistBankAccounts = async (nextAccounts) => {
+    const normalized = nextAccounts.map((bank, index) => ({ ...bank, isPrimary: bank.isPrimary || (!nextAccounts.some((b) => b.isPrimary) && index === 0) }));
+    const primary = normalized.find((bank) => bank.isPrimary) || normalized[0] || emptyBankAccount();
+    setBankAccounts(normalized);
+    try {
+      const { data } = await authAPI.updateMe({
+        bankAccounts: normalized,
+        bankDetails: {
+          bankName: primary.bankName,
+          accountName: primary.accountName,
+          accountNumber: primary.accountNumber,
+          ifscCode: primary.ifscCode,
+          swiftCode: primary.swiftCode,
+          branch: primary.branch,
+        },
+      });
+      updateUser(data.user);
+      toast.success('Bank accounts updated');
+    } catch {
+      toast.error('Failed to update bank accounts');
+    }
+  };
+
+  const openBankModal = (index = null) => setBankModal({ open: true, index, draft: index === null ? emptyBankAccount() : { ...emptyBankAccount(), ...bankAccounts[index] } });
+  const closeBankModal = () => setBankModal({ open: false, index: null, draft: emptyBankAccount() });
+  const saveBankModal = () => {
+    if (!bankModal.draft.bankName && !bankModal.draft.accountNumber) return toast.error('Bank name or account number is required');
+    const rawNext = bankModal.index === null ? [...bankAccounts, bankModal.draft] : bankAccounts.map((bank, index) => index === bankModal.index ? bankModal.draft : bank);
+    const next = bankModal.draft.isPrimary
+      ? rawNext.map((bank, index) => ({ ...bank, isPrimary: index === (bankModal.index === null ? rawNext.length - 1 : bankModal.index) }))
+      : rawNext;
+    const withPrimary = next.some((bank) => bank.isPrimary) ? next : next.map((bank, index) => ({ ...bank, isPrimary: index === 0 }));
+    closeBankModal();
+    persistBankAccounts(withPrimary);
+  };
+  const deleteBank = (index) => persistBankAccounts(bankAccounts.filter((_, i) => i !== index).map((bank, i) => ({ ...bank, isPrimary: i === 0 ? true : bank.isPrimary })));
+  const makePrimaryBank = (index) => persistBankAccounts(bankAccounts.map((bank, i) => ({ ...bank, isPrimary: i === index })));
 
   /* ── Handle account deletion ── */
   const handleDeleteAccount = async () => {
@@ -508,34 +602,21 @@ export default function ProfileEdit() {
                 </div>
 
                 <SectionHeading icon={Landmark} label="Banking Information" />
-                <div className="form-group">
-                  <label className="form-label">Bank Name <span style={{ color: 'var(--danger)' }}>*</span></label>
-                  <input className="form-control" placeholder="e.g. HDFC Bank" {...register('bankName')} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Manage multiple bank accounts. The primary account is mirrored to legacy bank details.</p>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => openBankModal()}><Landmark size={14} /> Add Bank Account</button>
                 </div>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label className="form-label">Account Name <span style={{ color: 'var(--danger)' }}>*</span></label>
-                    <input className="form-control" placeholder="Acme Solutions" {...register('accountName')} />
+                {bankAccounts.length ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
+                    {bankAccounts.map((bank, index) => (
+                      <BankCard key={`${bank.accountNumber || bank.bankName}-${index}`} bank={bank} index={index} editing onEdit={openBankModal} onDelete={deleteBank} onPrimary={makePrimaryBank} />
+                    ))}
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">Account Number <span style={{ color: 'var(--danger)' }}>*</span></label>
-                    <input className="form-control" placeholder="50100XXXXXXX" {...register('accountNumber')} />
+                ) : (
+                  <div style={{ padding: 18, border: '1px dashed var(--border)', borderRadius: 12, textAlign: 'center', color: 'var(--text-muted)' }}>
+                    No bank accounts added yet.
                   </div>
-                </div>
-                <div className="form-grid-3">
-                  <div className="form-group">
-                    <label className="form-label">IFSC Code <span style={{ color: 'var(--danger)' }}>*</span></label>
-                    <input className="form-control" placeholder="HDFC0001234" style={{ textTransform: 'uppercase' }} {...register('ifscCode')} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">SWIFT Code</label>
-                    <input className="form-control" placeholder="(Optional)" style={{ textTransform: 'uppercase' }} {...register('swiftCode')} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Branch</label>
-                    <input className="form-control" placeholder="Koramangala" {...register('branch')} />
-                  </div>
-                </div>
+                )}
 
               </form>
             </div>
@@ -555,35 +636,25 @@ export default function ProfileEdit() {
                 <InfoRow icon={FileText} label="GSTIN" value={user?.gstin} />
                 <InfoRow icon={MapPin} label="Address" value={addr || null} />
 
-                <div style={{ marginTop: 24, padding: '20px 20px 10px', background: 'var(--bg-elevated)', borderRadius: 12 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                    <div style={{ width: 28, height: 28, background: 'var(--primary-bg)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Landmark size={14} style={{ color: 'var(--primary)' }} />
+                <div style={{ marginTop: 24, padding: '20px', background: 'var(--bg-elevated)', borderRadius: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 16 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: 28, height: 28, background: 'var(--primary-bg)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Landmark size={14} style={{ color: 'var(--primary)' }} />
+                      </div>
+                      <h4 style={{ fontSize: '0.9rem', fontWeight: 700 }}>Banking Details</h4>
                     </div>
-                    <h4 style={{ fontSize: '0.9rem', fontWeight: 700 }}>Banking Details</h4>
+                    <button className="btn btn-secondary btn-sm" onClick={() => { setEditing(true); openBankModal(); }}><Landmark size={13} /> Add Bank Account</button>
                   </div>
-                  {user?.bankDetails?.accountNumber ? (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px 24px' }}>
-                      <div>
-                        <p style={{ fontSize: '0.7rem', color: !user.bankDetails.bankName ? 'var(--danger)' : 'var(--text-muted)' }}>Bank Name</p>
-                        <p style={{ fontWeight: 600, fontSize: '0.85rem', color: !user.bankDetails.bankName ? 'var(--danger)' : undefined, fontStyle: !user.bankDetails.bankName ? 'italic' : 'normal' }}>{user.bankDetails.bankName || 'Not set (Missing)'}</p>
-                      </div>
-                      <div>
-                        <p style={{ fontSize: '0.7rem', color: !user.bankDetails.accountName ? 'var(--danger)' : 'var(--text-muted)' }}>Account Name</p>
-                        <p style={{ fontWeight: 600, fontSize: '0.85rem', color: !user.bankDetails.accountName ? 'var(--danger)' : undefined, fontStyle: !user.bankDetails.accountName ? 'italic' : 'normal' }}>{user.bankDetails.accountName || 'Not set (Missing)'}</p>
-                      </div>
-                      <div>
-                        <p style={{ fontSize: '0.7rem', color: !user.bankDetails.accountNumber ? 'var(--danger)' : 'var(--text-muted)' }}>Account Number</p>
-                        <p style={{ fontWeight: 600, fontSize: '0.85rem', fontFamily: 'monospace', color: !user.bankDetails.accountNumber ? 'var(--danger)' : undefined, fontStyle: !user.bankDetails.accountNumber ? 'italic' : 'normal' }}>{user.bankDetails.accountNumber || 'Not set (Missing)'}</p>
-                      </div>
-                      <div>
-                        <p style={{ fontSize: '0.7rem', color: !user.bankDetails.ifscCode ? 'var(--danger)' : 'var(--text-muted)' }}>IFSC</p>
-                        <p style={{ fontWeight: 600, fontSize: '0.85rem', color: !user.bankDetails.ifscCode ? 'var(--danger)' : undefined, fontStyle: !user.bankDetails.ifscCode ? 'italic' : 'normal' }}>{user.bankDetails.ifscCode || 'Not set (Missing)'}</p>
-                      </div>
+                  {bankAccounts.length ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
+                      {bankAccounts.map((bank, index) => (
+                        <BankCard key={`${bank.accountNumber || bank.bankName}-${index}`} bank={bank} index={index} editing={false} />
+                      ))}
                     </div>
                   ) : (
                     <p style={{ fontSize: '0.8rem', color: 'var(--danger)', fontStyle: 'italic', fontWeight: 600 }}>
-                      No bank details added yet. (Missing)
+                      No bank accounts added yet. (Missing)
                     </p>
                   )}
                 </div>
@@ -745,6 +816,35 @@ export default function ProfileEdit() {
 
         </div>
       </div>
+
+      {/* ── Bank Account Modal ── */}
+      {bankModal.open && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 24, width: 560, maxWidth: '96vw', boxShadow: 'var(--shadow)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+              <h3 style={{ fontWeight: 700, fontSize: '1rem' }}>{bankModal.index === null ? 'Add Bank Account' : 'Edit Bank Account'}</h3>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={closeBankModal}><X size={15} /></button>
+            </div>
+            <div className="form-grid">
+              <div className="form-group"><label className="form-label">Nick name / Label</label><input className="form-control" value={bankModal.draft.label} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, label: e.target.value } }))} placeholder="Primary / Savings / USD" /></div>
+              <div className="form-group"><label className="form-label">Bank Name</label><input className="form-control" value={bankModal.draft.bankName} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, bankName: e.target.value } }))} placeholder="HDFC Bank" /></div>
+              <div className="form-group"><label className="form-label">Account Name</label><input className="form-control" value={bankModal.draft.accountName} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, accountName: e.target.value } }))} placeholder="Acme Solutions" /></div>
+              <div className="form-group"><label className="form-label">Account Number</label><input className="form-control" value={bankModal.draft.accountNumber} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, accountNumber: e.target.value } }))} placeholder="50100XXXXXXX" /></div>
+              <div className="form-group"><label className="form-label">IFSC Code</label><input className="form-control" style={{ textTransform: 'uppercase' }} value={bankModal.draft.ifscCode} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, ifscCode: e.target.value.toUpperCase() } }))} placeholder="HDFC0001234" /></div>
+              <div className="form-group"><label className="form-label">SWIFT Code</label><input className="form-control" style={{ textTransform: 'uppercase' }} value={bankModal.draft.swiftCode} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, swiftCode: e.target.value.toUpperCase() } }))} placeholder="Optional" /></div>
+              <div className="form-group"><label className="form-label">Branch</label><input className="form-control" value={bankModal.draft.branch} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, branch: e.target.value } }))} placeholder="Koramangala" /></div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 28, cursor: 'pointer' }}>
+                <input type="checkbox" checked={!!bankModal.draft.isPrimary} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, isPrimary: e.target.checked } }))} style={{ accentColor: 'var(--primary)' }} />
+                Mark as primary
+              </label>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+              <button type="button" className="btn btn-ghost" onClick={closeBankModal}>Cancel</button>
+              <button type="button" className="btn btn-primary" onClick={saveBankModal}>Save Bank Account</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Delete Confirmation Modal ── */}
       {deleteConfirm && (

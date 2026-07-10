@@ -1,6 +1,20 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+const bankAccountSchema = new mongoose.Schema(
+  {
+    label: { type: String, trim: true, default: 'Primary' },
+    bankName: { type: String, trim: true, default: '' },
+    accountName: { type: String, trim: true, default: '' },
+    accountNumber: { type: String, trim: true, default: '' },
+    ifscCode: { type: String, trim: true, default: '' },
+    swiftCode: { type: String, trim: true, default: '' },
+    branch: { type: String, trim: true, default: '' },
+    isPrimary: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -54,6 +68,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: 'INR',
     },
+    // Backward-compatible single primary bank object. Existing PDF/template code can keep using this.
     bankDetails: {
       bankName: { type: String, default: '' },
       accountName: { type: String, default: '' },
@@ -61,6 +76,11 @@ const userSchema = new mongoose.Schema(
       ifscCode: { type: String, default: '' },
       swiftCode: { type: String, default: '' },
       branch: { type: String, default: '' },
+    },
+    // New multi-bank storage. The first/isPrimary account is mirrored into bankDetails.
+    bankAccounts: {
+      type: [bankAccountSchema],
+      default: [],
     },
     invoiceTemplate: {
       type: String,
@@ -73,6 +93,28 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+
+// Keep the legacy bankDetails object synced with the primary bank account.
+userSchema.pre('save', function (next) {
+  if (Array.isArray(this.bankAccounts) && this.bankAccounts.length) {
+    const primaryIndex = this.bankAccounts.findIndex((bank) => bank.isPrimary);
+    const primary = this.bankAccounts[primaryIndex >= 0 ? primaryIndex : 0];
+    this.bankAccounts = this.bankAccounts.map((bank, index) => ({
+      ...(typeof bank.toObject === 'function' ? bank.toObject() : bank),
+      isPrimary: primaryIndex >= 0 ? index === primaryIndex : index === 0,
+    }));
+    this.bankDetails = {
+      bankName: primary.bankName || '',
+      accountName: primary.accountName || '',
+      accountNumber: primary.accountNumber || '',
+      ifscCode: primary.ifscCode || '',
+      swiftCode: primary.swiftCode || '',
+      branch: primary.branch || '',
+    };
+  }
+  next();
+});
 
 // Hash password before saving
 userSchema.pre('save', async function (next) {

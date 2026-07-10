@@ -34,6 +34,20 @@ const UNITS = [
   'hr', 'day', 'month', 'job', 'sqft', 'sqm',
 ];
 
+
+const normalizeBankAccounts = (user) => {
+  const accounts = Array.isArray(user?.bankAccounts) ? user.bankAccounts.filter(Boolean) : [];
+  if (accounts.length) return accounts;
+  const legacy = user?.bankDetails;
+  if (legacy && (legacy.bankName || legacy.accountName || legacy.accountNumber || legacy.ifscCode)) {
+    return [{ label: 'Primary', ...legacy, isPrimary: true }];
+  }
+  return [];
+};
+
+const serializeNotes = (points) => points.join('\n');
+const parseNotes = (notes) => (notes || '').split('\n').map((point) => point.trim()).filter(Boolean);
+
 export const DEFAULT_COLORS = {
   template1: { primary: '#4A72D4' },
   template2: { primary: '#000000' },
@@ -42,6 +56,19 @@ export const DEFAULT_COLORS = {
   template5: { primary: '#0A66C2' },
   template6: { primary: '#E8662B', secondary: '#1C2541' }, // Orange, Navy
 };
+
+
+export function resolveTemplateColors(templateKey, storedColors) {
+  const key = (templateKey || 'template1').toLowerCase();
+  const defaults = DEFAULT_COLORS[key] || DEFAULT_COLORS.template1;
+  if (!storedColors) return defaults;
+  const expectsSecondary = !!defaults.secondary;
+  const hasSecondary = !!storedColors.secondary;
+  if (expectsSecondary !== hasSecondary) return defaults;
+  return storedColors;
+}
+
+
 
 // Templates available on the free plan — everything else shows an "Upgrade" lock
 const FREE_TEMPLATES = ['template1', 'template2'];
@@ -64,6 +91,12 @@ export default function InvoiceForm() {
   const [downloading, setDownloading] = useState(false);
   const { user: currentUser } = useAuth();
   const [showHsn, setShowHsn] = useState(true);
+  const [lineSearchQuery, setLineSearchQuery] = useState('');
+  const [lineSearchOpen, setLineSearchOpen] = useState(false);
+  const [addItemMenuOpen, setAddItemMenuOpen] = useState(false);
+  const [newItemType, setNewItemType] = useState(null);
+  const [newItemDraft, setNewItemDraft] = useState(defaultItem());
+  const [discountInputModes, setDiscountInputModes] = useState({});
 
   // ── Client search-select state
   const [clientQuery, setClientQuery] = useState('');
@@ -153,6 +186,9 @@ export default function InvoiceForm() {
     taxType: 'gst_india',
     notes: '',
     termsAndConditions: '',
+    currency: currentUser?.currency || 'INR',
+    roundOff: false,
+    selectedBankIndex: 0,
     paymentInfo: '',
     template: '',
     templateColors: null, // { primary, secondary }
@@ -171,6 +207,7 @@ export default function InvoiceForm() {
     if (isEdit) {
       docAPI.getById(id).then((r) => {
         const inv = r.data.invoice;
+        const loadedTpt = (inv.template || currentUser?.invoiceTemplate || 'template1').toLowerCase();
         setForm({
           client: inv.client?._id || '',
           invoiceType: inv.invoiceType || docType,
@@ -181,19 +218,24 @@ export default function InvoiceForm() {
           taxType: inv.taxType || 'gst_india',
           notes: inv.notes || '',
           termsAndConditions: inv.termsAndConditions || '',
+          currency: inv.currency || currentUser?.currency || 'INR',
+          roundOff: inv.roundOff || false,
+          selectedBankIndex: inv.selectedBankIndex || 0,
           paymentInfo: inv.paymentInfo || '',
           template: inv.template || '',
-          templateColors: inv.templateColors || null,
+          templateColors: inv.template ? resolveTemplateColors(loadedTpt, inv.templateColors) : (inv.templateColors || null),
           items: inv.items?.length ? inv.items : [defaultItem()],
         });
         setClientQuery(inv.client?.name || '');
       }).catch(() => toast.error('Failed to load invoice'))
         .finally(() => setLoading(false));
     } else if (currentUser) {
+      const tptKey = (currentUser.invoiceTemplate || 'template1').toLowerCase();
       setForm(f => ({
         ...f,
         template: currentUser.invoiceTemplate || 'template1',
-        templateColors: currentUser.invoiceTemplateColors || DEFAULT_COLORS[currentUser.invoiceTemplate || 'template1'] || null,
+        templateColors: resolveTemplateColors(tptKey, currentUser.invoiceTemplateColors),
+        currency: currentUser.currency || 'INR',
       }));
       setLoading(false);
     } else {
@@ -232,6 +274,55 @@ export default function InvoiceForm() {
         i === idx ? { ...item, productId: p._id, name: p.name, description: p.description, price: p.price, unit: p.unit, hsn: p.hsn, cgstRate: p.cgstRate, sgstRate: p.sgstRate, igstRate: p.igstRate } : item
       ),
     }));
+  };
+
+
+  const appendProductLine = (product) => {
+    if (!product) return;
+    const line = {
+      ...defaultItem(),
+      productId: product._id,
+      name: product.name || '',
+      description: product.description || '',
+      price: product.price || 0,
+      unit: product.unit || 'pcs',
+      hsn: product.hsn || '',
+      cgstRate: product.cgstRate || 0,
+      sgstRate: product.sgstRate || 0,
+      igstRate: product.igstRate || 0,
+      vatRate: product.vatRate || 0,
+    };
+    setForm((f) => {
+      const hasOnlyBlank = f.items.length === 1 && !f.items[0].name && !f.items[0].productId && !f.items[0].price;
+      return { ...f, items: hasOnlyBlank ? [line] : [...f.items, line] };
+    });
+    setLineSearchQuery('');
+    setLineSearchOpen(false);
+  };
+
+  const openNewItemPanel = (type) => {
+    setNewItemType(type);
+    setNewItemDraft({ ...defaultItem(), unit: type === 'Service' ? 'hr' : 'pcs' });
+    setAddItemMenuOpen(false);
+  };
+
+  const commitNewItem = () => {
+    if (!newItemDraft.name.trim()) return toast.error('Item name is required');
+    setForm((f) => {
+      const hasOnlyBlank = f.items.length === 1 && !f.items[0].name && !f.items[0].productId && !f.items[0].price;
+      return { ...f, items: hasOnlyBlank ? [newItemDraft] : [...f.items, newItemDraft] };
+    });
+    setNewItemType(null);
+    setNewItemDraft(defaultItem());
+    toast.success(`${newItemType} added`);
+  };
+
+  const setDiscountForItem = (idx, rawValue, mode = discountInputModes[idx] || 'percent') => {
+    const item = form.items[idx];
+    const subtotal = (item?.price || 0) * (item?.quantity || 0);
+    const value = rawValue === '' ? 0 : parseFloat(rawValue) || 0;
+    const percent = mode === 'flat' ? (subtotal > 0 ? Math.min((value / subtotal) * 100, 100) : 0) : Math.min(value, 100);
+    setItem(idx, 'discount', percent);
   };
 
   // Compute line total based on taxType and discountMode
@@ -277,7 +368,9 @@ export default function InvoiceForm() {
       itemDiscount: base.itemDiscount,
       overallDiscTotal,
       tax: base.tax,
-      total: taxableAfterDisc + base.tax,
+      rawTotal: taxableAfterDisc + base.tax,
+      roundOffDiff: form.roundOff ? Math.round(taxableAfterDisc + base.tax) - (taxableAfterDisc + base.tax) : 0,
+      total: form.roundOff ? Math.round(taxableAfterDisc + base.tax) : taxableAfterDisc + base.tax,
     };
   })();
 
@@ -288,12 +381,13 @@ export default function InvoiceForm() {
 
       let invoiceForPDF = {
         ...invoiceData,
-        user: currentUser,
+        template: resolvedTpt,
+        user: { ...currentUser, bankDetails: normalizeBankAccounts(currentUser)[invoiceData.selectedBankIndex ?? form.selectedBankIndex ?? 0] || currentUser?.bankDetails },
         invoiceType: docType,
-        templateColors: form.templateColors ||
-          invoiceData.templateColors ||
-          (docTpt ? (DEFAULT_COLORS[docTpt] || null) : currentUser?.invoiceTemplateColors) ||
-          DEFAULT_COLORS[resolvedTpt],
+        templateColors: resolveTemplateColors(
+          resolvedTpt,
+          form.templateColors || invoiceData.templateColors
+        ),
         _discConfig: discConfig,
         _currency: form.currency || 'INR',
         _taxType: form.taxType,
@@ -311,17 +405,17 @@ export default function InvoiceForm() {
             reader.onloadend = () => resolve(reader.result);
             reader.readAsDataURL(blob);
           });
-          invoiceForPDF.user = { ...currentUser, businessLogo: base64Logo };
+          invoiceForPDF.user = { ...invoiceForPDF.user, businessLogo: base64Logo };
         } catch (e) {
           console.error("Logo fetch failed", e);
         }
       }
 
-      const [{ pdf }, { default: InvoicePDF }] = await Promise.all([
+      const [{ pdf }, { default: TemplateResolver }] = await Promise.all([
         import('@react-pdf/renderer'),
-        import('./InvoicePDF'),
+        import('./templates/TemplateResolver'),
       ]);
-      const blob = await pdf(<InvoicePDF invoice={invoiceForPDF} />).toBlob();
+      const blob = await pdf(<TemplateResolver invoice={invoiceForPDF} />).toBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -344,7 +438,7 @@ export default function InvoiceForm() {
     setSaving(true);
     if (shouldDownload) setDownloading(true);
 
-    const body = { ...form };
+    const body = { ...form, notes: serializeNotes(parseNotes(form.notes)), selectedBankIndex: Number(form.selectedBankIndex || 0) };
 
     try {
       let savedInvoice;
@@ -383,13 +477,15 @@ export default function InvoiceForm() {
   );
 
   // Resolve banking details from the logged-in user's profile
-  const bank = currentUser?.bankDetails || {
-    bankName: currentUser?.bankName,
-    accountName: currentUser?.accountName,
-    accountNumber: currentUser?.accountNumber,
-    ifsc: currentUser?.ifsc,
-  };
-  const hasBankDetails = bank && (bank.bankName || bank.accountName || bank.accountNumber || bank.ifsc);
+  const bankAccounts = normalizeBankAccounts(currentUser);
+  const selectedBankIndex = Math.min(Number(form.selectedBankIndex || 0), Math.max(bankAccounts.length - 1, 0));
+  const bank = bankAccounts[selectedBankIndex] || currentUser?.bankDetails || {};
+  const hasBankDetails = bank && (bank.bankName || bank.accountName || bank.accountNumber || bank.ifscCode);
+  const filteredLineProducts = products.filter((p) => {
+    const q = lineSearchQuery.toLowerCase();
+    return p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q) || p.hsn?.toLowerCase().includes(q);
+  }).slice(0, 8);
+  const notePoints = form.notes ? form.notes.split('\n') : [];
 
   if (loading) return <div className="flex-center" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
 
@@ -576,13 +672,66 @@ export default function InvoiceForm() {
       <div className="card mb-4">
         <div className="card-header" style={{ position: 'relative' }}>
           <h2 className="card-title">Line Items</h2>
-          <div className="flex gap-2">
+          <div className="flex gap-2" style={{ position: 'relative' }}>
             {!showHsn && (
               <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: '0.75rem' }} onClick={() => setShowHsn(true)}>+ HSN</button>
             )}
-            <button type="button" className="btn btn-secondary btn-sm" onClick={addItem}><Plus size={14} /> Add Item</button>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setAddItemMenuOpen((o) => !o)}><Plus size={14} /> Add Item <ChevronDown size={12} /></button>
+            {addItemMenuOpen && (
+              <div style={{ position: 'absolute', right: 0, top: '100%', zIndex: 40, marginTop: 6, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--shadow)', minWidth: 150, overflow: 'hidden' }}>
+                {['Product', 'Service'].map((type) => (
+                  <button key={type} type="button" onMouseDown={() => openNewItemPanel(type)} style={{ width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', color: 'var(--text-primary)', textAlign: 'left', cursor: 'pointer', fontWeight: 600 }}>
+                    {type}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
+
+        <div style={{ position: 'relative', marginBottom: 14 }}>
+          <input
+            className="form-control"
+            placeholder="Search products/services and press select to add a line item…"
+            value={lineSearchQuery}
+            onChange={(e) => { setLineSearchQuery(e.target.value); setLineSearchOpen(true); }}
+            onFocus={() => setLineSearchOpen(true)}
+            onBlur={() => setTimeout(() => setLineSearchOpen(false), 150)}
+          />
+          {lineSearchOpen && lineSearchQuery && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 35, marginTop: 4, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, maxHeight: 260, overflowY: 'auto', boxShadow: 'var(--shadow)' }}>
+              {filteredLineProducts.length === 0 ? (
+                <div style={{ padding: '12px 14px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>No products/services found.</div>
+              ) : filteredLineProducts.map((p) => (
+                <button key={p._id} type="button" onMouseDown={() => appendProductLine(p)} style={{ width: '100%', border: 'none', background: 'transparent', padding: '10px 14px', cursor: 'pointer', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
+                  <div style={{ fontWeight: 700 }}>{p.name}</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{[p.description, p.hsn, fmt(p.price)].filter(Boolean).join(' · ')}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {newItemType && (
+          <div style={{ border: '1px solid var(--border)', background: 'var(--bg-elevated)', borderRadius: 12, padding: 14, marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <strong>Add {newItemType}</strong>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNewItemType(null)}><X size={14} /></button>
+            </div>
+            <div className="form-grid-3">
+              <input className="form-control" placeholder="Name" value={newItemDraft.name} onChange={(e) => setNewItemDraft((d) => ({ ...d, name: e.target.value }))} />
+              <input className="form-control" placeholder="Description" value={newItemDraft.description} onChange={(e) => setNewItemDraft((d) => ({ ...d, description: e.target.value }))} />
+              <input className="form-control" placeholder="HSN/SAC" value={newItemDraft.hsn} onChange={(e) => setNewItemDraft((d) => ({ ...d, hsn: e.target.value }))} />
+              <input type="number" className="form-control" placeholder="Qty" value={newItemDraft.quantity} onChange={(e) => setNewItemDraft((d) => ({ ...d, quantity: parseFloat(e.target.value) || 0 }))} />
+              <select className="form-control" value={newItemDraft.unit} onChange={(e) => setNewItemDraft((d) => ({ ...d, unit: e.target.value }))}>{UNITS.map((u) => <option key={u} value={u}>{u}</option>)}</select>
+              <input type="number" className="form-control" placeholder="Price" value={newItemDraft.price || ''} onChange={(e) => setNewItemDraft((d) => ({ ...d, price: parseFloat(e.target.value) || 0 }))} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 10 }}>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setNewItemType(null)}>Cancel</button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={commitNewItem}>Add {newItemType}</button>
+            </div>
+          </div>
+        )}
 
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
@@ -601,8 +750,7 @@ export default function InvoiceForm() {
                 <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Price</th>
                 {discConfig.mode === 'item' && (
                   <>
-                    <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Disc %</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Disc Amt</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Disc</th>
                   </>
                 )}
                 {form.taxType !== 'none' && (
@@ -623,7 +771,7 @@ export default function InvoiceForm() {
             </thead>
             <tbody>
               {form.items.map((item, idx) => {
-                const line = computeLine(item, form.isInterstate, form.taxType);
+                const line = computeLine(item, form.isInterstate, form.taxType, discConfig.mode);
                 const lineSubtotal = (item.price || 0) * (item.quantity || 0);
                 const computedAmt = Number(((lineSubtotal * (item.discount || 0)) / 100).toFixed(2));
                 const amtDisplayValue = discAmtDraft[idx] !== undefined ? discAmtDraft[idx] : computedAmt; const productFilterQuery = productQueries[idx];
@@ -689,7 +837,8 @@ export default function InvoiceForm() {
                       )}
                     </td>
                     <td style={{ padding: '6px 4px' }}>
-                      <input className="form-control" style={{ minWidth: '150px', padding: '6px 8px' }} placeholder="Item name" value={item.name} onChange={(e) => setItem(idx, 'name', e.target.value)} />
+                      <input className="form-control" style={{ minWidth: '170px', padding: '6px 8px', marginBottom: 4 }} placeholder="Item name" value={item.name} onChange={(e) => setItem(idx, 'name', e.target.value)} />
+                      <input className="form-control" style={{ minWidth: '170px', padding: '6px 8px', fontSize: '0.74rem' }} placeholder="Description" value={item.description || ''} onChange={(e) => setItem(idx, 'description', e.target.value)} />
                     </td>
                     {showHsn && (
                       <td style={{ padding: '6px 4px' }}>
@@ -727,50 +876,40 @@ export default function InvoiceForm() {
                       />
                     </td>
                     {discConfig.mode === 'item' && (
-                      <>
-                        <td style={{ padding: '6px 4px' }}>
+                      <td style={{ padding: '6px 4px' }}>
+                        <div style={{ display: 'flex', width: 130 }}>
                           <input
                             type="number"
                             className="form-control"
                             placeholder="0"
-                            style={{ width: '65px', padding: '6px 8px' }}
-                            value={item.discount === 0 ? '' : item.discount}
+                            style={{ width: 76, padding: '6px 8px', borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
+                            value={(discountInputModes[idx] || 'percent') === 'flat' ? (discAmtDraft[idx] ?? (computedAmt || '')) : (item.discount === 0 ? '' : Number(item.discount.toFixed(2)))}
                             min={0}
-                            max={100}
+                            max={(discountInputModes[idx] || 'percent') === 'percent' ? 100 : undefined}
                             onChange={(e) => {
-                              setDiscAmtDraft((d) => { const c = { ...d }; delete c[idx]; return c; });
-                              setItem(idx, 'discount', e.target.value === '' ? 0 : Math.min(parseFloat(e.target.value) || 0, 100));
-                            }}
-                          />
-                        </td>
-                        <td style={{ padding: '6px 4px' }}>
-                          <input
-                            type="number"
-                            className="form-control"
-                            placeholder="0"
-                            title="Discount amount"
-                            style={{ width: '80px', padding: '6px 8px' }}
-                            value={amtDisplayValue}
-                            min={0}
-                            onChange={(e) => {
-                              const raw = e.target.value;
-                              // Keep showing exactly what the user typed while they're typing —
-                              // don't let the controlled value snap back to a recomputed number.
-                              setDiscAmtDraft((d) => ({ ...d, [idx]: raw }));
-                              const amt = parseFloat(raw) || 0;
-                              if (lineSubtotal > 0) {
-                                setItem(idx, 'discount', Math.min((amt / lineSubtotal) * 100, 100));
-                              }
-                              // If lineSubtotal is 0 (no price/qty yet), we can't derive a %,
-                              // so the typed value just sits in the draft until price/qty is set.
+                              const mode = discountInputModes[idx] || 'percent';
+                              if (mode === 'flat') setDiscAmtDraft((d) => ({ ...d, [idx]: e.target.value }));
+                              setDiscountForItem(idx, e.target.value, mode);
                             }}
                             onBlur={() => {
-                              // Once focus leaves, snap back to the canonical value derived from %
-                              setDiscAmtDraft((d) => { const c = { ...d }; delete c[idx]; return c; });
+                              if ((discountInputModes[idx] || 'percent') === 'flat') setDiscAmtDraft((d) => { const c = { ...d }; delete c[idx]; return c; });
                             }}
                           />
-                        </td>
-                      </>
+                          <select
+                            className="form-control"
+                            value={discountInputModes[idx] || 'percent'}
+                            onChange={(e) => {
+                              const next = e.target.value;
+                              setDiscountInputModes((m) => ({ ...m, [idx]: next }));
+                              setDiscAmtDraft((d) => { const c = { ...d }; delete c[idx]; return c; });
+                            }}
+                            style={{ width: 54, padding: '6px 4px', borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }}
+                          >
+                            <option value="percent">%</option>
+                            <option value="flat">₹</option>
+                          </select>
+                        </div>
+                      </td>
                     )}
                     {form.taxType !== 'none' && (
                       form.taxType === 'vat' ? (
@@ -834,6 +973,16 @@ export default function InvoiceForm() {
                 <span>{fmt(totals.tax)}</span>
               </div>
             )}
+            <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, paddingTop: 4, cursor: 'pointer' }}>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Round off</span>
+              <input type="checkbox" checked={!!form.roundOff} onChange={(e) => setField('roundOff', e.target.checked)} style={{ accentColor: 'var(--primary)' }} />
+            </label>
+            {form.roundOff && Math.abs(totals.roundOffDiff) > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Round Off</span>
+                <span>{totals.roundOffDiff >= 0 ? '+' : '-'} {fmt(Math.abs(totals.roundOffDiff))}</span>
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '8px', fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>
               <span>Grand Total</span>
               <span>{fmt(totals.total)}</span>
@@ -845,11 +994,20 @@ export default function InvoiceForm() {
       {/* Banking Details (from profile) */}
       {hasBankDetails && (
         <div className="card mb-4">
-          <div className="flex gap-2" style={{ alignItems: 'center', marginBottom: '16px' }}>
-            <div style={{ padding: 8, background: 'var(--primary-bg)', borderRadius: 8, color: 'var(--primary)' }}>
-              <Landmark size={18} />
+          <div className="flex gap-2" style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div className="flex gap-2" style={{ alignItems: 'center' }}>
+              <div style={{ padding: 8, background: 'var(--primary-bg)', borderRadius: 8, color: 'var(--primary)' }}>
+                <Landmark size={18} />
+              </div>
+              <h2 className="card-title" style={{ margin: 0 }}>Banking Details</h2>
             </div>
-            <h2 className="card-title" style={{ margin: 0 }}>Banking Details</h2>
+            {bankAccounts.length > 1 && (
+              <select className="form-control" style={{ width: 220 }} value={selectedBankIndex} onChange={(e) => setField('selectedBankIndex', Number(e.target.value))}>
+                {bankAccounts.map((account, idx) => (
+                  <option key={`${account.accountNumber || account.bankName}-${idx}`} value={idx}>{account.label || account.bankName || `Bank ${idx + 1}`}</option>
+                ))}
+              </select>
+            )}
           </div>
           <div className="form-grid">
             {bank.bankName && (
@@ -886,7 +1044,30 @@ export default function InvoiceForm() {
         <div className="form-grid">
           <div className="form-group">
             <label className="form-label">Notes</label>
-            <textarea className="form-control" rows={3} placeholder="Thank you for your business!" value={form.notes} onChange={(e) => setField('notes', e.target.value)} />
+            <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 10, background: 'var(--bg-elevated)' }}>
+              {notePoints.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: 8 }}>Add bullet-point notes for this {docLabel.toLowerCase()}.</p>}
+              {notePoints.map((point, noteIdx) => (
+                <div key={noteIdx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style={{ color: 'var(--primary)', fontWeight: 700 }}>•</span>
+                  <input
+                    className="form-control"
+                    value={point}
+                    onChange={(e) => {
+                      const next = [...notePoints];
+                      next[noteIdx] = e.target.value;
+                      setField('notes', serializeNotes(next));
+                    }}
+                    placeholder={`Point ${noteIdx + 1}`}
+                  />
+                  <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setField('notes', serializeNotes(notePoints.filter((_, i) => i !== noteIdx)))}><X size={14} /></button>
+                </div>
+              ))}
+              {notePoints.length < 5 ? (
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setField('notes', serializeNotes([...notePoints, 'New note']))}><Plus size={14} /> Add point</button>
+              ) : (
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => toast('Upgrade your plan to add more than 5 note points', { icon: '🔒' })}><Lock size={14} /> Upgrade to add more</button>
+              )}
+            </div>
           </div>
           <div className="form-group">
             <label className="form-label">Terms & Conditions</label>
