@@ -210,7 +210,7 @@ export default function InvoiceForm() {
     paymentInfo: '',
     template: '',
     templateColors: null, // { primary, secondary }
-    items: [defaultItem()],
+    items: [],
   });
 
   useEffect(() => {
@@ -312,8 +312,10 @@ export default function InvoiceForm() {
       vatRate: product.vatRate || 0,
     };
     setForm((f) => {
-      const hasOnlyBlank = f.items.length === 1 && !f.items[0].name && !f.items[0].productId && !f.items[0].price;
-      return { ...f, items: hasOnlyBlank ? [line] : [...f.items, line] };
+      return {
+        ...f,
+        items: [...f.items, line]
+      };
     });
     setLineSearchQuery('');
     setLineSearchOpen(false);
@@ -328,8 +330,10 @@ export default function InvoiceForm() {
   const commitNewItem = () => {
     if (!newItemDraft.name.trim()) return toast.error('Item name is required');
     setForm((f) => {
-      const hasOnlyBlank = f.items.length === 1 && !f.items[0].name && !f.items[0].productId && !f.items[0].price;
-      return { ...f, items: hasOnlyBlank ? [newItemDraft] : [...f.items, newItemDraft] };
+      return {
+        ...f,
+        items: [...f.items, newItemDraft]
+      };
     });
     setNewItemType(null);
     setNewItemDraft(defaultItem());
@@ -505,10 +509,19 @@ export default function InvoiceForm() {
   const selectedBankIndex = Math.min(Number(form.selectedBankIndex || 0), Math.max(bankAccounts.length - 1, 0));
   const bank = bankAccounts[selectedBankIndex] || currentUser?.bankDetails || {};
   const hasBankDetails = bank && (bank.bankName || bank.accountName || bank.accountNumber || bank.ifscCode);
-  const filteredLineProducts = products.filter((p) => {
-    const q = lineSearchQuery.toLowerCase();
-    return p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q) || p.hsn?.toLowerCase().includes(q);
-  }).slice(0, 8);
+  const filteredLineProducts = lineSearchQuery.trim()
+    ? products.filter((p) => {
+      const q = lineSearchQuery.toLowerCase();
+
+      return (
+        p.name?.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q) ||
+        p.hsn?.toLowerCase().includes(q)
+      );
+    })
+    : products;
+
+  const displayedProducts = filteredLineProducts.slice(0, 8);
   const notePoints = form.notes ? form.notes.split('\n') : [];
 
   if (loading) return <div className="flex-center" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
@@ -722,14 +735,64 @@ export default function InvoiceForm() {
             onFocus={() => setLineSearchOpen(true)}
             onBlur={() => setTimeout(() => setLineSearchOpen(false), 150)}
           />
-          {lineSearchOpen && lineSearchQuery && (
-            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 35, marginTop: 4, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, maxHeight: 260, overflowY: 'auto', boxShadow: 'var(--shadow)' }}>
+          {lineSearchOpen && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                zIndex: 35,
+                marginTop: 6,
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                borderRadius: 12,
+                maxHeight: 320,
+                overflowY: 'auto',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+                backdropFilter: 'blur(12px)',
+              }}
+            >
               {filteredLineProducts.length === 0 ? (
                 <div style={{ padding: '12px 14px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>No products/services found.</div>
-              ) : filteredLineProducts.map((p) => (
-                <button key={p._id} type="button" onMouseDown={() => appendProductLine(p)} style={{ width: '100%', border: 'none', background: 'transparent', padding: '10px 14px', cursor: 'pointer', textAlign: 'left', borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ fontWeight: 700 }}>{p.name}</div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{[p.description, p.hsn, fmt(p.price)].filter(Boolean).join(' · ')}</div>
+              ) : displayedProducts.map((p) => (
+                <button
+                  key={p._id}
+                  type="button"
+                  onMouseDown={() => appendProductLine(p)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--bg-elevated)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                  style={{
+                    width: '100%',
+                    border: 'none',
+                    background: 'transparent',
+                    padding: '12px 16px',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    borderBottom: '1px solid var(--border)',
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    {p.name}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '0.72rem',
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    {[p.description, p.hsn, fmt(p.price)].filter(Boolean).join(' · ')}
+                  </div>
                 </button>
               ))}
             </div>
