@@ -991,53 +991,6 @@ export default function InvoiceForm() {
         </div>
       </div>
 
-      {/* Banking Details (from profile) */}
-      {hasBankDetails && (
-        <div className="card mb-4">
-          <div className="flex gap-2" style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <div className="flex gap-2" style={{ alignItems: 'center' }}>
-              <div style={{ padding: 8, background: 'var(--primary-bg)', borderRadius: 8, color: 'var(--primary)' }}>
-                <Landmark size={18} />
-              </div>
-              <h2 className="card-title" style={{ margin: 0 }}>Banking Details</h2>
-            </div>
-            {bankAccounts.length > 1 && (
-              <select className="form-control" style={{ width: 220 }} value={selectedBankIndex} onChange={(e) => setField('selectedBankIndex', Number(e.target.value))}>
-                {bankAccounts.map((account, idx) => (
-                  <option key={`${account.accountNumber || account.bankName}-${idx}`} value={idx}>{account.label || account.bankName || `Bank ${idx + 1}`}</option>
-                ))}
-              </select>
-            )}
-          </div>
-          <div className="form-grid">
-            {bank.bankName && (
-              <div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Bank Name</div>
-                <div style={{ fontWeight: 600, marginTop: 4 }}>{bank.bankName}</div>
-              </div>
-            )}
-            {bank.accountName && (
-              <div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Account Name</div>
-                <div style={{ fontWeight: 600, marginTop: 4 }}>{bank.accountName}</div>
-              </div>
-            )}
-            {bank.accountNumber && (
-              <div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Account Number</div>
-                <div style={{ fontWeight: 600, marginTop: 4 }}>{bank.accountNumber}</div>
-              </div>
-            )}
-            {bank.ifscCode && (
-              <div>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>IFSC</div>
-                <div style={{ fontWeight: 600, marginTop: 4 }}>{bank.ifscCode}</div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Notes */}
       <div className="card">
         <h2 className="card-title mb-4" style={{ marginBottom: '16px' }}>Additional Info</h2>

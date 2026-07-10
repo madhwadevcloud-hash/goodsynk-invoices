@@ -19,7 +19,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.email || !form.password) return toast.error('Please fill in all fields');
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(form.email)) {
       return toast.error('Please enter a valid email address format');
@@ -61,7 +61,7 @@ export default function Login() {
       <div className="auth-card">
         <div className="auth-logo">
           <div className="auth-logo-icon"><Receipt size={24} /></div>
-          <span className="auth-logo-text">InvoiceGen</span>
+          <span className="auth-logo-text">Goodsynk Invoices</span>
         </div>
 
         <h1 className="auth-heading">Welcome back</h1>

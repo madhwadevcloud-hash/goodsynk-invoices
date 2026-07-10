@@ -115,7 +115,7 @@ export default function ProfileSetup() {
             fontSize: '1.1rem', fontWeight: 700,
             background: 'linear-gradient(135deg, var(--primary-light), #fff)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          }}>InvoiceGen</span>
+          }}>Goodsynk Invoices</span>
         </div>
 
         <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: 6 }}>Complete your profile</h1>
