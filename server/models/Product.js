@@ -26,6 +26,21 @@ const productSchema = new mongoose.Schema(
       type: String,
       default: 'pcs', // pcs, hrs, kg, m, etc.
     },
+    qty: {
+      type: Number,
+      default: 1,
+    },
+
+    discountType: {
+      type: String,
+      enum: ['percentage', 'amount'],
+      default: 'percentage',
+    },
+
+    discountValue: {
+      type: Number,
+      default: 0,
+    },
     // GST rates (Indian tax breakdown)
     cgstRate: { type: Number, default: 0 },  // Central GST %
     sgstRate: { type: Number, default: 0 },  // State GST %

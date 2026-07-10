@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { productAPI } from '../../api/services';
 import toast from 'react-hot-toast';
 import { Save, ArrowLeft } from 'lucide-react';
@@ -7,11 +7,24 @@ import { Save, ArrowLeft } from 'lucide-react';
 export default function ProductForm() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
   const isEdit = !!id;
+  const formType = searchParams.get('type');
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    name: '', description: '', price: 0, unit: 'pcs',
-    cgstRate: 0, sgstRate: 0, igstRate: 0, hsn: '', isService: false,
+    name: '',
+    description: '',
+    price: '',
+    qty: 1,
+    unit: 'pcs',
+    discountType: 'percentage',
+    discountValue: '',
+    cgstRate: '',
+    sgstRate: '',
+    igstRate: '',
+    hsn: '',
+    isService: formType === 'service',
   });
 
   useEffect(() => {
@@ -40,43 +53,152 @@ export default function ProductForm() {
         <div className="flex gap-3" style={{ alignItems: 'center' }}>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate('/products')}><ArrowLeft size={16} /></button>
           <div>
-            <h1 className="page-title">{isEdit ? 'Edit Product' : 'New Product / Service'}</h1>
-            <p className="page-subtitle">{isEdit ? 'Update product details' : 'Add a product or service for quick use in invoices'}</p>
+            <h1 className="page-title">
+              {isEdit
+                ? (form.isService ? 'Edit Service' : 'Edit Product')
+                : (form.isService ? 'New Service' : 'New Product')}
+            </h1>
+            <p className="page-subtitle">
+              {isEdit
+                ? 'Update details'
+                : form.isService
+                  ? 'Add a service for quick use in invoices'
+                  : 'Add a product for quick use in invoices'}
+            </p>
           </div>
         </div>
-        <button type="submit" className="btn btn-primary" disabled={saving}><Save size={16} />{saving ? 'Saving…' : 'Save Product'}</button>
+        <button type="submit" className="btn btn-primary" disabled={saving}><Save size={16} />{saving
+          ? 'Saving...'
+          : form.isService
+            ? 'Save Service'
+            : 'Save Product'}</button>
       </div>
 
       <div className="card mb-4">
-        <h2 className="card-title" style={{ marginBottom: '16px' }}>Product Details</h2>
-        <div className="form-group">
-          <label className="form-label">Name *</label>
-          <input className="form-control" value={form.name} onChange={(e) => setField('name', e.target.value)} placeholder="Web Design Services" />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Description</label>
-          <textarea className="form-control" rows={2} value={form.description} onChange={(e) => setField('description', e.target.value)} placeholder="Brief description…" />
-        </div>
+        <h2 className="card-title" style={{ marginBottom: '16px' }}>
+          {form.isService ? 'Service Details' : 'Product Details'}
+        </h2>
+
         <div className="form-grid">
           <div className="form-group">
-            <label className="form-label">Default Price (₹)</label>
-            <input type="number" className="form-control" value={form.price} min={0} onChange={(e) => setField('price', parseFloat(e.target.value) || 0)} />
+            <label className="form-label">
+              {form.isService ? 'Service Name *' : 'Product Name *'}
+            </label>
+            <input
+              className="form-control"
+              value={form.name}
+              onChange={(e) => setField('name', e.target.value)}
+            />
           </div>
+
           <div className="form-group">
-            <label className="form-label">Unit</label>
-            <select className="form-control" value={form.unit} onChange={(e) => setField('unit', e.target.value)}>
-              {['pcs', 'hrs', 'days', 'kg', 'm', 'ft', 'ltr', 'box', 'set'].map((u) => <option key={u} value={u}>{u}</option>)}
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">HSN / SAC Code</label>
-            <input className="form-control" value={form.hsn} onChange={(e) => setField('hsn', e.target.value)} placeholder="998314" />
+            <label className="form-label">
+              {form.isService ? 'SAC Code' : 'HSN Code'}
+            </label>
+            <input
+              className="form-control"
+              value={form.hsn}
+              onChange={(e) => setField('hsn', e.target.value)}
+            />
           </div>
         </div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-          <input type="checkbox" checked={form.isService} onChange={(e) => setField('isService', e.target.checked)} />
-          This is a service (uses SAC code, not HSN)
-        </label>
+
+        <div className="form-group">
+          <label className="form-label">Description</label>
+          <textarea
+            className="form-control"
+            rows={2}
+            value={form.description}
+            onChange={(e) => setField('description', e.target.value)}
+          />
+        </div>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: form.isService
+              ? '1fr 1fr 1fr'
+              : '1fr 1fr 1fr 1fr 1fr',
+            gap: '16px'
+          }}
+        >
+          {!form.isService && (
+            <>
+              <div className="form-group">
+                <label className="form-label">Qty</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  min={1}
+                  value={form.qty}
+                  onChange={(e) =>
+                    setField('qty', e.target.value)
+                  }
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Unit</label>
+                <select
+                  className="form-control"
+                  value={form.unit}
+                  onChange={(e) => setField('unit', e.target.value)}
+                >
+                  {['pcs', 'hrs', 'days', 'kg', 'm', 'ft', 'ltr', 'box', 'set']
+                    .map((u) => (
+                      <option key={u} value={u}>
+                        {u}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </>
+          )}
+
+          <div className="form-group">
+            <label className="form-label">Price (₹)</label>
+            <input
+              type="number"
+              className="form-control"
+              value={form.price}
+              min={0}
+              onChange={(e) =>
+                setField('price', e.target.value)
+              }
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Discount Type</label>
+            <select
+              className="form-control"
+              value={form.discountType}
+              onChange={(e) =>
+                setField('discountType', e.target.value)
+              }
+            >
+              <option value="percentage">Percentage (%)</option>
+              <option value="amount">Amount (₹)</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">
+              {form.discountType === 'percentage'
+                ? 'Discount %'
+                : 'Discount Amount'}
+            </label>
+            <input
+              type="number"
+              className="form-control"
+              value={form.discountValue}
+              min={0}
+              onChange={(e) =>
+                setField('discountValue', e.target.value)
+              }
+            />
+          </div>
+        </div>
       </div>
 
       <div className="card">
@@ -85,15 +207,15 @@ export default function ProductForm() {
         <div className="form-grid-3">
           <div className="form-group">
             <label className="form-label">CGST % (intrastate)</label>
-            <input type="number" className="form-control" value={form.cgstRate} min={0} max={50} onChange={(e) => setField('cgstRate', parseFloat(e.target.value) || 0)} />
+            <input type="number" className="form-control" value={form.cgstRate} min={0} max={50} onChange={(e) => setField('cgstRate', e.target.value)} />
           </div>
           <div className="form-group">
             <label className="form-label">SGST % (intrastate)</label>
-            <input type="number" className="form-control" value={form.sgstRate} min={0} max={50} onChange={(e) => setField('sgstRate', parseFloat(e.target.value) || 0)} />
+            <input type="number" className="form-control" value={form.sgstRate} min={0} max={50} onChange={(e) => setField('sgstRate', e.target.value)} />
           </div>
           <div className="form-group">
             <label className="form-label">IGST % (interstate)</label>
-            <input type="number" className="form-control" value={form.igstRate} min={0} max={50} onChange={(e) => setField('igstRate', parseFloat(e.target.value) || 0)} />
+            <input type="number" className="form-control" value={form.igstRate} min={0} max={50} onChange={(e) => setField('igstRate', e.target.value)} />
           </div>
         </div>
       </div>
