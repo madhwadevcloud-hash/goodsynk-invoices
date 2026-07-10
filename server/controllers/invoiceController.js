@@ -1,4 +1,5 @@
 const Invoice = require('../models/Invoice');
+const { upsertProductsFromItems } = require('../utils/productHelper');
 
 // Helper: recalculate invoice totals from items
 const calcTotals = (items, isInterstate) => {
@@ -87,6 +88,10 @@ const createInvoice = async (req, res) => {
     const { items = [], isInterstate = false, ...rest } = req.body;
     const totals = calcTotals(items, isInterstate);
     const invoice = await Invoice.create({ ...rest, ...totals, isInterstate, user: req.user._id, template: req.body.template || req.user.invoiceTemplate || 'template1' });
+    
+    // Automatically reflect items in products/services database
+    await upsertProductsFromItems(req.user._id, items);
+
     await invoice.populate('client', 'name email phone');
     res.status(201).json({ success: true, invoice });
   } catch (err) {
@@ -114,6 +119,11 @@ const updateInvoice = async (req, res) => {
       { ...rest, ...totals, isInterstate: interstate, template: resolvedTemplate },
       { new: true, runValidators: true }
     ).populate('client', 'name email phone');
+
+    // Automatically reflect items in products/services database
+    if (items) {
+      await upsertProductsFromItems(req.user._id, items);
+    }
 
     res.json({ success: true, invoice });
   } catch (err) {

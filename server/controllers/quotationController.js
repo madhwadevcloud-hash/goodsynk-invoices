@@ -1,4 +1,5 @@
 const Quotation = require('../models/Quotation');
+const { upsertProductsFromItems } = require('../utils/productHelper');
 
 // Helper: recalculate totals from items
 const calcTotals = (items, isInterstate, taxType = 'gst_india') => {
@@ -109,6 +110,10 @@ const createQuotation = async (req, res) => {
       user: req.user._id,
       template: req.body.template || req.user.invoiceTemplate || 'template1',
     });
+    
+    // Automatically reflect items in products/services database
+    await upsertProductsFromItems(req.user._id, items);
+
     await quotation.populate('client', 'name email phone');
     // Map quotationNumber → invoiceNumber for frontend compatibility
     const out = quotation.toObject();
@@ -149,6 +154,11 @@ const updateQuotation = async (req, res) => {
       },
       { new: true, runValidators: true }
     ).populate('client', 'name email phone');
+
+    // Automatically reflect items in products/services database
+    if (items) {
+      await upsertProductsFromItems(req.user._id, items);
+    }
 
     const out = quotation.toObject();
     out.invoiceNumber = out.quotationNumber;
@@ -247,6 +257,9 @@ const convertToInvoice = async (req, res) => {
       templateColors:     quotation.templateColors,
       status:             'draft',
     });
+
+    // Automatically reflect items in products/services database
+    await upsertProductsFromItems(req.user._id, items);
 
     // Mark quotation as accepted
     quotation.status = 'accepted';
