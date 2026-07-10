@@ -56,6 +56,8 @@ const quotationSchema = new mongoose.Schema(
     taxType: { type: String, default: 'gst_india' },
     isInterstate: { type: Boolean, default: false },
     placeOfSupply: { type: String, default: '' },
+    roundOff: { type: Boolean, default: false },
+    selectedBankIndex: { type: Number, default: 0 },
 
     shareToken: { type: String, default: null, index: true },
 

@@ -83,6 +83,8 @@ const invoiceSchema = new mongoose.Schema(
     taxType: { type: String, default: 'gst_india' },
     isInterstate: { type: Boolean, default: false }, // if true, use IGST
     placeOfSupply: { type: String, default: '' },
+    roundOff: { type: Boolean, default: false },
+    selectedBankIndex: { type: Number, default: 0 },
 
     notes: { type: String, default: '' },
     termsAndConditions: { type: String, default: '' },

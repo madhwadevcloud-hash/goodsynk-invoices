@@ -76,6 +76,7 @@ const login = async (req, res) => {
         gstin: user.gstin,
         currency: user.currency,
         bankDetails: user.bankDetails,
+        bankAccounts: user.bankAccounts,
       },
     });
   } catch (err) {
@@ -93,14 +94,81 @@ const getMe = async (req, res) => {
 // @desc    Update user profile
 // @route   PUT /api/auth/me
 // @access  Private
+const normalizeBankAccounts = (bankAccounts = []) => {
+  const primaryIndex = bankAccounts.findIndex((bank) => bank?.isPrimary);
+  return bankAccounts.map((bank, index) => ({
+    label: bank?.label || (index === 0 ? 'Primary' : `Bank ${index + 1}`),
+    bankName: bank?.bankName || '',
+    accountName: bank?.accountName || '',
+    accountNumber: bank?.accountNumber || '',
+    ifscCode: bank?.ifscCode || '',
+    swiftCode: bank?.swiftCode || '',
+    branch: bank?.branch || '',
+    isPrimary: primaryIndex >= 0 ? index === primaryIndex : index === 0,
+  }));
+};
+
 const updateMe = async (req, res) => {
   try {
-    const fields = ['name', 'businessName', 'businessLogo', 'businessSignature', 'address', 'phone', 'gstin', 'currency', 'bankDetails', 'invoiceTemplate', 'invoiceTemplateColors'];
-    const updates = {};
-    fields.forEach((f) => { if (req.body[f] !== undefined) updates[f] = req.body[f]; });
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
 
-    const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true, runValidators: true });
-    res.json({ success: true, user });
+    const simpleFields = [
+      'name',
+      'businessName',
+      'businessLogo',
+      'businessSignature',
+      'address',
+      'phone',
+      'gstin',
+      'currency',
+      'invoiceTemplate',
+      'invoiceTemplateColors',
+    ];
+
+    simpleFields.forEach((field) => {
+      if (req.body[field] !== undefined) user[field] = req.body[field];
+    });
+
+    if (Array.isArray(req.body.bankAccounts)) {
+      const normalizedBanks = normalizeBankAccounts(req.body.bankAccounts);
+      user.bankAccounts = normalizedBanks;
+
+      const primaryBank = normalizedBanks.find((bank) => bank.isPrimary) || normalizedBanks[0];
+      user.bankDetails = primaryBank || {
+        bankName: '',
+        accountName: '',
+        accountNumber: '',
+        ifscCode: '',
+        swiftCode: '',
+        branch: '',
+      };
+    } else if (req.body.bankDetails !== undefined) {
+      user.bankDetails = req.body.bankDetails;
+
+      // Backward compatibility: when only the legacy bankDetails object is sent,
+      // seed bankAccounts if the user does not already have multiple accounts.
+      if (!Array.isArray(user.bankAccounts) || user.bankAccounts.length === 0) {
+        const legacy = req.body.bankDetails || {};
+        if (legacy.bankName || legacy.accountName || legacy.accountNumber || legacy.ifscCode) {
+          user.bankAccounts = [{
+            label: 'Primary',
+            bankName: legacy.bankName || '',
+            accountName: legacy.accountName || '',
+            accountNumber: legacy.accountNumber || '',
+            ifscCode: legacy.ifscCode || '',
+            swiftCode: legacy.swiftCode || '',
+            branch: legacy.branch || '',
+            isPrimary: true,
+          }];
+        }
+      }
+    }
+
+    const updatedUser = await user.save();
+    res.json({ success: true, user: updatedUser });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -175,6 +243,7 @@ const googleLogin = async (req, res) => {
         gstin: user.gstin,
         currency: user.currency,
         bankDetails: user.bankDetails,
+        bankAccounts: user.bankAccounts,
       },
     });
   } catch (err) {

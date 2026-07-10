@@ -13,16 +13,34 @@ export default function ClientForm() {
   const isEdit = !!id;
   const returnTo = location.state?.returnTo; // e.g. '/quotations/new', set by InvoiceForm's "Create Client"
   const formDraft = location.state?.formDraft;
+  const clientDraft = location.state?.clientDraft;
 
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    name: '', email: '', phone: '', gstin: '', pan: '', notes: '',
-    address: { street: '', city: '', state: '', pincode: '', country: 'India' },
+    name: clientDraft?.name || '',
+    email: clientDraft?.email || '',
+    phone: clientDraft?.phone || '',
+    gstin: clientDraft?.gstin || '',
+    pan: clientDraft?.pan || '',
+    notes: clientDraft?.notes || '',
+    address: {
+      street: clientDraft?.address?.street || '',
+      city: clientDraft?.address?.city || '',
+      state: clientDraft?.address?.state || '',
+      pincode: clientDraft?.address?.pincode || '',
+      country: clientDraft?.address?.country || 'India',
+    },
   });
 
   useEffect(() => {
     if (isEdit) {
       clientAPI.getById(id).then((r) => setForm(r.data.client)).catch(() => { toast.error('Client not found'); navigate('/clients'); });
+    } else if (clientDraft) {
+      setForm((f) => ({
+        ...f,
+        ...clientDraft,
+        address: { ...f.address, ...(clientDraft.address || {}) },
+      }));
     }
   }, [id]);
 

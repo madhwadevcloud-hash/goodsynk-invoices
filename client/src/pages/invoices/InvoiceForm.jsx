@@ -97,6 +97,7 @@ export default function InvoiceForm() {
   const [newItemType, setNewItemType] = useState(null);
   const [newItemDraft, setNewItemDraft] = useState(defaultItem());
   const [discountInputModes, setDiscountInputModes] = useState({});
+  const [bankSwitchOpen, setBankSwitchOpen] = useState(false);
 
   // ── Client search-select state
   const [clientQuery, setClientQuery] = useState('');
@@ -119,6 +120,23 @@ export default function InvoiceForm() {
     setNewClientForm({ name: clientQuery && !form.client ? clientQuery : '', email: '', phone: '', gstin: '' });
     setClientDropdownOpen(false);
     setNewClientModal(true);
+  };
+
+  const openFullClientForm = (draft = null) => {
+    setClientDropdownOpen(false);
+    setNewClientModal(false);
+    navigate('/clients/new', {
+      state: {
+        returnTo: location.pathname,
+        formDraft: form,
+        clientDraft: draft || {
+          name: clientQuery && !form.client ? clientQuery : '',
+          email: '',
+          phone: '',
+          gstin: '',
+        },
+      },
+    });
   };
 
   const handleCreateClientSubmit = async () => {
@@ -682,7 +700,7 @@ export default function InvoiceForm() {
             {!showHsn && (
               <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: '0.75rem' }} onClick={() => setShowHsn(true)}>+ HSN</button>
             )}
-            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setAddItemMenuOpen((o) => !o)}><Plus size={14} /> Add Item <ChevronDown size={12} /></button>
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => setAddItemMenuOpen((o) => !o)}><Plus size={14} /> Add Item <ChevronDown size={12} /></button>
             {addItemMenuOpen && (
               <div style={{ position: 'absolute', right: 0, top: '100%', zIndex: 40, marginTop: 6, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--shadow)', minWidth: 150, overflow: 'hidden' }}>
                 {['Product', 'Service'].map((type) => (
@@ -962,7 +980,7 @@ export default function InvoiceForm() {
 
 
       {/* Banking Details (from profile) */}
-      {hasBankDetails && (
+      {isQuotation && hasBankDetails && (
         <div className="card mb-4">
           <div className="flex gap-2" style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <div className="flex gap-2" style={{ alignItems: 'center' }}>
@@ -972,13 +990,42 @@ export default function InvoiceForm() {
               <h2 className="card-title" style={{ margin: 0 }}>Banking Details</h2>
             </div>
             {bankAccounts.length > 1 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700 }}>Switch Bank</span>
-                <select className="form-control" style={{ width: 220 }} value={selectedBankIndex} onChange={(e) => setField('selectedBankIndex', Number(e.target.value))}>
-                  {bankAccounts.map((account, idx) => (
-                    <option key={`${account.accountNumber || account.bankName}-${idx}`} value={idx}>{account.label || account.bankName || `Bank ${idx + 1}`}</option>
-                  ))}
-                </select>
+              <div style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setBankSwitchOpen((open) => !open)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                >
+                  <Landmark size={13} /> Switch Account <ChevronDown size={13} />
+                </button>
+                {bankSwitchOpen && (
+                  <>
+                    <div onClick={() => setBankSwitchOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 39 }} />
+                    <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 6, zIndex: 40, width: 280, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: 'var(--shadow)', overflow: 'hidden' }}>
+                      {bankAccounts.map((account, idx) => (
+                        <button
+                          key={`${account.accountNumber || account.bankName}-${idx}`}
+                          type="button"
+                          onClick={() => { setField('selectedBankIndex', idx); setBankSwitchOpen(false); }}
+                          style={{
+                            width: '100%', padding: '11px 14px', border: 'none', borderBottom: '1px solid var(--border)',
+                            background: idx === selectedBankIndex ? 'var(--primary-bg)' : 'transparent',
+                            color: 'var(--text-primary)', textAlign: 'left', cursor: 'pointer',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontWeight: 700 }}>
+                            <span>{account.label || account.bankName || `Bank ${idx + 1}`}</span>
+                            {idx === selectedBankIndex && <span style={{ color: 'var(--primary)', fontSize: '0.72rem' }}>Selected</span>}
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 3 }}>
+                            {[account.bankName, account.accountNumber].filter(Boolean).join(' · ')}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -1016,7 +1063,7 @@ export default function InvoiceForm() {
                 </div>
               ))}
               {notePoints.length < 5 ? (
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setField('notes', serializeNotes([...notePoints, 'New note']))}><Plus size={14} /> Add point</button>
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('notes', serializeNotes([...notePoints, 'New note']))}><Plus size={14} /> Add point</button>
               ) : (
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => toast('Upgrade your plan to add more than 5 note points', { icon: '🔒' })}><Lock size={14} /> Upgrade to add more</button>
               )}
@@ -1377,7 +1424,19 @@ export default function InvoiceForm() {
             </div>
 
             <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: -6, marginBottom: 4 }}>
-              You can add address, PAN and notes later from the Clients page.
+              You can add address, PAN and notes from the{' '}
+              <button
+                type="button"
+                onClick={() => openFullClientForm(newClientForm)}
+                style={{
+                  background: 'none', border: 'none', padding: 0, margin: 0,
+                  color: 'var(--primary)', fontWeight: 700, cursor: 'pointer',
+                  textDecoration: 'underline', fontSize: '0.72rem',
+                }}
+              >
+                Clients page
+              </button>
+
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
