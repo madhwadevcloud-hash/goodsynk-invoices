@@ -61,7 +61,7 @@ export default function Login() {
       <div className="auth-card">
         <div className="auth-logo">
           <div className="auth-logo-icon"><Receipt size={24} /></div>
-          <span className="auth-logo-text">Goodsynk</span>
+          <span className="auth-logo-text">Goodsynk Invoices</span>
         </div>
 
         <h1 className="auth-heading">Welcome back</h1>

@@ -22,6 +22,8 @@ export default function QuotationList() {
   const [sendingId, setSendingId] = useState(null);
   const [whatsappModalData, setWhatsappModalData] = useState(null);
   const [emailModalData, setEmailModalData] = useState(null);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
 
@@ -43,6 +45,33 @@ export default function QuotationList() {
   };
 
   useEffect(fetchQuotations, []);
+
+  const filteredQuotations = quotations.filter((q) => {
+    const matchesSearch =
+      q.invoiceNumber?.toLowerCase().includes(search.toLowerCase()) ||
+      q.client?.name?.toLowerCase().includes(search.toLowerCase());
+
+    const matchesStatus =
+      !statusFilter || q.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleStatusChange = async (id, status) => {
+    try {
+      await quotationAPI.updateStatus(id, { status });
+
+      setQuotations((prev) =>
+        prev.map((q) =>
+          q._id === id ? { ...q, status } : q
+        )
+      );
+
+      toast.success('Status updated');
+    } catch {
+      toast.error('Failed to update status');
+    }
+  };
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this quotation?')) return;
@@ -146,7 +175,7 @@ export default function QuotationList() {
       const shareUrl = `${window.location.origin}/share/quotation/${inv.shareToken}`;
       const text = getQuotationMessage(inv, shareUrl, fmtCurrency);
       const phone = inv.client?.phone || '';
-      
+
       setWhatsappModalData({
         phone,
         text,
@@ -173,14 +202,60 @@ export default function QuotationList() {
       </div>
 
       <div className="card" style={{ padding: 0 }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '16px',
+            padding: '16px',
+            alignItems: 'center'
+          }}
+        >
+          <input
+            type="text"
+            placeholder="Search quotation or client..."
+            className="form-control"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ maxWidth: '350px' }}
+          />
+
+          <select
+            className="form-control"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{ maxWidth: '180px' }}
+          >
+            <option value="">All Status</option>
+            <option value="draft">Draft</option>
+            <option value="accepted">Accepted</option>
+          </select>
+        </div>
         {loading ? (
           <div className="flex-center" style={{ padding: '60px' }}><div className="spinner" /></div>
-        ) : quotations.length === 0 ? (
+        ) : filteredQuotations.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">📋</div>
-            <div className="empty-state-title">No quotations found</div>
-            <div className="empty-state-desc">Create your first quotation to share with clients</div>
-            <Link to="/quotations/new" className="btn btn-primary" onClick={handleCreate}><Plus size={15} /> Create Quotation</Link>
+            <div className="empty-state-title">
+              {statusFilter
+                ? `No ${statusFilter} quotations found`
+                : 'No quotations found'}
+            </div>
+
+            <div className="empty-state-desc">
+              {statusFilter
+                ? 'No quotations match the selected filter'
+                : 'Create your first quotation to share with clients'}
+            </div>
+            {!statusFilter && (
+              <Link
+                to="/quotations/new"
+                className="btn btn-primary"
+                onClick={handleCreate}
+              >
+                <Plus size={15} />
+                Create Quotation
+              </Link>
+            )}
           </div>
         ) : (
           <div className="table-wrapper" style={{ border: 'none', borderRadius: 'var(--radius-lg)' }}>
@@ -197,14 +272,43 @@ export default function QuotationList() {
                 </tr>
               </thead>
               <tbody>
-                {quotations.map((inv) => (
+                {filteredQuotations.map((inv) => (
                   <tr key={inv._id}>
                     <td style={{ fontWeight: 600 }}>{inv.invoiceNumber}</td>
                     <td>{inv.client?.name || '—'}</td>
                     <td>{new Date(inv.issueDate).toLocaleDateString('en-IN')}</td>
                     <td>{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('en-IN') : '—'}</td>
                     <td className="font-semibold">{fmtCurrency(inv.total, inv.currency)}</td>
-                    <td><span className={`badge badge-${inv.status}`}>{inv.status}</span></td>
+                    <td>
+                      <select
+                        value={inv.status}
+                        onChange={(e) =>
+                          handleStatusChange(inv._id, e.target.value)
+                        }
+                        className="form-control"
+                        style={{
+                          width: '130px',
+                          fontWeight: 600,
+                          color:
+                            inv.status === 'accepted'
+                              ? '#22c55e'
+                              : '#9ca3af',
+
+                          border:
+                            inv.status === 'accepted'
+                              ? '1px solid rgba(34,197,94,.35)'
+                              : '1px solid rgba(107,114,128,.35)',
+
+                          background:
+                            inv.status === 'accepted'
+                              ? 'rgba(34,197,94,.12)'
+                              : 'rgba(107,114,128,.12)',
+                        }}
+                      >
+                        <option value="draft">Draft</option>
+                        <option value="accepted">Accepted</option>
+                      </select>
+                    </td>
                     <td>
                       <div className="flex gap-2">
                         <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/quotations/${inv._id}`)} title="View"><Eye size={14} /></button>
@@ -272,7 +376,7 @@ export default function QuotationList() {
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '16px', lineHeight: '1.4' }}>
               Review and edit the message template before sending it to WhatsApp. The PDF will also download automatically.
             </p>
-            
+
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '6px', color: 'var(--text-secondary)' }}>
                 Recipient Phone Number
@@ -333,13 +437,13 @@ export default function QuotationList() {
                 onClick={() => {
                   // Trigger PDF download
                   downloadBlob(whatsappModalData.blob, whatsappModalData.fileName);
-                  
+
                   // Open WhatsApp
                   const phone = whatsappModalData.phone.replace(/[^0-9]/g, '');
                   const base = phone ? `https://wa.me/${phone}` : 'https://wa.me/';
                   const waUrl = `${base}?text=${encodeURIComponent(whatsappModalData.text)}`;
                   window.open(waUrl, '_blank');
-                  
+
                   // Close modal
                   setWhatsappModalData(null);
                 }}

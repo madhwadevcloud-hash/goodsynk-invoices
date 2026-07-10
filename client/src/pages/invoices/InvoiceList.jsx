@@ -16,6 +16,8 @@ export default function InvoiceList() {
   const { user } = useAuth();
   const { setShowProfilePrompt } = useOutletContext();
   const [invoices, setInvoices] = useState([]);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [shareOpenId, setShareOpenId] = useState(null);
   const [shareDropdownPos, setShareDropdownPos] = useState(null);
@@ -49,6 +51,24 @@ export default function InvoiceList() {
       fetchInvoices();
     } catch {
       toast.error('Failed to delete invoice');
+    }
+  };
+
+  const handleStatusChange = async (id, status) => {
+    try {
+      await invoiceAPI.updateStatus(id, { status });
+
+      setInvoices((prev) =>
+        prev.map((inv) =>
+          inv._id === id
+            ? { ...inv, status }
+            : inv
+        )
+      );
+
+      toast.success('Status updated');
+    } catch {
+      toast.error('Failed to update status');
     }
   };
 
@@ -144,7 +164,7 @@ export default function InvoiceList() {
       const shareUrl = `${window.location.origin}/share/invoice/${inv.shareToken}`;
       const text = getInvoiceMessage(inv, shareUrl, fmtCurrency);
       const phone = inv.client?.phone || '';
-      
+
       setWhatsappModalData({
         phone,
         text,
@@ -157,6 +177,19 @@ export default function InvoiceList() {
       setSendingId(null);
     }
   };
+
+  const filteredInvoices = invoices.filter((inv) => {
+    const matchesSearch =
+      inv.invoiceNumber?.toLowerCase().includes(search.toLowerCase()) ||
+      inv.client?.name?.toLowerCase().includes(search.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === 'all'
+        ? true
+        : inv.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div>
@@ -171,17 +204,59 @@ export default function InvoiceList() {
       </div>
 
       <div className="card" style={{ padding: 0 }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '16px',
+            padding: '16px',
+            alignItems: 'center',
+            flexWrap: 'wrap'
+          }}
+        >
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search invoice or client..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: '350px' }}
+          />
+
+          <select
+            className="form-control"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{ width: '150px' }}
+          >
+            <option value="all">All Status</option>
+            <option value="draft">Draft</option>
+            <option value="sent">Sent</option>
+            <option value="paid">Paid</option>
+          </select>
+        </div>
         {loading ? (
-          <div className="flex-center" style={{ padding: '60px' }}><div className="spinner" /></div>
-        ) : invoices.length === 0 ? (
+          <div className="flex-center" style={{ padding: '60px' }}>
+            <div className="spinner" />
+          </div>
+        ) : filteredInvoices.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">📄</div>
-            <div className="empty-state-title">No invoices found</div>
-            <div className="empty-state-desc">Create your first invoice to start billing clients</div>
-            <Link to="/invoices/new" className="btn btn-primary" onClick={handleCreate}><Plus size={15} /> Create Invoice</Link>
+
+            <div className="empty-state-title">
+              {statusFilter === 'all'
+                ? 'No invoices found'
+                : `No ${statusFilter} invoices found`}
+            </div>
+
+            <div className="empty-state-desc">
+              No invoices match the selected filter
+            </div>
           </div>
         ) : (
-          <div className="table-wrapper" style={{ border: 'none', borderRadius: 'var(--radius-lg)' }}>
+          <div
+            className="table-wrapper"
+            style={{ border: 'none', borderRadius: 'var(--radius-lg)' }}
+          >
             <table>
               <thead>
                 <tr>
@@ -195,14 +270,56 @@ export default function InvoiceList() {
                 </tr>
               </thead>
               <tbody>
-                {invoices.map((inv) => (
+                {filteredInvoices.map((inv) => (
                   <tr key={inv._id}>
                     <td style={{ fontWeight: 600 }}>{inv.invoiceNumber}</td>
                     <td>{inv.client?.name || '—'}</td>
                     <td>{new Date(inv.issueDate).toLocaleDateString('en-IN')}</td>
                     <td>{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('en-IN') : '—'}</td>
                     <td className="font-semibold">{fmtCurrency(inv.total, inv.currency)}</td>
-                    <td><span className={`badge badge-${inv.status}`}>{inv.status}</span></td>
+                    <td>
+                      <select
+                        value={inv.status}
+                        onChange={(e) =>
+                          handleStatusChange(
+                            inv._id,
+                            e.target.value
+                          )
+                        }
+                        className="form-control"
+                        style={{
+                          width: '100px',
+                          padding: '4px 8px',
+
+                          background:
+                            inv.status === 'paid'
+                              ? 'rgba(34,197,94,0.15)'
+                              : inv.status === 'sent'
+                                ? 'rgba(59,130,246,0.15)'
+                                : 'rgba(107,114,128,0.15)',
+
+                          color:
+                            inv.status === 'paid'
+                              ? '#22c55e'
+                              : inv.status === 'sent'
+                                ? '#60a5fa'
+                                : '#9ca3af',
+
+                          border:
+                            inv.status === 'paid'
+                              ? '1px solid rgba(34,197,94,0.3)'
+                              : inv.status === 'sent'
+                                ? '1px solid rgba(59,130,246,0.3)'
+                                : '1px solid rgba(107,114,128,0.35)',
+
+                          fontWeight: 600
+                        }}
+                      >
+                        <option value="draft">Draft</option>
+                        <option value="sent">Sent</option>
+                        <option value="paid">Paid</option>
+                      </select>
+                    </td>
                     <td>
                       <div className="flex gap-2">
                         <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/invoices/${inv._id}`)} title="View"><Eye size={14} /></button>
@@ -277,7 +394,7 @@ export default function InvoiceList() {
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '16px', lineHeight: '1.4' }}>
               Review and edit the message template before sending it to WhatsApp. The PDF will also download automatically.
             </p>
-            
+
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, marginBottom: '6px', color: 'var(--text-secondary)' }}>
                 Recipient Phone Number
@@ -338,13 +455,13 @@ export default function InvoiceList() {
                 onClick={() => {
                   // Trigger PDF download
                   downloadBlob(whatsappModalData.blob, whatsappModalData.fileName);
-                  
+
                   // Open WhatsApp
                   const phone = whatsappModalData.phone.replace(/[^0-9]/g, '');
                   const base = phone ? `https://wa.me/${phone}` : 'https://wa.me/';
                   const waUrl = `${base}?text=${encodeURIComponent(whatsappModalData.text)}`;
                   window.open(waUrl, '_blank');
-                  
+
                   // Close modal
                   setWhatsappModalData(null);
                 }}

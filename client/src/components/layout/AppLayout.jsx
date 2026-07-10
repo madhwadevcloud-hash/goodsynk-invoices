@@ -74,7 +74,7 @@ export default function AppLayout() {
           <div className="sidebar-logo-icon">
             <Receipt size={18} />
           </div>
-          <span className="sidebar-logo-text">Goodsynk</span>
+          <span className="sidebar-logo-text">Goodsynk Invoices</span>
         </Link>
 
         <nav className="sidebar-nav">

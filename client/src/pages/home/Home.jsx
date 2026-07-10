@@ -71,7 +71,7 @@ export default function Home() {
           <div className="sidebar-logo-icon">
             <Receipt size={18} />
           </div>
-          <span className="sidebar-logo-text">Goodsynk</span>
+          <span className="sidebar-logo-text">Goodsynk Invoices</span>
         </Link>
 
         {/* Nav actions */}
@@ -244,10 +244,10 @@ export default function Home() {
           }}>
             <Receipt size={14} />
           </div>
-          <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Goodsynk</span>
+          <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Goodsynk Invoices</span>
         </div>
         <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-          © {new Date().getFullYear()} Goodsynk. Built for Indian businesses.
+          © {new Date().getFullYear()} Goodsynk Invoices. Built for Indian businesses.
         </p>
       </footer>
 
