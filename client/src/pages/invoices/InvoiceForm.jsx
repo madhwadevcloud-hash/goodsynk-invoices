@@ -470,7 +470,7 @@ export default function InvoiceForm() {
       ...form,
       notes: serializeNotes(parseNotes(form.notes)),
       selectedBankIndex: Number(form.selectedBankIndex || 0),
-      items: form.items.map(({ itemType, ...item }) => item),
+      items: form.items,
     };
 
     try {
