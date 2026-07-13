@@ -1,5 +1,5 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Font, Image, Svg, Polygon } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font, Image, Svg, Polygon, Rect, Path } from '@react-pdf/renderer';
 
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-SemiBold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
@@ -102,6 +102,43 @@ export default function Template6({ invoice }) {
   return (
     <Document>
       <Page size="A4" style={s.page}>
+        {/* Watermark */}
+        <View style={s.watermarkContainer} pointerEvents="none">
+          {biz?.businessLogo ? (
+            <Image src={biz.businessLogo} style={s.watermarkImage} />
+          ) : (
+            <Svg viewBox="0 0 24 24" style={s.watermarkSvg}>
+              <Rect x={1} y={1} width={22} height={22} rx={4} fill={colors.primary} fillOpacity={0.12} />
+              <Path
+                d="M6 4v16l2-1 2 1 2-1 2 1 2-1 2 1V4l-2 1-2-1-2 1-2-1-2 1-2-1Z"
+                fill="none"
+                stroke="#FFF"
+                strokeOpacity={0.65}
+                strokeWidth={1.2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <Path
+                d="M14 9h-3a1.5 1.5 0 0 0 0 3h2a1.5 1.5 0 0 1 0 3h-3"
+                fill="none"
+                stroke="#FFF"
+                strokeOpacity={0.65}
+                strokeWidth={1.2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <Path
+                d="M12 7.5v9"
+                fill="none"
+                stroke="#FFF"
+                strokeOpacity={0.65}
+                strokeWidth={1.2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+          )}
+        </View>
 
         {/* Header with SVG Angles */}
         <View style={s.headerContainer}>
@@ -251,19 +288,23 @@ export default function Template6({ invoice }) {
 
         {/* Fixed Footer Contact Info */}
         <View style={s.footerContactBox} fixed>
-          {biz?.phone && (
-            <View style={s.contactLine}>
-              <View style={s.contactIconCircle}><View style={s.contactIconBg} /></View>
-              <Text style={s.contactText}>{biz.phone}</Text>
-            </View>
-          )}
-          {biz?.email && (
-            <View style={s.contactLine}>
-              <View style={s.contactIconCircle}><View style={s.contactIconBg} /></View>
-              <Text style={s.contactText}>{biz.email}</Text>
-            </View>
-          )}
-
+          <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+            {biz?.phone && (
+              <View style={s.contactLine}>
+                <View style={s.contactIconCircle}><View style={s.contactIconBg} /></View>
+                <Text style={s.contactText}>{biz.phone}</Text>
+              </View>
+            )}
+            {biz?.email && (
+              <View style={s.contactLine}>
+                <View style={s.contactIconCircle}><View style={s.contactIconBg} /></View>
+                <Text style={s.contactText}>{biz.email}</Text>
+              </View>
+            )}
+          </View>
+          <Text style={{ fontSize: 6.5, color: '#666', textAlign: 'center', width: '100%' }}>
+            Powered by GoodSynk — Invoice Banega, Payment Badega.
+          </Text>
         </View>
 
         {/* Bottom Design Decor */}

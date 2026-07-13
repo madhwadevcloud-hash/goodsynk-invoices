@@ -1,5 +1,5 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font, Image, Svg, Rect, Path } from '@react-pdf/renderer';
 
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-SemiBold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
@@ -63,7 +63,28 @@ export default function Template2({ invoice }) {
 
     signatureArea: { position: 'absolute', bottom: 70, right: 50, alignItems: 'center' },
     signatureLine: { width: 120, borderTopWidth: 0.5, borderTopColor: '#000', borderTopStyle: 'solid', paddingTop: 6, alignItems: 'center' },
-    footer: { position: 'absolute', bottom: 20, left: 50, right: 50, flexDirection: 'row', gap: 20, borderTopWidth: 0.5, borderTopColor: '#999', borderTopStyle: 'solid', paddingTop: 8 },
+    footer: { position: 'absolute', bottom: 20, left: 50, right: 50, flexDirection: 'column', alignItems: 'center', borderTopWidth: 0.5, borderTopColor: '#999', borderTopStyle: 'solid', paddingTop: 8 },
+    watermarkContainer: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: -100,
+    },
+    watermarkImage: {
+      width: 250,
+      height: 250,
+      objectFit: 'contain',
+      opacity: 0.12,
+    },
+    watermarkSvg: {
+      width: 250,
+      height: 250,
+    },
     footerText: { fontSize: 8, color: '#333' },
   });
   const currency = invoice._currency || invoice.currency || 'INR';
@@ -84,6 +105,43 @@ export default function Template2({ invoice }) {
   return (
     <Document>
       <Page size="A4" style={s.page}>
+        {/* Watermark */}
+        <View style={s.watermarkContainer} pointerEvents="none">
+          {biz?.businessLogo ? (
+            <Image src={biz.businessLogo} style={s.watermarkImage} />
+          ) : (
+            <Svg viewBox="0 0 24 24" style={s.watermarkSvg}>
+              <Rect x={1} y={1} width={22} height={22} rx={4} fill={PRIMARY} fillOpacity={0.12} />
+              <Path
+                d="M6 4v16l2-1 2 1 2-1 2 1 2-1 2 1V4l-2 1-2-1-2 1-2-1-2 1-2-1Z"
+                fill="none"
+                stroke="#FFF"
+                strokeOpacity={0.65}
+                strokeWidth={1.2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <Path
+                d="M14 9h-3a1.5 1.5 0 0 0 0 3h2a1.5 1.5 0 0 1 0 3h-3"
+                fill="none"
+                stroke="#FFF"
+                strokeOpacity={0.65}
+                strokeWidth={1.2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <Path
+                d="M12 7.5v9"
+                fill="none"
+                stroke="#FFF"
+                strokeOpacity={0.65}
+                strokeWidth={1.2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+          )}
+        </View>
 
         {/* Top Header */}
         <View style={s.topHeader}>
@@ -223,13 +281,18 @@ export default function Template2({ invoice }) {
 
 
 
-        {/* Footer: contact details */}
-        {(biz?.phone || biz?.email) && (
-          <View style={s.footer} fixed>
-            {biz?.phone && <Text style={s.footerText}>Phone: {biz.phone}</Text>}
-            {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
-          </View>
-        )}
+        {/* Footer: contact details & branding */}
+        <View style={s.footer} fixed>
+          {(biz?.phone || biz?.email) && (
+            <View style={{ flexDirection: 'row', gap: 20, marginBottom: 2 }}>
+              {biz?.phone && <Text style={s.footerText}>Phone: {biz.phone}</Text>}
+              {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
+            </View>
+          )}
+          <Text style={{ fontSize: 6.5, color: '#666', opacity: 0.8 }}>
+            Powered by GoodSynk — Invoice Banega, Payment Badega.
+          </Text>
+        </View>
       </Page>
     </Document>
   );
