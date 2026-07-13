@@ -897,7 +897,27 @@ export default function InvoiceForm() {
                 return (
                   <tr key={idx}>
                     <td style={{ padding: '6px 4px' }}>
-                      <input className="form-control" style={{ minWidth: '150px', padding: '6px 8px' }} placeholder="Item name" value={item.name} onChange={(e) => setItem(idx, 'name', e.target.value)} />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <input className="form-control" style={{ minWidth: '150px', padding: '6px 8px' }} placeholder="Item name" value={item.name} onChange={(e) => setItem(idx, 'name', e.target.value)} />
+                        <select 
+                          className="form-control" 
+                          style={{ fontSize: '0.7rem', padding: '2px 4px', height: '22px', width: '100%', cursor: 'pointer' }}
+                          value={item.itemType || 'Product'} 
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setItem(idx, 'itemType', val);
+                            if (val === 'Service') {
+                              setItem(idx, 'quantity', 1);
+                              setItem(idx, 'unit', '');
+                            } else {
+                              setItem(idx, 'unit', 'pcs');
+                            }
+                          }}
+                        >
+                          <option value="Product">Product</option>
+                          <option value="Service">Service</option>
+                        </select>
+                      </div>
                     </td>
                     <td style={{ padding: '6px 4px' }}>
                       <input className="form-control" style={{ minWidth: '170px', padding: '6px 8px' }} placeholder="Description" value={item.description || ''} onChange={(e) => setItem(idx, 'description', e.target.value)} />
