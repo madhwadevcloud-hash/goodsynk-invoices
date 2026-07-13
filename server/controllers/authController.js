@@ -95,7 +95,12 @@ const getMe = async (req, res) => {
 // @route   PUT /api/auth/me
 // @access  Private
 const normalizeBankAccounts = (bankAccounts = []) => {
-  const primaryIndex = bankAccounts.findIndex((bank) => bank?.isPrimary);
+  let primaryIndex = -1;
+  for (let i = 0; i < bankAccounts.length; i++) {
+    if (bankAccounts[i]?.isPrimary) {
+      primaryIndex = i;
+    }
+  }
   return bankAccounts.map((bank, index) => ({
     label: bank?.label || (index === 0 ? 'Primary' : `Bank ${index + 1}`),
     bankName: bank?.bankName || '',

@@ -102,7 +102,19 @@ const emptyBankAccount = () => ({
 
 const normalizeBankAccounts = (user) => {
   const accounts = Array.isArray(user?.bankAccounts) ? user.bankAccounts.filter(Boolean) : [];
-  if (accounts.length) return accounts.map((account, index) => ({ ...emptyBankAccount(), ...account, isPrimary: account.isPrimary || index === 0 }));
+  if (accounts.length) {
+    let primaryIndex = -1;
+    for (let i = 0; i < accounts.length; i++) {
+      if (accounts[i]?.isPrimary) {
+        primaryIndex = i;
+      }
+    }
+    return accounts.map((account, index) => ({
+      ...emptyBankAccount(),
+      ...account,
+      isPrimary: primaryIndex >= 0 ? index === primaryIndex : index === 0,
+    }));
+  }
   const legacy = user?.bankDetails;
   if (legacy && (legacy.bankName || legacy.accountName || legacy.accountNumber || legacy.ifscCode)) {
     return [{ ...emptyBankAccount(), label: 'Primary', ...legacy, isPrimary: true }];
@@ -254,8 +266,14 @@ export default function ProfileEdit() {
   /* ── Save profile ── */
   const handleSave = async (values, isManual = true) => {
     try {
+      let primaryIdx = -1;
+      for (let i = 0; i < bankAccounts.length; i++) {
+        if (bankAccounts[i]?.isPrimary) {
+          primaryIdx = i;
+        }
+      }
       const normalizedBanks = bankAccounts.length
-        ? bankAccounts.map((bank, index) => ({ ...bank, isPrimary: bank.isPrimary || (!bankAccounts.some((b) => b.isPrimary) && index === 0) }))
+        ? bankAccounts.map((bank, index) => ({ ...bank, isPrimary: primaryIdx >= 0 ? index === primaryIdx : index === 0 }))
         : (values.bankName || values.accountNumber ? [{
           label: 'Primary', bankName: values.bankName, accountName: values.accountName,
           accountNumber: values.accountNumber, ifscCode: values.ifscCode,
@@ -303,7 +321,13 @@ export default function ProfileEdit() {
 
 
   const persistBankAccounts = async (nextAccounts) => {
-    const normalized = nextAccounts.map((bank, index) => ({ ...bank, isPrimary: bank.isPrimary || (!nextAccounts.some((b) => b.isPrimary) && index === 0) }));
+    let primaryIdx = -1;
+    for (let i = 0; i < nextAccounts.length; i++) {
+      if (nextAccounts[i]?.isPrimary) {
+        primaryIdx = i;
+      }
+    }
+    const normalized = nextAccounts.map((bank, index) => ({ ...bank, isPrimary: primaryIdx >= 0 ? index === primaryIdx : index === 0 }));
     const primary = normalized.find((bank) => bank.isPrimary) || normalized[0] || emptyBankAccount();
     setBankAccounts(normalized);
     try {

@@ -98,7 +98,12 @@ const userSchema = new mongoose.Schema(
 // Keep the legacy bankDetails object synced with the primary bank account.
 userSchema.pre('save', function (next) {
   if (Array.isArray(this.bankAccounts) && this.bankAccounts.length) {
-    const primaryIndex = this.bankAccounts.findIndex((bank) => bank.isPrimary);
+    let primaryIndex = -1;
+    for (let i = 0; i < this.bankAccounts.length; i++) {
+      if (this.bankAccounts[i].isPrimary) {
+        primaryIndex = i;
+      }
+    }
     const primary = this.bankAccounts[primaryIndex >= 0 ? primaryIndex : 0];
     this.bankAccounts = this.bankAccounts.map((bank, index) => ({
       ...(typeof bank.toObject === 'function' ? bank.toObject() : bank),
