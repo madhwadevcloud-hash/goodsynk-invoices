@@ -11,6 +11,7 @@ const lineItemSchema = new mongoose.Schema(
       default: null,
     },
     name: { type: String, required: true },
+    itemType: { type: String, enum: ['Product', 'Service'], default: 'Product' },
     description: { type: String, default: '' },
     hsn: { type: String, default: '' },
     quantity: { type: Number, required: true, min: 0, default: 1 },

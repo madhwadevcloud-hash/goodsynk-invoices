@@ -196,7 +196,7 @@ export default function Template6({ invoice }) {
                 {item.description && <Text style={{ fontSize: 7.5, color: '#555', marginTop: 2, textAlign: 'left' }}>{item.description}</Text>}
               </View>
               {hasHsn && <Text style={[s.td, s.colHsn]}>{item.hsn || '—'}</Text>}
-              <Text style={[s.td, s.colQty]}>{item.quantity}{item.unit ? ` ${item.unit}` : ''}</Text>
+              <Text style={[s.td, s.colQty]}>{item.itemType === 'Service' ? '-' : `${item.quantity}${item.unit ? ` ${item.unit}` : ''}`}</Text>
               <Text style={[s.td, s.colPrice]}>{fmt(item.price)}</Text>
               {hasDiscount && <Text style={[s.td, s.colDisc]}>{item.discount || 0}%</Text>}
               {showCGST && <Text style={[s.td, s.colTax]}>{item.cgstRate || 0}%</Text>}

@@ -213,6 +213,7 @@ const convertToInvoice = async (req, res) => {
     const items = quotation.items.map(item => ({
       product:       item.product || null,
       name:          item.name,
+      itemType:      item.itemType || 'Product',
       description:   item.description || '',
       hsn:           item.hsn || '',
       quantity:      item.quantity,

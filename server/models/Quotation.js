@@ -7,6 +7,7 @@ const lineItemSchema = new mongoose.Schema(
   {
     product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', default: null },
     name: { type: String, required: true },
+    itemType: { type: String, enum: ['Product', 'Service'], default: 'Product' },
     description: { type: String, default: '' },
     hsn: { type: String, default: '' },
     quantity: { type: Number, required: true, min: 0, default: 1 },

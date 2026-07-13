@@ -67,37 +67,54 @@ export default function ProductList() {
                 top: '100%',
                 right: 0,
                 marginTop: '8px',
-                minWidth: '160px',
-                background: 'var(--card-bg)',
-                border: '1px solid var(--border-color)',
+                minWidth: '140px',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
                 borderRadius: '12px',
                 overflow: 'hidden',
                 zIndex: 1000,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                boxShadow: 'var(--shadow)',
+                padding: '4px 0'
               }}
             >
               <button
                 type="button"
-                className="btn btn-ghost"
                 style={{
                   width: '100%',
-                  justifyContent: 'flex-start',
-                  borderRadius: 0
+                  padding: '10px 14px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-primary)',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  display: 'block'
                 }}
-                onClick={() => navigate('/products/new?type=product')}
+                onClick={() => { setShowNewMenu(false); navigate('/products/new?type=product'); }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
               >
                 Product
               </button>
 
               <button
                 type="button"
-                className="btn btn-ghost"
                 style={{
                   width: '100%',
-                  justifyContent: 'flex-start',
-                  borderRadius: 0
+                  padding: '10px 14px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-primary)',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  display: 'block'
                 }}
-                onClick={() => navigate('/products/new?type=service')}
+                onClick={() => { setShowNewMenu(false); navigate('/products/new?type=service'); }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-elevated)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
               >
                 Service
               </button>

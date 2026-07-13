@@ -329,10 +329,15 @@ export default function InvoiceForm() {
 
   const commitNewItem = () => {
     if (!newItemDraft.name.trim()) return toast.error('Item name is required');
+    const finalItem = {
+      ...newItemDraft,
+      quantity: newItemType === 'Service' ? 1 : (newItemDraft.quantity || 1),
+      unit: newItemType === 'Service' ? '' : (newItemDraft.unit || 'pcs')
+    };
     setForm((f) => {
       return {
         ...f,
-        items: [...f.items, newItemDraft]
+        items: [...f.items, finalItem]
       };
     });
     setNewItemType(null);
@@ -809,8 +814,16 @@ export default function InvoiceForm() {
               <input className="form-control" placeholder="Name" value={newItemDraft.name} onChange={(e) => setNewItemDraft((d) => ({ ...d, name: e.target.value }))} />
               <input className="form-control" placeholder="Description" value={newItemDraft.description} onChange={(e) => setNewItemDraft((d) => ({ ...d, description: e.target.value }))} />
               <input className="form-control" value={newItemType} disabled style={{ opacity: 0.7 }} />
-              <input type="number" className="form-control" placeholder="Qty" value={newItemDraft.quantity} onChange={(e) => setNewItemDraft((d) => ({ ...d, quantity: parseFloat(e.target.value) || 0 }))} />
-              <select className="form-control" value={newItemDraft.unit} onChange={(e) => setNewItemDraft((d) => ({ ...d, unit: e.target.value }))}>{UNITS.map((u) => <option key={u} value={u}>{u}</option>)}</select>
+              {newItemType === 'Service' ? (
+                <input className="form-control" value="-" disabled style={{ opacity: 0.6 }} />
+              ) : (
+                <input type="number" className="form-control" placeholder="Qty" value={newItemDraft.quantity} onChange={(e) => setNewItemDraft((d) => ({ ...d, quantity: parseFloat(e.target.value) || 0 }))} />
+              )}
+              {newItemType === 'Service' ? (
+                <input className="form-control" value="-" disabled style={{ opacity: 0.6 }} />
+              ) : (
+                <select className="form-control" value={newItemDraft.unit} onChange={(e) => setNewItemDraft((d) => ({ ...d, unit: e.target.value }))}>{UNITS.map((u) => <option key={u} value={u}>{u}</option>)}</select>
+              )}
               <input type="number" className="form-control" placeholder="Price" value={newItemDraft.price || ''} onChange={(e) => setNewItemDraft((d) => ({ ...d, price: parseFloat(e.target.value) || 0 }))} />
               <input className="form-control" placeholder={newItemType === 'Service' ? 'SAC' : 'HSN'} value={newItemDraft.hsn} onChange={(e) => setNewItemDraft((d) => ({ ...d, hsn: e.target.value }))} />
               <input type="number" className="form-control" placeholder="CGST %" value={newItemDraft.cgstRate || ''} onChange={(e) => setNewItemDraft((d) => ({ ...d, cgstRate: parseFloat(e.target.value) || 0 }))} />
@@ -885,23 +898,31 @@ export default function InvoiceForm() {
                       </td>
                     )}
                     <td style={{ padding: '6px 4px' }}>
-                      <input type="number" className="form-control" style={{ width: '70px', padding: '6px 8px' }} value={item.quantity} min={0} onChange={(e) => setItem(idx, 'quantity', parseFloat(e.target.value) || 0)} />
+                      {item.itemType === 'Service' ? (
+                        <input className="form-control" style={{ width: '70px', padding: '6px 8px', textAlign: 'center', opacity: 0.6 }} value="-" disabled />
+                      ) : (
+                        <input type="number" className="form-control" style={{ width: '70px', padding: '6px 8px' }} value={item.quantity} min={0} onChange={(e) => setItem(idx, 'quantity', parseFloat(e.target.value) || 0)} />
+                      )}
                     </td>
                     <td style={{ padding: '6px 4px' }}>
-                      <div style={{ position: 'relative' }}>
-                        <select
-                          className="form-control"
-                          style={{ width: '90px', padding: '6px 24px 6px 8px', appearance: 'none' }}
-                          value={UNITS.includes(item.unit) ? item.unit : '__custom__'}
-                          onChange={(e) => {
-                            if (e.target.value !== '__custom__') setItem(idx, 'unit', e.target.value);
-                          }}
-                        >
-                          {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
-                          {!UNITS.includes(item.unit) && <option value="__custom__">{item.unit || 'custom'}</option>}
-                        </select>
-                        <ChevronDown size={12} style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }} />
-                      </div>
+                      {item.itemType === 'Service' ? (
+                        <input className="form-control" style={{ width: '90px', padding: '6px 8px', textAlign: 'center', opacity: 0.6 }} value="-" disabled />
+                      ) : (
+                        <div style={{ position: 'relative' }}>
+                          <select
+                            className="form-control"
+                            style={{ width: '90px', padding: '6px 24px 6px 8px', appearance: 'none' }}
+                            value={UNITS.includes(item.unit) ? item.unit : '__custom__'}
+                            onChange={(e) => {
+                              if (e.target.value !== '__custom__') setItem(idx, 'unit', e.target.value);
+                            }}
+                          >
+                            {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                            {!UNITS.includes(item.unit) && <option value="__custom__">{item.unit || 'custom'}</option>}
+                          </select>
+                          <ChevronDown size={12} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }} />
+                        </div>
+                      )}
                     </td>
                     <td style={{ padding: '6px 4px' }}>
                       <input
