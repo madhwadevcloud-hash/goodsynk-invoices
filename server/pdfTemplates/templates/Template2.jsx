@@ -27,7 +27,7 @@ export default function Template2({ invoice }) {
   const PRIMARY = colors.primary;
 
   const s = StyleSheet.create({
-    page: { paddingTop: 50, paddingBottom: 90, paddingHorizontal: 50, fontFamily: 'Inter', color: '#000' },
+    page: { paddingTop: 50, paddingBottom: 100, paddingHorizontal: 40, fontFamily: 'Inter', color: '#000' },
 
     topHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 },
     bizBox: { maxWidth: '60%' },
@@ -58,13 +58,13 @@ export default function Template2({ invoice }) {
     td: { fontSize: 9, color: '#000' },
 
     colNo: { flex: 0.4 },
-    colDesc: { flex: 2.2 },
-    colHsn: { flex: 0.8, textAlign: 'center' },
-    colPrice: { flex: 1.1, textAlign: 'right' },
-    colQty: { flex: 0.9, textAlign: 'center' },
-    colDisc: { flex: 0.7, textAlign: 'center' },
-    colTax: { flex: 0.8, textAlign: 'center' },
-    colTotal: { flex: 1.2, textAlign: 'right' },
+    colDesc: { flex: 2 },
+    colHsn: { flex: 0.7, textAlign: 'center' },
+    colPrice: { flex: 1, textAlign: 'right' },
+    colQty: { flex: 0.8, textAlign: 'center' },
+    colDisc: { flex: 0.6, textAlign: 'center' },
+    colTax: { flex: 0.7, textAlign: 'center' },
+    colTotal: { flex: 1, textAlign: 'right' },
 
     totalsArea: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, borderTop: `1pt solid ${PRIMARY}`, paddingTop: 12 },
     notesArea: { width: '50%' },
@@ -74,9 +74,9 @@ export default function Template2({ invoice }) {
     calcLabel: { fontFamily: B, fontSize: 9, textTransform: 'uppercase', marginRight: 20 },
     calcVal: { fontSize: 9.5, fontFamily: B, width: 60, textAlign: 'right' },
 
-    signatureArea: { position: 'absolute', bottom: 70, right: 50, alignItems: 'center' },
+    signatureArea: { marginTop: 40, alignItems: 'flex-end', paddingRight: 40 },
     signatureLine: { width: 120, borderTopWidth: 0.5, borderTopColor: '#000', borderTopStyle: 'solid', paddingTop: 6, alignItems: 'center' },
-    footer: { position: 'absolute', bottom: 20, left: 50, right: 50, flexDirection: 'column', alignItems: 'center', borderTopWidth: 0.5, borderTopColor: '#999', borderTopStyle: 'solid', paddingTop: 8 },
+    footer: { position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'column', alignItems: 'center', borderTopWidth: 0.5, borderTopColor: '#999', borderTopStyle: 'solid', paddingTop: 8 },
     watermarkContainer: {
       position: 'absolute',
       top: 0,
@@ -147,15 +147,15 @@ export default function Template2({ invoice }) {
         <View style={s.detailsRow}>
           <View style={s.detailsItem}>
             <Text style={s.detailsLabel}>{isQuotation ? 'Quotation No' : 'Invoice No'}</Text>
-            <Text style={s.detailsValue}>{invoice.invoiceNumber || invoice.quotationNumber}</Text>
+            <Text style={s.detailsValue} wrap={false}>{invoice.invoiceNumber || invoice.quotationNumber}</Text>
           </View>
           <View style={s.detailsItem}>
             <Text style={s.detailsLabel}>Date of Issue</Text>
-            <Text style={s.detailsValue}>{new Date(invoice.issueDate).toLocaleDateString()}</Text>
+            <Text style={s.detailsValue} wrap={false}>{new Date(invoice.issueDate).toLocaleDateString()}</Text>
           </View>
           <View style={s.detailsItem}>
             <Text style={s.detailsLabel}>Due Date</Text>
-            <Text style={s.detailsValue}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'Upon Receipt'}</Text>
+            <Text style={s.detailsValue} wrap={false}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'Upon Receipt'}</Text>
           </View>
         </View>
 

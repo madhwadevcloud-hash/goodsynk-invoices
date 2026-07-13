@@ -52,11 +52,12 @@ export default function Template6({ invoice }) {
 
     paymentInfoBlock: { width: '50%', alignItems: 'flex-end' },
     paymentTitle: { fontSize: 10, fontFamily: B, color: NAVY, marginBottom: 6, textAlign: 'right' },
-    payRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 3 },
+    payRow: { flexDirection: 'row', width: 220, marginBottom: 3 },
     payLabel: { fontSize: 9, color: '#555', width: 80, textAlign: 'right' },
-    payVal: { fontSize: 9, color: '#000', fontFamily: M, width: 140 },
-
+    payColon: { fontSize: 9, color: '#555', width: 10, textAlign: 'center' },
+    payVal: { fontSize: 9, color: '#000', fontFamily: M, width: 130, textAlign: 'left' },
     table: { width: '100%', paddingHorizontal: 40, marginBottom: 20 },
+
     tHead: { flexDirection: 'row', backgroundColor: ORANGE, paddingVertical: 8 },
     th: { fontSize: 9, fontFamily: B, color: '#FFF', textTransform: 'uppercase', textAlign: 'center' },
 
@@ -97,6 +98,25 @@ export default function Template6({ invoice }) {
     contactIconCircle: { width: 14, height: 14, borderRadius: 7, backgroundColor: ORANGE, marginRight: 8, position: 'relative' },
     contactIconBg: { position: 'absolute', top: 3, left: 3, width: 8, height: 8, borderRadius: 4, backgroundColor: '#FFF' },
     contactText: { fontSize: 8.5, color: '#444' },
+
+    watermarkContainer: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: -100,
+    },
+    watermarkText: {
+      fontSize: 60,
+      fontFamily: B,
+      color: hexToRgba(NAVY, 0.08),
+      transform: 'rotate(-45deg)',
+      letterSpacing: 5,
+    },
   });
 
   const currency = invoice._currency || invoice.currency || 'INR';
@@ -117,7 +137,7 @@ export default function Template6({ invoice }) {
       <Page size="A4" style={s.page}>
         {/* Watermark */}
         {biz?.plan !== 'premium' && (
-          <View style={s.watermarkContainer} pointerEvents="none">
+          <View style={s.watermarkContainer} fixed pointerEvents="none">
             <Text style={s.watermarkText}>GoodSynk</Text>
           </View>
         )}
@@ -178,10 +198,10 @@ export default function Template6({ invoice }) {
             {(!isQuotation && biz?.bankDetails?.accountNumber) ? (
               <>
                 <Text style={s.paymentTitle}>Payment Info :</Text>
-                <View style={s.payRow}><Text style={s.payLabel}>Account No</Text><Text style={s.payVal}>: {biz.bankDetails.accountNumber}</Text></View>
-                <View style={s.payRow}><Text style={s.payLabel}>A/C Name</Text><Text style={s.payVal}>: {biz.bankDetails.accountName}</Text></View>
-                {biz.bankDetails.bankName && <View style={s.payRow}><Text style={s.payLabel}>Bank Name</Text><Text style={s.payVal}>: {biz.bankDetails.bankName}</Text></View>}
-                {biz.bankDetails.ifscCode && <View style={s.payRow}><Text style={s.payLabel}>IFSC Code</Text><Text style={s.payVal}>: {biz.bankDetails.ifscCode}</Text></View>}
+                <View style={s.payRow}><Text style={s.payLabel}>Account No</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.accountNumber}</Text></View>
+                <View style={s.payRow}><Text style={s.payLabel}>A/C Name</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.accountName}</Text></View>
+                {biz.bankDetails.bankName && <View style={s.payRow}><Text style={s.payLabel}>Bank Name</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.bankName}</Text></View>}
+                {biz.bankDetails.ifscCode && <View style={s.payRow}><Text style={s.payLabel}>IFSC Code</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.ifscCode}</Text></View>}
               </>
             ) : invoice.paymentInfo ? (
               <>

@@ -72,12 +72,30 @@ export default function Template5({ invoice }) {
 
     footer: { position: 'absolute', bottom: 20, left: 40, right: 40, borderTop: '0.5pt solid #EEE', paddingTop: 8, flexDirection: 'row', justifyContent: 'center', gap: 30 },
     footerText: { fontSize: 8, color: '#666' },
+    watermarkContainer: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: -100,
+    },
+    watermarkText: {
+      fontSize: 60,
+      fontFamily: B,
+      color: hexToRgba(BLUE, 0.08),
+      transform: 'rotate(-45deg)',
+      letterSpacing: 5,
+    },
   });
   const currency = invoice._currency || invoice.currency || 'INR';
   const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency, currencyDisplay: 'code' }).format(n || 0).replace(currency, '').trim();
   const bizName = biz?.businessName || biz?.name || '';
   const isQuotation = invoice.invoiceType === 'quotation';
-  
+
   const showCGST = invoice.cgstTotal > 0;
   const showSGST = invoice.sgstTotal > 0;
   const showIGST = invoice.igstTotal > 0;
@@ -91,11 +109,11 @@ export default function Template5({ invoice }) {
       <Page size="A4" style={s.page}>
         {/* Watermark */}
         {biz?.plan !== 'premium' && (
-          <View style={s.watermarkContainer} pointerEvents="none">
+          <View style={s.watermarkContainer} fixed pointerEvents="none">
             <Text style={s.watermarkText}>GoodSynk</Text>
           </View>
         )}
-        
+
         {/* Header */}
         <View style={s.headerTop}>
           <View style={s.headerLeft}>
@@ -103,10 +121,10 @@ export default function Template5({ invoice }) {
             <View style={{ marginTop: 20 }}>
               <Text style={s.metaLabel}>Invoice No.</Text>
               <Text style={[s.metaVal, { fontFamily: B, marginBottom: 10 }]}>{invoice.invoiceNumber || invoice.quotationNumber}</Text>
-              
+
               <Text style={s.metaLabel}>Date</Text>
               <Text style={[s.metaVal, { marginBottom: 10 }]}>{new Date(invoice.issueDate).toLocaleDateString()}</Text>
-              
+
               {invoice.dueDate && (
                 <>
                   <Text style={s.metaLabel}>Due Date</Text>
@@ -195,7 +213,7 @@ export default function Template5({ invoice }) {
                 </Text>
               </View>
             )}
-            
+
             {invoice.notes && (
               <View style={{ marginBottom: 15 }}>
                 <Text style={s.metaLabel}>Notes</Text>

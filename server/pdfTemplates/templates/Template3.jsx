@@ -29,7 +29,7 @@ export default function Template3({ invoice }) {
 
   const s = StyleSheet.create({
     page: { paddingBottom: 60, fontFamily: 'Inter', color: '#000' },
-    
+
     headerBlock: { backgroundColor: DARK_BLUE, paddingTop: 30, paddingBottom: 25, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
     headerLeft: { width: '65%' },
     headerRight: { width: '30%', alignItems: 'flex-end' },
@@ -53,7 +53,7 @@ export default function Template3({ invoice }) {
     tableWrap: { paddingHorizontal: 40 },
     tHead: { flexDirection: 'row', backgroundColor: DARK_BLUE, color: '#FFF', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 4 },
     th: { fontSize: 9.5, fontFamily: B },
-    
+
     tRow: { flexDirection: 'row', paddingVertical: 12, paddingHorizontal: 15, borderBottom: '1pt solid #EEE' },
     td: { fontSize: 9, color: '#000' },
 
@@ -74,7 +74,7 @@ export default function Template3({ invoice }) {
     totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
     totalLabel: { fontSize: 9, color: '#222' },
     totalVal: { fontSize: 9.5, fontFamily: M, color: '#000' },
-    
+
     grandTotalRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, paddingTop: 10, borderTop: '1pt solid #DDD' },
     grandTotalLabel: { fontSize: 11, fontFamily: B, color: DARK_BLUE },
     grandTotalVal: { fontSize: 11, fontFamily: B, color: DARK_BLUE },
@@ -84,6 +84,26 @@ export default function Template3({ invoice }) {
 
     footer: { position: 'absolute', bottom: 30, left: 40, right: 40, borderTop: '0.5pt solid #EEE', paddingTop: 10, flexDirection: 'row', justifyContent: 'center', gap: 30 },
     footerText: { fontSize: 8.5, color: '#666' },
+
+
+    watermarkContainer: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: -100,
+    },
+    watermarkText: {
+      fontSize: 60,
+      fontFamily: B,
+      color: hexToRgba(DARK_BLUE, 0.08),
+      transform: 'rotate(-45deg)',
+      letterSpacing: 5,
+    },
   });
 
   const currency = invoice._currency || invoice.currency || 'INR';
@@ -91,7 +111,7 @@ export default function Template3({ invoice }) {
   const bizName = biz?.businessName || biz?.name || '';
   const isQuotation = invoice.invoiceType === 'quotation';
   const docTitle = isQuotation ? 'QUOTATION' : 'INVOICE';
-  
+
   const showCGST = invoice.cgstTotal > 0;
   const showSGST = invoice.sgstTotal > 0;
   const showIGST = invoice.igstTotal > 0;
@@ -104,11 +124,11 @@ export default function Template3({ invoice }) {
       <Page size="A4" style={s.page}>
         {/* Watermark */}
         {biz?.plan !== 'premium' && (
-          <View style={s.watermarkContainer} pointerEvents="none">
+          <View style={s.watermarkContainer} fixed pointerEvents="none">
             <Text style={s.watermarkText}>GoodSynk</Text>
           </View>
         )}
-        
+
         {/* Header Block */}
         <View style={s.headerBlock}>
           <View style={s.headerLeft}>
@@ -128,20 +148,18 @@ export default function Template3({ invoice }) {
         {/* Separator & Details */}
         <View style={s.separator} />
         <View style={s.detailsRow}>
-           <View style={s.detailsItem}>
-              <Text style={s.detailsLabel}>{isQuotation ? 'Quotation No' : 'Invoice No'}</Text>
-              <Text style={s.detailsValue}>{invoice.invoiceNumber || invoice.quotationNumber}</Text>
-           </View>
-           <View style={s.detailsItem}>
-              <Text style={s.detailsLabel}>Date of Issue</Text>
-              <Text style={s.detailsValue}>{new Date(invoice.issueDate).toLocaleDateString()}</Text>
-           </View>
-           <View style={s.detailsItem}>
-              <Text style={s.detailsLabel}>Due Date</Text>
-              <Text style={s.detailsValue}>
-                {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'Upon Receipt'}
-              </Text>
-           </View>
+          <View style={s.detailsItem}>
+            <Text style={s.detailsLabel}>{isQuotation ? 'Quotation No' : 'Invoice No'}</Text>
+            <Text style={s.detailsValue} wrap={false}>{invoice.invoiceNumber || invoice.quotationNumber}</Text>
+          </View>
+          <View style={s.detailsItem}>
+            <Text style={s.detailsLabel}>Date of Issue</Text>
+            <Text style={s.detailsValue} wrap={false}>{new Date(invoice.issueDate).toLocaleDateString()}</Text>
+          </View>
+          <View style={s.detailsItem}>
+            <Text style={s.detailsLabel}>Due Date</Text>
+            <Text style={s.detailsValue} wrap={false}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'Upon Receipt'}</Text>
+          </View>
         </View>
 
         {/* Client & Payment Info Grid */}
@@ -219,14 +237,14 @@ export default function Template3({ invoice }) {
                 <Text style={s.paymentText}>{invoice.notes}</Text>
               </View>
             )}
-             {invoice.termsAndConditions && (
+            {invoice.termsAndConditions && (
               <View style={{ marginTop: 15 }}>
                 <Text style={s.paymentTitle}>Terms & Conditions</Text>
                 <Text style={s.paymentText}>{invoice.termsAndConditions}</Text>
               </View>
             )}
           </View>
-          
+
           <View style={s.rightBottom}>
             <View style={s.totalsBox}>
               <View style={s.totalRow}><Text style={s.totalLabel}>Subtotal</Text><Text style={s.totalVal}>{fmt(invoice.subtotal)}</Text></View>

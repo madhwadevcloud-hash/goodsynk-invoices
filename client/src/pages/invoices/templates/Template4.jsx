@@ -74,13 +74,32 @@ export default function Template4({ invoice }) {
 
     footer: { position: 'absolute', bottom: 30, left: 40, right: 40, borderTopWidth: 1, borderTopColor: GOLD, borderTopStyle: 'solid', paddingTop: 10, flexDirection: 'row', justifyContent: 'center', gap: 30 },
     footerText: { fontSize: 8, color: NAVY, textTransform: 'uppercase', letterSpacing: 1 },
+
+    watermarkContainer: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: -100,
+    },
+    watermarkText: {
+      fontSize: 60,
+      fontFamily: B,
+      color: hexToRgba(NAVY, 0.08),
+      transform: 'rotate(-45deg)',
+      letterSpacing: 5,
+    },
   });
   const currency = invoice._currency || invoice.currency || 'INR';
   const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency, currencyDisplay: 'code' }).format(n || 0).replace(currency, '').trim();
   const bizName = biz?.businessName || biz?.name || '';
   const isQuotation = invoice.invoiceType === 'quotation';
   const docTitle = isQuotation ? 'QUOTATION' : 'INVOICE';
-  
+
   const showCGST = invoice.cgstTotal > 0;
   const showSGST = invoice.sgstTotal > 0;
   const showIGST = invoice.igstTotal > 0;
@@ -93,7 +112,7 @@ export default function Template4({ invoice }) {
       <Page size="A4" style={s.page}>
         {/* Watermark */}
         {biz?.plan !== 'premium' && (
-          <View style={s.watermarkContainer} pointerEvents="none">
+          <View style={s.watermarkContainer} fixed pointerEvents="none">
             <Text style={s.watermarkText}>GoodSynk</Text>
           </View>
         )}
@@ -150,37 +169,37 @@ export default function Template4({ invoice }) {
 
         {/* Table */}
         <View style={s.table}>
-            <View style={s.tHeadRow}>
-              <Text style={[s.th, s.colNo]}>#</Text>
-              <Text style={[s.th, s.colDesc, { paddingLeft: 10 }]}>Description</Text>
-              {hasHsn && <Text style={[s.th, s.colHsn]}>HSN</Text>}
-              <Text style={[s.th, s.colQty]}>Qty</Text>
-              <Text style={[s.th, s.colPrice]}>Price</Text>
-              {hasDiscount && <Text style={[s.th, s.colDisc]}>Disc%</Text>}
-              {showCGST && <Text style={[s.th, s.colTax]}>CGST</Text>}
-              {showSGST && <Text style={[s.th, s.colTax]}>SGST</Text>}
-              {showIGST && <Text style={[s.th, s.colTax]}>IGST</Text>}
-              {showVAT && <Text style={[s.th, s.colTax]}>VAT</Text>}
-              <Text style={[s.th, s.colTotal]}>Total</Text>
-            </View>
-            {invoice.items?.map((item, i) => (
-              <View key={i} style={s.tRow}>
-                <Text style={[s.td, s.colNo]}>{i + 1}</Text>
-                <View style={[s.colDesc, { paddingLeft: 10 }]}>
-                  <Text style={[s.td, { fontFamily: M }]}>{item.name}</Text>
-                  {item.description && <Text style={{ fontSize: 8, color: '#666', marginTop: 2 }}>{item.description}</Text>}
-                </View>
-                {hasHsn && <Text style={[s.td, s.colHsn]}>{item.hsn || '—'}</Text>}
-                <Text style={[s.td, s.colQty]}>{item.itemType === 'Service' ? '-' : `${item.quantity}${item.unit ? ` ${item.unit}` : ''}`}</Text>
-                <Text style={[s.td, s.colPrice]}>{fmt(item.price)}</Text>
-                {hasDiscount && <Text style={[s.td, s.colDisc]}>{item.discount || 0}%</Text>}
-                  {showCGST && <Text style={[s.td, s.colTax]}>{item.cgstRate || 0}%</Text>}
-                  {showSGST && <Text style={[s.td, s.colTax]}>{item.sgstRate || 0}%</Text>}
-                  {showIGST && <Text style={[s.td, s.colTax]}>{item.igstRate || 0}%</Text>}
-                  {showVAT && <Text style={[s.td, s.colTax]}>{item.vatRate || 0}%</Text>}
-                <Text style={[s.td, s.colTotal, { fontFamily: B }]}>{fmt(item.total)}</Text>
+          <View style={s.tHeadRow}>
+            <Text style={[s.th, s.colNo]}>#</Text>
+            <Text style={[s.th, s.colDesc, { paddingLeft: 10 }]}>Description</Text>
+            {hasHsn && <Text style={[s.th, s.colHsn]}>HSN</Text>}
+            <Text style={[s.th, s.colQty]}>Qty</Text>
+            <Text style={[s.th, s.colPrice]}>Price</Text>
+            {hasDiscount && <Text style={[s.th, s.colDisc]}>Disc%</Text>}
+            {showCGST && <Text style={[s.th, s.colTax]}>CGST</Text>}
+            {showSGST && <Text style={[s.th, s.colTax]}>SGST</Text>}
+            {showIGST && <Text style={[s.th, s.colTax]}>IGST</Text>}
+            {showVAT && <Text style={[s.th, s.colTax]}>VAT</Text>}
+            <Text style={[s.th, s.colTotal]}>Total</Text>
+          </View>
+          {invoice.items?.map((item, i) => (
+            <View key={i} style={s.tRow}>
+              <Text style={[s.td, s.colNo]}>{i + 1}</Text>
+              <View style={[s.colDesc, { paddingLeft: 10 }]}>
+                <Text style={[s.td, { fontFamily: M }]}>{item.name}</Text>
+                {item.description && <Text style={{ fontSize: 8, color: '#666', marginTop: 2 }}>{item.description}</Text>}
               </View>
-            ))}
+              {hasHsn && <Text style={[s.td, s.colHsn]}>{item.hsn || '—'}</Text>}
+              <Text style={[s.td, s.colQty]}>{item.itemType === 'Service' ? '-' : `${item.quantity}${item.unit ? ` ${item.unit}` : ''}`}</Text>
+              <Text style={[s.td, s.colPrice]}>{fmt(item.price)}</Text>
+              {hasDiscount && <Text style={[s.td, s.colDisc]}>{item.discount || 0}%</Text>}
+              {showCGST && <Text style={[s.td, s.colTax]}>{item.cgstRate || 0}%</Text>}
+              {showSGST && <Text style={[s.td, s.colTax]}>{item.sgstRate || 0}%</Text>}
+              {showIGST && <Text style={[s.td, s.colTax]}>{item.igstRate || 0}%</Text>}
+              {showVAT && <Text style={[s.td, s.colTax]}>{item.vatRate || 0}%</Text>}
+              <Text style={[s.td, s.colTotal, { fontFamily: B }]}>{fmt(item.total)}</Text>
+            </View>
+          ))}
         </View>
 
         {/* Bottom */}

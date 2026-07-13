@@ -89,7 +89,50 @@ export default function InvoiceForm() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const { user: currentUser } = useAuth();
+  const authContext = useAuth() || {};
+  const { user: currentUser, updateUser, setUser } = authContext;
+  const [unlockedPlan, setUnlockedPlan] = useState(() =>
+    Boolean(currentUser?.plan === 'pro' || currentUser?.plan === 'premium' || currentUser?.isPro || currentUser?.upgraded)
+  );
+  const [upgradeModal, setUpgradeModal] = useState({ open: false, targetType: null, targetTemplate: null });
+
+  useEffect(() => {
+    if (currentUser?.plan === 'pro' || currentUser?.plan === 'premium' || currentUser?.isPro || currentUser?.upgraded) {
+      setUnlockedPlan(true);
+    }
+  }, [currentUser]);
+
+  const isUpgraded = unlockedPlan || Boolean(currentUser?.plan === 'pro' || currentUser?.plan === 'premium' || currentUser?.isPro || currentUser?.upgraded);
+
+  const handlePerformUpgrade = ({ type, template }) => {
+    setUnlockedPlan(true);
+    setUpgradeModal({ open: false, targetType: null, targetTemplate: null });
+    toast.dismiss('upgrade-template-toast');
+    toast.dismiss('upgrade-notes-toast');
+
+    if (currentUser) {
+      const updatedUser = { ...currentUser, plan: 'pro', isPro: true, upgraded: true };
+      if (typeof updateUser === 'function') updateUser(updatedUser);
+      if (typeof setUser === 'function') setUser(updatedUser);
+    }
+
+    if (type === 'template' && template) {
+      setField('template', template.id);
+      if (!template.id) {
+        setField('templateColors', null);
+      } else {
+        setField('templateColors', DEFAULT_COLORS[template.id.toLowerCase()]);
+      }
+      toast.success('🎉 Plan upgraded! Template unlocked and selected.');
+    } else if (type === 'notes') {
+      const currentNotes = parseNotes(form.notes);
+      setField('notes', serializeNotes([...currentNotes, 'New note']));
+      toast.success('🎉 Plan upgraded! Unlimited notes unlocked.');
+    } else {
+      toast.success('🎉 Plan upgraded successfully!');
+    }
+  };
+
   const [showHsn, setShowHsn] = useState(true);
   const [lineSearchQuery, setLineSearchQuery] = useState('');
   const [lineSearchOpen, setLineSearchOpen] = useState(false);
@@ -210,7 +253,7 @@ export default function InvoiceForm() {
     paymentInfo: '',
     template: '',
     templateColors: null, // { primary, secondary }
-    items: [],
+    items: [defaultItem()],
   });
 
   useEffect(() => {
@@ -287,9 +330,24 @@ export default function InvoiceForm() {
   const fillFromProduct = (idx, productId) => {
     const p = products.find((pr) => pr._id === productId);
     if (!p) return;
+    const isService = !!p.isService;
     setForm((f) => ({
       ...f, items: f.items.map((item, i) =>
-        i === idx ? { ...item, productId: p._id, itemType: p.isService ? 'Service' : 'Product', name: p.name, description: p.description, price: p.price, unit: p.isService ? 'hr' : (p.unit || 'pcs'), hsn: p.hsn, cgstRate: p.cgstRate, sgstRate: p.sgstRate, igstRate: p.igstRate } : item
+        i === idx ? {
+          ...item,
+          productId: p._id,
+          itemType: isService ? 'Service' : 'Product',
+          name: p.name,
+          description: p.description,
+          price: p.price,
+          quantity: isService ? 1 : (item.quantity || 1),
+          unit: isService ? '' : (p.unit || 'pcs'),
+          hsn: p.hsn,
+          cgstRate: p.cgstRate,
+          sgstRate: p.sgstRate,
+          igstRate: p.igstRate,
+          vatRate: p.vatRate || 0,
+        } : item
       ),
     }));
   };
@@ -297,14 +355,16 @@ export default function InvoiceForm() {
 
   const appendProductLine = (product) => {
     if (!product) return;
+    const isService = !!product.isService;
     const line = {
       ...defaultItem(),
       productId: product._id,
-      itemType: product.isService ? 'Service' : 'Product',
+      itemType: isService ? 'Service' : 'Product',
       name: product.name || '',
       description: product.description || '',
       price: product.price || 0,
-      unit: product.isService ? 'hr' : (product.unit || 'pcs'),
+      quantity: isService ? 1 : 1,
+      unit: isService ? '' : (product.unit || 'pcs'),
       hsn: product.hsn || '',
       cgstRate: product.cgstRate || 0,
       sgstRate: product.sgstRate || 0,
@@ -312,10 +372,8 @@ export default function InvoiceForm() {
       vatRate: product.vatRate || 0,
     };
     setForm((f) => {
-      return {
-        ...f,
-        items: [...f.items, line]
-      };
+      const hasOnlyBlank = f.items.length === 1 && !f.items[0].name && !f.items[0].productId && !f.items[0].price;
+      return { ...f, items: hasOnlyBlank ? [line] : [...f.items, line] };
     });
     setLineSearchQuery('');
     setLineSearchOpen(false);
@@ -323,7 +381,7 @@ export default function InvoiceForm() {
 
   const openNewItemPanel = (type) => {
     setNewItemType(type);
-    setNewItemDraft({ ...defaultItem(), itemType: type, unit: type === 'Service' ? 'hr' : 'pcs' });
+    setNewItemDraft({ ...defaultItem(), itemType: type, unit: type === 'Service' ? '' : 'pcs', quantity: type === 'Service' ? 1 : 1 });
     setAddItemMenuOpen(false);
   };
 
@@ -332,13 +390,11 @@ export default function InvoiceForm() {
     const finalItem = {
       ...newItemDraft,
       quantity: newItemType === 'Service' ? 1 : (newItemDraft.quantity || 1),
-      unit: newItemType === 'Service' ? '' : (newItemDraft.unit || 'pcs')
+      unit: newItemType === 'Service' ? '' : (newItemDraft.unit || 'pcs'),
     };
     setForm((f) => {
-      return {
-        ...f,
-        items: [...f.items, finalItem]
-      };
+      const hasOnlyBlank = f.items.length === 1 && !f.items[0].name && !f.items[0].productId && !f.items[0].price;
+      return { ...f, items: hasOnlyBlank ? [finalItem] : [...f.items, finalItem] };
     });
     setNewItemType(null);
     setNewItemDraft(defaultItem());
@@ -514,19 +570,17 @@ export default function InvoiceForm() {
   const selectedBankIndex = Math.min(Number(form.selectedBankIndex || 0), Math.max(bankAccounts.length - 1, 0));
   const bank = bankAccounts[selectedBankIndex] || currentUser?.bankDetails || {};
   const hasBankDetails = bank && (bank.bankName || bank.accountName || bank.accountNumber || bank.ifscCode);
-  const filteredLineProducts = lineSearchQuery.trim()
-    ? products.filter((p) => {
-      const q = lineSearchQuery.toLowerCase();
-
-      return (
-        p.name?.toLowerCase().includes(q) ||
-        p.description?.toLowerCase().includes(q) ||
-        p.hsn?.toLowerCase().includes(q)
-      );
-    })
-    : products;
-
-  const displayedProducts = filteredLineProducts.slice(0, 8);
+  const filteredLineProducts = products.filter((p) => {
+    const q = (lineSearchQuery || '').toLowerCase().trim();
+    if (!q) return true;
+    return (
+      (p.name || '').toLowerCase().includes(q) ||
+      (p.description || '').toLowerCase().includes(q) ||
+      (p.hsn || '').toLowerCase().includes(q) ||
+      (p.itemType || '').toLowerCase().includes(q) ||
+      (p.isService ? 'service' : 'product').includes(q)
+    );
+  });
   const notePoints = form.notes ? form.notes.split('\n') : [];
 
   if (loading) return <div className="flex-center" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
@@ -569,7 +623,7 @@ export default function InvoiceForm() {
             <input type="date" className="form-control" value={form.issueDate} onChange={(e) => setField('issueDate', e.target.value)} />
           </div>
           <div className="form-group">
-            <label className="form-label">Validity *</label>
+            <label className="form-label">Validity <span style={{ color: 'var(--danger)' }}>*</span></label>
             <input type="date" className="form-control" required value={form.dueDate} onChange={(e) => setField('dueDate', e.target.value)} />
           </div>
         </div>
@@ -674,7 +728,9 @@ export default function InvoiceForm() {
           </button>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <label className="form-label">Currency *</label>
+            <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Currency <span style={{ color: 'var(--danger)' }}>*</span>
+            </label>
             <div style={{ position: 'relative' }}>
               <select
                 className="form-control"
@@ -736,66 +792,32 @@ export default function InvoiceForm() {
             value={lineSearchQuery}
             onChange={(e) => { setLineSearchQuery(e.target.value); setLineSearchOpen(true); }}
             onFocus={() => setLineSearchOpen(true)}
-            onBlur={() => setTimeout(() => setLineSearchOpen(false), 150)}
+            onBlur={() => setTimeout(() => setLineSearchOpen(false), 180)}
           />
           {lineSearchOpen && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                right: 0,
-                zIndex: 35,
-                marginTop: 6,
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border)',
-                borderRadius: 12,
-                maxHeight: 320,
-                overflowY: 'auto',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
-                backdropFilter: 'blur(12px)',
-              }}
-            >
+            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 35, marginTop: 4, background: 'var(--bg-card, #fff)', border: '1px solid var(--border, #cbd5e1)', borderRadius: 10, maxHeight: 280, overflowY: 'auto', boxShadow: 'var(--shadow, 0 10px 15px -3px rgba(0,0,0,0.1))' }}>
               {filteredLineProducts.length === 0 ? (
-                <div style={{ padding: '12px 14px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>No products/services found.</div>
-              ) : displayedProducts.map((p) => (
+                <div style={{ padding: '12px 14px', color: 'var(--text-muted, #64748b)', fontSize: '0.82rem' }}>
+                  {products.length === 0 ? 'No products or services found in your inventory.' : 'No matching products/services found.'}
+                </div>
+              ) : filteredLineProducts.map((p) => (
                 <button
-                  key={p._id}
+                  key={p._id || p.name}
                   type="button"
-                  onMouseDown={() => appendProductLine(p)}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--bg-elevated)';
+                  onMouseDown={() => {
+                    appendProductLine(p);
+                    setLineSearchOpen(false);
+                    setLineSearchQuery('');
                   }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                  }}
-                  style={{
-                    width: '100%',
-                    border: 'none',
-                    background: 'transparent',
-                    padding: '12px 16px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    borderBottom: '1px solid var(--border)',
-                    color: 'var(--text-primary)',
-                  }}
+                  style={{ width: '100%', border: 'none', background: 'transparent', padding: '10px 14px', cursor: 'pointer', textAlign: 'left', borderBottom: '1px solid var(--border, #f1f5f9)', display: 'block' }}
                 >
-                  <div
-                    style={{
-                      fontWeight: 700,
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    {p.name}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--text-primary, #1e293b)' }}>{p.name}</span>
+                    <span style={{ fontSize: '0.72rem', background: p.isService || p.itemType === 'Service' ? 'rgba(59,130,246,0.1)' : 'rgba(16,185,129,0.1)', color: p.isService || p.itemType === 'Service' ? '#3b82f6' : '#10b981', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                      {p.itemType || (p.isService ? 'Service' : 'Product')}
+                    </span>
                   </div>
-                  <div
-                    style={{
-                      fontSize: '0.72rem',
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    {[p.description, p.hsn, fmt(p.price)].filter(Boolean).join(' · ')}
-                  </div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #64748b)', marginTop: 2 }}>{[p.description, p.hsn ? `HSN/SAC: ${p.hsn}` : null, fmt(p.price)].filter(Boolean).join(' · ')}</div>
                 </button>
               ))}
             </div>
@@ -878,14 +900,71 @@ export default function InvoiceForm() {
                 const computedAmt = Number(((lineSubtotal * (item.discount || 0)) / 100).toFixed(2));
                 const amtDisplayValue = discAmtDraft[idx] !== undefined ? discAmtDraft[idx] : computedAmt; const productFilterQuery = productQueries[idx];
                 const selectedProductName = products.find((p) => p._id === item.productId)?.name;
-                const filteredProducts = products.filter((p) =>
-                  p.name.toLowerCase().includes((productFilterQuery ?? '').toLowerCase())
-                ).slice(0, 8);
+                const filteredProducts = products.filter((p) => {
+                  const query = (productFilterQuery ?? item.name ?? '').toLowerCase().trim();
+                  if (!query) return true;
+                  return (
+                    (p.name || '').toLowerCase().includes(query) ||
+                    (p.description || '').toLowerCase().includes(query) ||
+                    (p.hsn || '').toLowerCase().includes(query)
+                  );
+                });
 
                 return (
                   <tr key={idx}>
-                    <td style={{ padding: '6px 4px' }}>
-                      <input className="form-control" style={{ minWidth: '150px', padding: '6px 8px' }} placeholder="Item name" value={item.name} onChange={(e) => setItem(idx, 'name', e.target.value)} />
+                    <td style={{ padding: '6px 4px', position: 'relative' }}>
+                      <input
+                        className="form-control"
+                        style={{ minWidth: '160px', padding: '6px 8px', width: '100%' }}
+                        placeholder="Item name / Select product…"
+                        value={item.name || ''}
+                        onFocus={() => {
+                          setOpenProductIdx(idx);
+                          if (productQueries[idx] === undefined) {
+                            setProductQueries((q) => ({ ...q, [idx]: item.name || '' }));
+                          }
+                        }}
+                        onBlur={() => setTimeout(() => setOpenProductIdx(null), 180)}
+                        onChange={(e) => {
+                          setItem(idx, 'name', e.target.value);
+                          setProductQueries((q) => ({ ...q, [idx]: e.target.value }));
+                          setOpenProductIdx(idx);
+                        }}
+                      />
+                      {openProductIdx === idx && filteredProducts.length > 0 && (
+                        <div style={{
+                          position: 'absolute', top: '100%', left: 4, right: 4, zIndex: 50, marginTop: 2,
+                          background: 'var(--bg-card, #fff)', border: '1px solid var(--border, #cbd5e1)',
+                          borderRadius: 8, maxHeight: 220, overflowY: 'auto',
+                          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)'
+                        }}>
+                          {filteredProducts.map((p) => (
+                            <button
+                              key={p._id || p.name}
+                              type="button"
+                              onMouseDown={() => {
+                                fillFromProduct(idx, p._id);
+                                setOpenProductIdx(null);
+                              }}
+                              style={{
+                                width: '100%', border: 'none', background: 'transparent',
+                                padding: '8px 10px', cursor: 'pointer', textAlign: 'left',
+                                borderBottom: '1px solid var(--border, #f1f5f9)', display: 'block'
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-primary, #1e293b)' }}>{p.name}</span>
+                                <span style={{ fontSize: '0.68rem', background: p.isService || p.itemType === 'Service' ? 'rgba(59,130,246,0.1)' : 'rgba(16,185,129,0.1)', color: p.isService || p.itemType === 'Service' ? '#3b82f6' : '#10b981', padding: '1px 5px', borderRadius: '4px', fontWeight: 600 }}>
+                                  {p.itemType || (p.isService ? 'Service' : 'Product')}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: 2 }}>
+                                {[p.description, p.hsn ? `HSN/SAC: ${p.hsn}` : null, fmt(p.price)].filter(Boolean).join(' · ')}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </td>
                     <td style={{ padding: '6px 4px' }}>
                       <input className="form-control" style={{ minWidth: '170px', padding: '6px 8px' }} placeholder="Description" value={item.description || ''} onChange={(e) => setItem(idx, 'description', e.target.value)} />
@@ -918,7 +997,7 @@ export default function InvoiceForm() {
                             {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
                             {!UNITS.includes(item.unit) && <option value="__custom__">{item.unit || 'custom'}</option>}
                           </select>
-                          <ChevronDown size={12} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }} />
+                          <ChevronDown size={12} style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }} />
                         </div>
                       )}
                     </td>
@@ -1144,10 +1223,40 @@ export default function InvoiceForm() {
                   <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setField('notes', serializeNotes(notePoints.filter((_, i) => i !== noteIdx)))}><X size={14} /></button>
                 </div>
               ))}
-              {notePoints.length < 5 ? (
+              {notePoints.length < 5 || isUpgraded ? (
                 <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('notes', serializeNotes([...notePoints, 'New note']))}><Plus size={14} /> Add point</button>
               ) : (
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => toast('Upgrade your plan to add more than 5 note points', { icon: '🔒' })}><Lock size={14} /> Upgrade to add more</button>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => {
+                  toast((toastObj) => (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 500 }}>
+                        🔒 Upgrade your plan to add more than 5 note points
+                      </span>
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        style={{
+                          padding: '4px 14px',
+                          fontWeight: 600,
+                          fontSize: '0.85rem',
+                          cursor: 'pointer',
+                          background: 'var(--primary, #3b82f6)',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '4px',
+                          whiteSpace: 'nowrap'
+                        }}
+                        onClick={() => {
+                          toast.dismiss(toastObj.id);
+                          handlePerformUpgrade({ type: 'notes' });
+                        }}
+                      >
+                        OK
+                      </button>
+                    </div>
+                  ), { id: 'upgrade-notes-toast', duration: 8000 });
+                  setUpgradeModal({ open: true, targetType: 'notes', targetTemplate: null });
+                }}><Lock size={14} /> Upgrade to add more</button>
               )}
             </div>
           </div>
@@ -1183,14 +1292,42 @@ export default function InvoiceForm() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginTop: 8 }}>
                 {TEMPLATES.map((t) => {
                   const isSelected = (form.template || '') === t.id;
-                  const isLocked = t.id && !FREE_TEMPLATES.includes(t.id);
+                  const isLocked = !isUpgraded && t.id && !FREE_TEMPLATES.includes(t.id);
                   return (
                     <button
                       key={t.id}
                       type="button"
                       onClick={() => {
                         if (isLocked) {
-                          toast('Upgrade your plan to unlock this template', { icon: '🔒' });
+                          toast((toastObj) => (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 500 }}>
+                                🔒 Upgrade your plan to unlock this template
+                              </span>
+                              <button
+                                type="button"
+                                className="btn btn-primary btn-sm"
+                                style={{
+                                  padding: '4px 14px',
+                                  fontWeight: 600,
+                                  fontSize: '0.85rem',
+                                  cursor: 'pointer',
+                                  background: 'var(--primary, #3b82f6)',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  whiteSpace: 'nowrap'
+                                }}
+                                onClick={() => {
+                                  toast.dismiss(toastObj.id);
+                                  handlePerformUpgrade({ type: 'template', template: t });
+                                }}
+                              >
+                                OK
+                              </button>
+                            </div>
+                          ), { id: 'upgrade-template-toast', duration: 8000 });
+                          setUpgradeModal({ open: true, targetType: 'template', targetTemplate: t });
                           return;
                         }
                         setField('template', t.id);
@@ -1531,6 +1668,39 @@ export default function InvoiceForm() {
         </div>
       )}
 
+      {/* ══ Upgrade Plan Modal ══ */}
+      {upgradeModal.open && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(3px)' }}>
+          <div style={{ background: 'var(--bg-card, #fff)', borderRadius: 'var(--radius-lg, 12px)', padding: '28px 28px 20px', width: 420, maxWidth: '95vw', boxShadow: 'var(--shadow, 0 10px 25px rgba(0,0,0,0.1))', border: '1px solid var(--border, #e2e8f0)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <h3 style={{ fontWeight: 700, fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: 8, margin: 0, color: 'var(--text-primary, #1e293b)' }}>
+                <Lock size={18} style={{ color: 'var(--primary, #3b82f6)' }} /> Upgrade Plan
+              </h3>
+              <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted, #64748b)' }} onClick={() => setUpgradeModal({ open: false, targetType: null, targetTemplate: null })}><X size={18} /></button>
+            </div>
+            <div style={{ marginBottom: 24 }}>
+              <p style={{ margin: '0 0 12px 0', color: 'var(--text-secondary, #475569)', fontSize: '0.92rem', lineHeight: 1.6 }}>
+                {upgradeModal.targetType === 'template' ? (
+                  <>Upgrade your plan to unlock <strong>{upgradeModal.targetTemplate?.name || 'this template'}</strong> alongside all premium invoice templates, unlimited note points, and advanced features.</>
+                ) : (
+                  <>Upgrade your plan to add more than 5 note points and unlock all premium invoice templates and features.</>
+                )}
+              </p>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, borderTop: '1px solid var(--border, #e2e8f0)', paddingTop: 16 }}>
+              <button type="button" className="btn btn-ghost" onClick={() => setUpgradeModal({ open: false, targetType: null, targetTemplate: null })}>Cancel</button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ padding: '6px 20px', fontWeight: 600 }}
+                onClick={() => handlePerformUpgrade({ type: upgradeModal.targetType, template: upgradeModal.targetTemplate })}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </form>
   );
