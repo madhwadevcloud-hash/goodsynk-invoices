@@ -569,7 +569,7 @@ export default function InvoiceForm() {
             <input type="date" className="form-control" value={form.issueDate} onChange={(e) => setField('issueDate', e.target.value)} />
           </div>
           <div className="form-group">
-            <label className="form-label">Validity <span style={{ color: 'var(--danger)' }}>*</span></label>
+            <label className="form-label">Validity *</label>
             <input type="date" className="form-control" required value={form.dueDate} onChange={(e) => setField('dueDate', e.target.value)} />
           </div>
         </div>
@@ -674,9 +674,7 @@ export default function InvoiceForm() {
           </button>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Currency <span style={{ color: 'var(--danger)' }}>*</span>
-            </label>
+            <label className="form-label">Currency *</label>
             <div style={{ position: 'relative' }}>
               <select
                 className="form-control"
