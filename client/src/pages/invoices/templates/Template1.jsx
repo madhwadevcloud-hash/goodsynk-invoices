@@ -1,5 +1,5 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Font, Image, Svg, Rect, Path } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 
 // Register fonts (same as before)
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
@@ -8,6 +8,19 @@ Font.register({ family: 'Inter-Bold', src: 'https://fonts.gstatic.com/s/inter/v1
 
 const B = 'Inter-Bold';
 const M = 'Inter-SemiBold';
+
+
+const hexToRgba = (hex, alpha) => {
+  if (!hex) return 'rgba(0, 0, 0, ' + alpha + ')';
+  let clean = hex.replace('#', '');
+  if (clean.length === 3) {
+    clean = clean.split('').map(c => c + c).join('');
+  }
+  const r = parseInt(clean.substring(0, 2), 16) || 0;
+  const g = parseInt(clean.substring(2, 4), 16) || 0;
+  const b = parseInt(clean.substring(4, 6), 16) || 0;
+  return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
+};
 
 export default function Template1({ invoice }) {
   const { client, user: biz } = invoice;
@@ -73,15 +86,12 @@ export default function Template1({ invoice }) {
       justifyContent: 'center',
       zIndex: -100,
     },
-    watermarkImage: {
-      width: 250,
-      height: 250,
-      objectFit: 'contain',
-      opacity: 0.12,
-    },
-    watermarkSvg: {
-      width: 250,
-      height: 250,
+    watermarkText: {
+      fontSize: 60,
+      fontFamily: B,
+      color: hexToRgba(PRIMARY, 0.08),
+      transform: 'rotate(-45deg)',
+      letterSpacing: 5,
     },
     footerText: { fontSize: 8.5, color: '#FFF' },
   });
@@ -105,42 +115,11 @@ export default function Template1({ invoice }) {
     <Document>
       <Page size="A4" style={s.page}>
         {/* Watermark */}
-        <View style={s.watermarkContainer} pointerEvents="none">
-          {biz?.businessLogo ? (
-            <Image src={biz.businessLogo} style={s.watermarkImage} />
-          ) : (
-            <Svg viewBox="0 0 24 24" style={s.watermarkSvg}>
-              <Rect x={1} y={1} width={22} height={22} rx={4} fill={PRIMARY} fillOpacity={0.12} />
-              <Path
-                d="M6 4v16l2-1 2 1 2-1 2 1 2-1 2 1V4l-2 1-2-1-2 1-2-1-2 1-2-1Z"
-                fill="none"
-                stroke="#FFF"
-                strokeOpacity={0.65}
-                strokeWidth={1.2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <Path
-                d="M14 9h-3a1.5 1.5 0 0 0 0 3h2a1.5 1.5 0 0 1 0 3h-3"
-                fill="none"
-                stroke="#FFF"
-                strokeOpacity={0.65}
-                strokeWidth={1.2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <Path
-                d="M12 7.5v9"
-                fill="none"
-                stroke="#FFF"
-                strokeOpacity={0.65}
-                strokeWidth={1.2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </Svg>
-          )}
-        </View>
+        {biz?.plan !== 'premium' && (
+          <View style={s.watermarkContainer} pointerEvents="none">
+            <Text style={s.watermarkText}>GoodSynk</Text>
+          </View>
+        )}
 
         <View style={s.topSection}>
           <View>
