@@ -147,18 +147,19 @@ export default function ProfileSetup() {
               <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <Phone size={12} /> Phone <span style={{ color: 'var(--danger)' }}>*</span>
               </label>
-              <input className="form-control" placeholder="+91 98765 43210" {...register('phone')} />
+              <input className={`form-control${errors.phone ? ' error' : ''}`} placeholder="9876543210" {...register('phone', { required: 'Phone is required', pattern: { value: /^[0-9]{10}$/, message: 'Phone must be exactly 10 digits' } })} />
+              {errors.phone && <p className="form-error">{errors.phone.message}</p>}
             </div>
             <div className="form-group">
               <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <FileText size={12} /> GSTIN
               </label>
               <input
-                className="form-control"
+                className={`form-control${errors.gstin ? ' error' : ''}`}
                 placeholder="22AAAAA0000A1Z5"
                 style={{ textTransform: 'uppercase' }}
                 {...register('gstin', {
-                  pattern: { value: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, message: 'Invalid GSTIN format' }
+                  pattern: { value: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, message: 'Invalid GSTIN format (e.g. 22AAAAA0000A1Z5)' }
                 })}
               />
               {errors.gstin && <p className="form-error">{errors.gstin.message}</p>}
@@ -185,7 +186,8 @@ export default function ProfileSetup() {
             </div>
             <div className="form-group">
               <label className="form-label">Pincode <span style={{ color: 'var(--danger)' }}>*</span></label>
-              <input className="form-control" placeholder="560001" {...register('pincode')} />
+              <input className={`form-control${errors.pincode ? ' error' : ''}`} placeholder="560001" {...register('pincode', { required: 'Pincode is required', pattern: { value: /^[0-9]{6}$/, message: 'Pincode must be exactly 6 digits' } })} />
+              {errors.pincode && <p className="form-error">{errors.pincode.message}</p>}
             </div>
           </div>
 
@@ -217,14 +219,16 @@ export default function ProfileSetup() {
             </div>
             <div className="form-group">
               <label className="form-label">Account Number <span style={{ color: 'var(--danger)' }}>*</span></label>
-              <input className="form-control" placeholder="50100XXXXXXX" {...register('accountNumber')} />
+              <input className={`form-control${errors.accountNumber ? ' error' : ''}`} placeholder="50100XXXXXXX" {...register('accountNumber', { required: 'Account number is required', pattern: { value: /^[0-9]{9,18}$/, message: 'Account number must be 9 to 18 digits' } })} />
+              {errors.accountNumber && <p className="form-error">{errors.accountNumber.message}</p>}
             </div>
           </div>
 
           <div className="form-grid-3">
             <div className="form-group">
               <label className="form-label">IFSC Code <span style={{ color: 'var(--danger)' }}>*</span></label>
-              <input className="form-control" placeholder="HDFC0001234" style={{ textTransform: 'uppercase' }} {...register('ifscCode')} />
+              <input className={`form-control${errors.ifscCode ? ' error' : ''}`} placeholder="HDFC0001234" style={{ textTransform: 'uppercase' }} {...register('ifscCode', { required: 'IFSC is required', pattern: { value: /^[A-Z]{4}0[A-Z0-9]{6}$/, message: 'Invalid IFSC format (e.g. HDFC0001234)' } })} />
+              {errors.ifscCode && <p className="form-error">{errors.ifscCode.message}</p>}
             </div>
             <div className="form-group">
               <label className="form-label">SWIFT Code</label>

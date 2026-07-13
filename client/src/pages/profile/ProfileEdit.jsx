@@ -353,6 +353,12 @@ export default function ProfileEdit() {
   const closeBankModal = () => setBankModal({ open: false, index: null, draft: emptyBankAccount() });
   const saveBankModal = () => {
     if (!bankModal.draft.bankName && !bankModal.draft.accountNumber) return toast.error('Bank name or account number is required');
+    if (bankModal.draft.accountNumber && !/^[0-9]{9,18}$/.test(bankModal.draft.accountNumber)) {
+      return toast.error('Account number must be 9 to 18 digits');
+    }
+    if (bankModal.draft.ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankModal.draft.ifscCode)) {
+      return toast.error('Invalid IFSC Code format (e.g. HDFC0001234)');
+    }
     const rawNext = bankModal.index === null ? [...bankAccounts, bankModal.draft] : bankAccounts.map((bank, index) => index === bankModal.index ? bankModal.draft : bank);
     const next = bankModal.draft.isPrimary
       ? rawNext.map((bank, index) => ({ ...bank, isPrimary: index === (bankModal.index === null ? rawNext.length - 1 : bankModal.index) }))
@@ -586,14 +592,15 @@ export default function ProfileEdit() {
                 <div className="form-grid">
                   <div className="form-group">
                     <label className="form-label">Phone <span style={{ color: 'var(--danger)' }}>*</span></label>
-                    <input className="form-control" placeholder="+91 98765 43210" {...register('phone')} />
+                    <input className={`form-control${errors.phone ? ' error' : ''}`} placeholder="9876543210" {...register('phone', { required: 'Phone is required', pattern: { value: /^[0-9]{10}$/, message: 'Phone must be exactly 10 digits' } })} />
+                    {errors.phone && <p className="form-error">{errors.phone.message}</p>}
                   </div>
                   <div className="form-group">
                     <label className="form-label">GSTIN</label>
-                    <input className="form-control" placeholder="22AAAAA0000A1Z5"
+                    <input className={`form-control${errors.gstin ? ' error' : ''}`} placeholder="22AAAAA0000A1Z5"
                       style={{ textTransform: 'uppercase' }}
                       {...register('gstin', {
-                        pattern: { value: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, message: 'Invalid GSTIN' }
+                        pattern: { value: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, message: 'Invalid GSTIN format (e.g. 22AAAAA0000A1Z5)' }
                       })} />
                     {errors.gstin && <p className="form-error">{errors.gstin.message}</p>}
                   </div>
@@ -611,7 +618,8 @@ export default function ProfileEdit() {
                   </div>
                   <div className="form-group">
                     <label className="form-label">Pincode <span style={{ color: 'var(--danger)' }}>*</span></label>
-                    <input className="form-control" placeholder="560001" {...register('pincode')} />
+                    <input className={`form-control${errors.pincode ? ' error' : ''}`} placeholder="560001" {...register('pincode', { required: 'Pincode is required', pattern: { value: /^[0-9]{6}$/, message: 'Pincode must be exactly 6 digits' } })} />
+                    {errors.pincode && <p className="form-error">{errors.pincode.message}</p>}
                   </div>
                   <div className="form-group">
                     <label className="form-label">State <span style={{ color: 'var(--danger)' }}>*</span></label>
@@ -850,9 +858,9 @@ export default function ProfileEdit() {
               <div className="form-group"><label className="form-label">Nick name / Label</label><input className="form-control" value={bankModal.draft.label} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, label: e.target.value } }))} placeholder="Primary / Savings / USD" /></div>
               <div className="form-group"><label className="form-label">Bank Name</label><input className="form-control" value={bankModal.draft.bankName} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, bankName: e.target.value } }))} placeholder="HDFC Bank" /></div>
               <div className="form-group"><label className="form-label">Account Name</label><input className="form-control" value={bankModal.draft.accountName} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, accountName: e.target.value } }))} placeholder="Acme Solutions" /></div>
-              <div className="form-group"><label className="form-label">Account Number</label><input className="form-control" value={bankModal.draft.accountNumber} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, accountNumber: e.target.value } }))} placeholder="50100XXXXXXX" /></div>
-              <div className="form-group"><label className="form-label">IFSC Code</label><input className="form-control" style={{ textTransform: 'uppercase' }} value={bankModal.draft.ifscCode} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, ifscCode: e.target.value.toUpperCase() } }))} placeholder="HDFC0001234" /></div>
-              <div className="form-group"><label className="form-label">SWIFT Code</label><input className="form-control" style={{ textTransform: 'uppercase' }} value={bankModal.draft.swiftCode} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, swiftCode: e.target.value.toUpperCase() } }))} placeholder="Optional" /></div>
+              <div className="form-group"><label className="form-label">Account Number</label><input className="form-control" value={bankModal.draft.accountNumber} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, accountNumber: e.target.value.replace(/[^0-9]/g, '') } }))} placeholder="50100XXXXXXX" /></div>
+              <div className="form-group"><label className="form-label">IFSC Code</label><input className="form-control" style={{ textTransform: 'uppercase' }} value={bankModal.draft.ifscCode} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, ifscCode: e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 11) } }))} placeholder="HDFC0001234" /></div>
+              <div className="form-group"><label className="form-label">SWIFT Code</label><input className="form-control" style={{ textTransform: 'uppercase' }} value={bankModal.draft.swiftCode} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, swiftCode: e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 11) } }))} placeholder="Optional" /></div>
               <div className="form-group"><label className="form-label">Branch</label><input className="form-control" value={bankModal.draft.branch} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, branch: e.target.value } }))} placeholder="Koramangala" /></div>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 28, cursor: 'pointer' }}>
                 <input type="checkbox" checked={!!bankModal.draft.isPrimary} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, isPrimary: e.target.checked } }))} style={{ accentColor: 'var(--primary)' }} />

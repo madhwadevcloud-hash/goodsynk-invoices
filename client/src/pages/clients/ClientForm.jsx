@@ -52,6 +52,18 @@ export default function ClientForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name) return toast.error('Client name is required');
+    if (form.phone && !/^[0-9]{10}$/.test(form.phone)) {
+      return toast.error('Phone number must be exactly 10 digits');
+    }
+    if (form.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(form.gstin)) {
+      return toast.error('Invalid GSTIN format (e.g. 29ABCDE1234F1Z5)');
+    }
+    if (form.pan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(form.pan)) {
+      return toast.error('Invalid PAN format (e.g. ABCDE1234F)');
+    }
+    if (form.address?.pincode && !/^[0-9]{6}$/.test(form.address.pincode)) {
+      return toast.error('Pincode must be exactly 6 digits');
+    }
     setSaving(true);
     try {
       if (isEdit) {
@@ -104,7 +116,7 @@ export default function ClientForm() {
           </div>
           <div className="form-group">
             <label className="form-label">Phone</label>
-            <input className="form-control" value={form.phone} onChange={(e) => setField('phone', e.target.value)} placeholder="+91 9876543210" />
+            <input className="form-control" value={form.phone} onChange={(e) => setField('phone', e.target.value.replace(/[^0-9]/g, '').slice(0, 10))} placeholder="9876543210" />
           </div>
           <div className="form-group">
             <label className="form-label">GSTIN</label>
@@ -137,7 +149,7 @@ export default function ClientForm() {
           </div>
           <div className="form-group">
             <label className="form-label">Pincode</label>
-            <input className="form-control" value={form.address?.pincode} onChange={(e) => setAddr('pincode', e.target.value)} placeholder="400001" />
+            <input className="form-control" value={form.address?.pincode} onChange={(e) => setAddr('pincode', e.target.value.replace(/[^0-9]/g, '').slice(0, 6))} placeholder="400001" />
           </div>
         </div>
       </div>
