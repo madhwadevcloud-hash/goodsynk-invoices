@@ -53,7 +53,12 @@ export default function EmailComposeModal({
         }
         setSending(true);
         try {
-            await onSend({ to: to.trim(), cc: cc.trim(), subject, body });
+            await onSend({ 
+                to: to.trim().replace(/;/g, ','), 
+                cc: cc.trim().replace(/;/g, ','), 
+                subject, 
+                body 
+            });
             toast.success(`${title} email sent successfully!`);
             onClose();
         } catch (err) {
