@@ -96,6 +96,15 @@ export default function InvoiceForm() {
   const [addItemMenuOpen, setAddItemMenuOpen] = useState(false);
   const [newItemType, setNewItemType] = useState(null);
   const [newItemDraft, setNewItemDraft] = useState(defaultItem());
+  const [newItemDiscMode, setNewItemDiscMode] = useState('percent');
+  const [newItemDiscValue, setNewItemDiscValue] = useState('');
+
+  const updateNewItemDiscount = (val, mode, price, quantity) => {
+    const rawVal = val === '' ? 0 : parseFloat(val) || 0;
+    const subtotal = (price || 0) * (quantity || 1);
+    const percent = mode === 'flat' ? (subtotal > 0 ? Math.min((rawVal / subtotal) * 100, 100) : 0) : Math.min(rawVal, 100);
+    setNewItemDraft((d) => ({ ...d, discount: percent }));
+  };
   const [discountInputModes, setDiscountInputModes] = useState({});
   const [bankSwitchOpen, setBankSwitchOpen] = useState(false);
 
@@ -342,6 +351,8 @@ export default function InvoiceForm() {
     });
     setNewItemType(null);
     setNewItemDraft(defaultItem());
+    setNewItemDiscMode('percent');
+    setNewItemDiscValue('');
     toast.success(`${newItemType} added`);
   };
 
@@ -815,17 +826,64 @@ export default function InvoiceForm() {
               {newItemType === 'Service' ? (
                 <input className="form-control" value="-" disabled style={{ opacity: 0.6 }} />
               ) : (
-                <input type="number" className="form-control" placeholder="Qty" value={newItemDraft.quantity} onChange={(e) => setNewItemDraft((d) => ({ ...d, quantity: parseFloat(e.target.value) || 0 }))} />
+                <input 
+                  type="number" 
+                  className="form-control" 
+                  placeholder="Qty" 
+                  value={newItemDraft.quantity} 
+                  onChange={(e) => {
+                    const nextQty = parseFloat(e.target.value) || 0;
+                    setNewItemDraft((d) => ({ ...d, quantity: nextQty }));
+                    updateNewItemDiscount(newItemDiscValue, newItemDiscMode, newItemDraft.price, nextQty);
+                  }} 
+                />
               )}
               {newItemType === 'Service' ? (
                 <input className="form-control" value="-" disabled style={{ opacity: 0.6 }} />
               ) : (
                 <select className="form-control" value={newItemDraft.unit} onChange={(e) => setNewItemDraft((d) => ({ ...d, unit: e.target.value }))}>{UNITS.map((u) => <option key={u} value={u}>{u}</option>)}</select>
               )}
-              <input type="number" className="form-control" placeholder="Price" value={newItemDraft.price || ''} onChange={(e) => setNewItemDraft((d) => ({ ...d, price: parseFloat(e.target.value) || 0 }))} />
+              <input 
+                type="number" 
+                className="form-control" 
+                placeholder="Price" 
+                value={newItemDraft.price || ''} 
+                onChange={(e) => {
+                  const nextPrice = parseFloat(e.target.value) || 0;
+                  setNewItemDraft((d) => ({ ...d, price: nextPrice }));
+                  updateNewItemDiscount(newItemDiscValue, newItemDiscMode, nextPrice, newItemDraft.quantity || 1);
+                }} 
+              />
               <input className="form-control" placeholder={newItemType === 'Service' ? 'SAC' : 'HSN'} value={newItemDraft.hsn} onChange={(e) => setNewItemDraft((d) => ({ ...d, hsn: e.target.value }))} />
               {discConfig.mode === 'item' && (
-                <input type="number" className="form-control" placeholder="Disc %" value={newItemDraft.discount || ''} onChange={(e) => setNewItemDraft((d) => ({ ...d, discount: parseFloat(e.target.value) || 0 }))} />
+                <div style={{ display: 'flex', width: '100%', gap: 0 }}>
+                  <input
+                    type="number"
+                    className="form-control"
+                    placeholder="0"
+                    style={{ flex: 1, borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
+                    value={newItemDiscValue}
+                    min={0}
+                    onChange={(e) => {
+                      const nextVal = e.target.value;
+                      setNewItemDiscValue(nextVal);
+                      updateNewItemDiscount(nextVal, newItemDiscMode, newItemDraft.price, newItemDraft.quantity || 1);
+                    }}
+                  />
+                  <select
+                    className="form-control"
+                    value={newItemDiscMode}
+                    onChange={(e) => {
+                      const nextMode = e.target.value;
+                      setNewItemDiscMode(nextMode);
+                      updateNewItemDiscount(newItemDiscValue, nextMode, newItemDraft.price, newItemDraft.quantity || 1);
+                    }}
+                    style={{ width: 54, borderTopLeftRadius: 0, borderBottomLeftRadius: 0, padding: '6px 4px', cursor: 'pointer' }}
+                  >
+                    <option value="percent">%</option>
+                    <option value="flat">₹</option>
+                  </select>
+                </div>
               )}
               {form.taxType !== 'none' && (
                 form.taxType === 'vat' ? (
