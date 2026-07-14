@@ -20,12 +20,12 @@ const PLANS = [
         invoicesLimit: 10,
         features: [
             { label: '3 clients', included: true },
-            { label: '10 invoices & quotations / mo', included: true },
+            { label: '10 invoices & quotations / month', included: true },
             { label: 'Classic Blue & Minimalist templates', included: true },
             { label: 'Up to 5 note points per document', included: true },
             { label: 'All 6 templates + custom colors', included: false },
             { label: 'Multiple bank accounts', included: false },
-            { label: 'Priority support', included: false },
+
         ],
         cta: 'Stay on Free Trial',
     },
@@ -45,13 +45,37 @@ const PLANS = [
         invoicesLimit: 50,
         features: [
             { label: '15 clients', included: true },
-            { label: '50 invoices & quotations / mo', included: true },
+            { label: '50 invoices & quotations / month', included: true },
             { label: 'All 6 templates + custom colors', included: true },
             { label: 'Unlimited note points', included: true },
             { label: 'Multiple bank accounts', included: true },
-            { label: 'Priority support', included: false },
+
         ],
         cta: 'Upgrade to Growth',
+    },
+    {
+        id: 'growth_yearly',
+        tag: 'Growth',
+        name: 'Growth (Yearly)',
+        icon: Sparkles,
+        price: 2388,
+        priceLabel: '₹2,388',
+        priceSuffix: '/ year',
+        blurb: "Annual plan with a discount.",
+        color: 'var(--primary)',
+        bg: 'var(--primary-bg)',
+        popular: false,
+        clientsLimit: 15,
+        invoicesLimit: 50,
+        features: [
+            { label: '15 clients', included: true },
+            { label: '50 invoices & quotations / month', included: true },
+            { label: 'All 6 templates + custom colors', included: true },
+            { label: 'Unlimited note points', included: true },
+            { label: 'Multiple bank accounts', included: true },
+
+        ],
+        cta: 'Upgrade to Growth (Yearly)',
     },
     {
         id: 'enterprise',
@@ -72,19 +96,42 @@ const PLANS = [
             { label: 'All 6 templates + custom colors', included: true },
             { label: 'Unlimited note points', included: true },
             { label: 'Multiple bank accounts', included: true },
-            { label: 'Priority support', included: true },
+
         ],
         cta: 'Go Enterprise',
+    },
+    {
+        id: 'enterprise_yearly',
+        tag: 'Scale',
+        name: 'Enterprise (Yearly)',
+        icon: Crown,
+        price: 12000,
+        priceLabel: '₹12,000',
+        priceSuffix: '/ year',
+        blurb: 'Annual enterprise plan with unlimited features.',
+        color: 'var(--warning)',
+        bg: 'var(--warning-bg)',
+        clientsLimit: Infinity,
+        invoicesLimit: Infinity,
+        features: [
+            { label: 'Unlimited clients', included: true },
+            { label: 'Unlimited invoices & quotations', included: true },
+            { label: 'All 6 templates + custom colors', included: true },
+            { label: 'Unlimited note points', included: true },
+            { label: 'Multiple bank accounts', included: true },
+
+        ],
+        cta: 'Upgrade to Enterprise (Yearly)',
     },
 ];
 
 const COMPARISON_ROWS = [
-    ['Clients', ['3', '15', 'Unlimited']],
-    ['Invoices & quotations / month', ['10', '50', 'Unlimited']],
-    ['Templates', ['2 (Classic Blue, Minimalist)', 'All 6 + colors', 'All 6 + colors']],
-    ['Note points per document', ['5', 'Unlimited', 'Unlimited']],
-    ['Multiple bank accounts', [false, true, true]],
-    ['Priority support', [false, false, true]],
+    ['Clients', ['3', '15', '15', 'Unlimited', 'Unlimited']],
+    ['Invoices & quotations / month', ['10', '50', '50', 'Unlimited', 'Unlimited']],
+    ['Templates', ['2 (Classic Blue, Minimalist)', 'All 6 + colors', 'All 6 + colors', 'All 6 + colors', 'All 6 + colors']],
+    ['Note points per document', ['5', 'Unlimited', 'Unlimited', 'Unlimited', 'Unlimited']],
+    ['Multiple bank accounts', [false, true, true, true, true]],
+
 ];
 
 export default function UpgradePage() {
@@ -157,7 +204,7 @@ export default function UpgradePage() {
                         <Users size={20} />
                     </div>
                     <div className="stat-body">
-                        <div className="stat-label">Clients used</div>
+                        <div className="stat-label">Clients (per month)</div>
                         <div className="stat-value">
                             {loadingUsage ? '—' : `${usage.clients} / ${activePlanConfig.clientsLimit === Infinity ? '∞' : activePlanConfig.clientsLimit}`}
                         </div>
@@ -168,9 +215,9 @@ export default function UpgradePage() {
                         <FileText size={20} />
                     </div>
                     <div className="stat-body">
-                        <div className="stat-label">Invoices (all-time)</div>
+                        <div className="stat-label">Invoices (per month)</div>
                         <div className="stat-value">
-                            {loadingUsage ? '—' : `${usage.invoices} / ${activePlanConfig.invoicesLimit === Infinity ? '∞' : activePlanConfig.invoicesLimit + '/mo'}`}
+                            {loadingUsage ? '—' : `${usage.invoices} / ${activePlanConfig.invoicesLimit === Infinity ? '∞' : activePlanConfig.invoicesLimit}`}
                         </div>
                     </div>
                 </div>
@@ -220,7 +267,7 @@ export default function UpgradePage() {
                                 <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{plan.priceSuffix}</span>
                             </div>
                             <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 18 }}>
-                                {plan.clientsLimit === Infinity ? 'Unlimited' : plan.clientsLimit} clients · {plan.invoicesLimit === Infinity ? 'unlimited' : plan.invoicesLimit} invoices/mo
+                                {plan.clientsLimit === Infinity ? 'Unlimited' : plan.clientsLimit} clients · {plan.invoicesLimit === Infinity ? 'unlimited' : plan.invoicesLimit} invoices/month
                             </div>
 
                             <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px', display: 'flex', flexDirection: 'column', gap: 9, flex: 1 }}>

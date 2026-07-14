@@ -92,7 +92,7 @@ const userSchema = new mongoose.Schema(
     },
     plan: {
       type: String,
-      enum: ['free', 'growth', 'enterprise'],
+      enum: ['free', 'growth', 'growth_yearly', 'enterprise', 'enterprise_yearly'],
       default: 'free',
     },
     planUpdatedAt: {
