@@ -14,19 +14,19 @@ const {
   deleteInvoice,
   getStats,
   getUsage,
-} = require('../controllers/invoiceController'); // ← sendEmailWithPDF removed from here
-
+} = require('../controllers/invoiceController');
 
 const { protect } = require('../middleware/authMiddleware');
 
 router.use(protect);
 
+// Literal paths MUST come before '/:id' so Express doesn't treat them as an id
 router.get('/stats', getStats);
-router.route('/').get(getInvoices).post(createInvoice);
+router.get('/usage', getUsage); // protect already applied via router.use above
+
+router.route('/').get(getInvoices).post(checkDocumentLimit, createInvoice);
 router.route('/:id').get(getInvoice).put(updateInvoice).delete(deleteInvoice);
 router.patch('/:id/status', updateInvoiceStatus);
 router.post('/:id/send-email', upload.single('pdf'), sendInvoiceEmail);
-router.post('/', protect, checkDocumentLimit, createInvoice);
-router.get('/usage', protect, getUsage);
 
 module.exports = router;
