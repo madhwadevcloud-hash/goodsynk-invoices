@@ -30,6 +30,10 @@ const getClient = async (req, res) => {
 // @access  Private
 const createClient = async (req, res) => {
   try {
+    const count = await Client.countDocuments({ user: req.user._id });
+    if (count >= 3) {
+      return res.status(403).json({ success: false, message: 'Client limit reached. Get a subscription to add more clients.' });
+    }
     const client = await Client.create({ ...req.body, user: req.user._id });
     res.status(201).json({ success: true, client });
   } catch (err) {
