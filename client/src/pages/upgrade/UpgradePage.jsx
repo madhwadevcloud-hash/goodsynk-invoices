@@ -215,7 +215,7 @@ export default function UpgradePage() {
                         <FileText size={20} />
                     </div>
                     <div className="stat-body">
-                        <div className="stat-label">Invoices (per month)</div>
+                        <div className="stat-label">Invoices & Quotations (per month)</div>
                         <div className="stat-value">
                             {loadingUsage ? '—' : `${usage.invoices} / ${activePlanConfig.invoicesLimit === Infinity ? '∞' : activePlanConfig.invoicesLimit}`}
                         </div>
