@@ -1,5 +1,6 @@
 const Quotation = require('../models/Quotation');
 const { upsertProductsFromItems } = require('../utils/productHelper');
+const { getLimits } = require('../utils/planLimits');
 
 // Helper: recalculate totals from items
 const calcTotals = (items, isInterstate, taxType = 'gst_india') => {
@@ -98,6 +99,30 @@ const getQuotation = async (req, res) => {
 // @route POST /api/quotations
 const createQuotation = async (req, res) => {
   try {
+    const limits = getLimits(req.user.plan);
+
+    if (limits.documentsPerMonth !== Infinity) {
+      const Invoice = require('../models/Invoice');
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const [invoiceCount, quotationCount] = await Promise.all([
+        Invoice.countDocuments({ user: req.user._id, createdAt: { $gte: startOfMonth } }),
+        Quotation.countDocuments({ user: req.user._id, createdAt: { $gte: startOfMonth } }),
+      ]);
+
+      const totalDocs = invoiceCount + quotationCount;
+      if (totalDocs >= limits.documentsPerMonth) {
+        return res.status(403).json({
+          success: false,
+          code: 'PLAN_LIMIT_DOCUMENTS',
+          message: `You have reached your plan limit of ${limits.documentsPerMonth} invoices & quotations per month. Please upgrade to create more.`,
+          limitReached: true,
+        });
+      }
+    }
+
     const { items = [], isInterstate = false, taxType = 'gst_india', dueDate, invoiceNumber, invoiceType, ...rest } = req.body;
     const totals = calcTotals(items, isInterstate, taxType);
     const quotation = await Quotation.create({
@@ -203,11 +228,34 @@ const deleteQuotation = async (req, res) => {
 // @route POST /api/quotations/:id/convert
 const convertToInvoice = async (req, res) => {
   try {
+    const Invoice = require('../models/Invoice');
+
+    // Enforce document limit before creating converted invoice
+    const limits = getLimits(req.user.plan);
+    if (limits.documentsPerMonth !== Infinity) {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const [invoiceCount, quotationCount] = await Promise.all([
+        Invoice.countDocuments({ user: req.user._id, createdAt: { $gte: startOfMonth } }),
+        Quotation.countDocuments({ user: req.user._id, createdAt: { $gte: startOfMonth } }),
+      ]);
+
+      const totalDocs = invoiceCount + quotationCount;
+      if (totalDocs >= limits.documentsPerMonth) {
+        return res.status(403).json({
+          success: false,
+          code: 'PLAN_LIMIT_DOCUMENTS',
+          message: `You have reached your plan limit of ${limits.documentsPerMonth} invoices & quotations per month. Please upgrade to create more.`,
+          limitReached: true,
+        });
+      }
+    }
+
     const quotation = await Quotation.findOne({ _id: req.params.id, user: req.user._id })
       .populate('client');
     if (!quotation) return res.status(404).json({ success: false, message: 'Quotation not found' });
-
-    const Invoice = require('../models/Invoice');
 
     // Pluck only fields that exist in Invoice's lineItemSchema (avoid strict-mode issues)
     const items = quotation.items.map(item => ({

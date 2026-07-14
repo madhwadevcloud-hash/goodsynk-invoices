@@ -116,6 +116,29 @@ const getInvoice = async (req, res) => {
 // @access  Private
 const createInvoice = async (req, res) => {
   try {
+    const limits = getLimits(req.user.plan);
+
+    if (limits.documentsPerMonth !== Infinity) {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const [invoiceCount, quotationCount] = await Promise.all([
+        Invoice.countDocuments({ user: req.user._id, createdAt: { $gte: startOfMonth } }),
+        Quotation.countDocuments({ user: req.user._id, createdAt: { $gte: startOfMonth } }),
+      ]);
+
+      const totalDocs = invoiceCount + quotationCount;
+      if (totalDocs >= limits.documentsPerMonth) {
+        return res.status(403).json({
+          success: false,
+          code: 'PLAN_LIMIT_DOCUMENTS',
+          message: `You have reached your plan limit of ${limits.documentsPerMonth} invoices & quotations per month. Please upgrade to create more.`,
+          limitReached: true,
+        });
+      }
+    }
+
     const { items = [], isInterstate = false, ...rest } = req.body;
     const totals = calcTotals(items, isInterstate);
     const invoice = await Invoice.create({ ...rest, ...totals, isInterstate, user: req.user._id, template: req.body.template || req.user.invoiceTemplate || 'template1' });
@@ -129,6 +152,7 @@ const createInvoice = async (req, res) => {
     res.status(400).json({ success: false, message: err.message });
   }
 };
+
 
 // @desc    Update invoice
 // @route   PUT /api/invoices/:id

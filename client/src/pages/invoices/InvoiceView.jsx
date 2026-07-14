@@ -69,7 +69,12 @@ export default function InvoiceView() {
       const r = await quotationAPI.convert(id);
       toast.success(`Invoice ${r.data.invoiceNumber} created!`);
       navigate(`/invoices/${r.data.invoiceId}`);
-    } catch {
+    } catch (err) {
+      if (err.response?.status === 403 && err.response?.data?.code === 'PLAN_LIMIT_DOCUMENTS') {
+        toast.error(err.response.data.message);
+        navigate('/upgrade');
+        return;
+      }
       toast.error('Failed to convert quotation');
     } finally {
       setConverting(false);

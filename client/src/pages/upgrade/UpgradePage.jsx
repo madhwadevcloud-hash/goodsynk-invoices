@@ -24,7 +24,7 @@ const PLANS = [
             { label: 'Classic Blue & Minimalist templates', included: true },
             { label: 'Up to 5 note points per document', included: true },
             { label: 'All 6 templates + custom colors', included: false },
-            { label: 'Multiple bank accounts', included: false },
+            { label: 'Multiple bank accounts', included: true },
 
         ],
         cta: 'Stay on Free Trial',
@@ -130,7 +130,7 @@ const COMPARISON_ROWS = [
     ['Invoices & quotations / month', ['10', '50', '50', 'Unlimited', 'Unlimited']],
     ['Templates', ['2 (Classic Blue, Minimalist)', 'All 6 + colors', 'All 6 + colors', 'All 6 + colors', 'All 6 + colors']],
     ['Note points per document', ['5', 'Unlimited', 'Unlimited', 'Unlimited', 'Unlimited']],
-    ['Multiple bank accounts', [false, true, true, true, true]],
+    ['Multiple bank accounts', [true, true, true, true, true]],
 
 ];
 
