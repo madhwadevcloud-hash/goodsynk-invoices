@@ -116,7 +116,7 @@ export default function Template1({ invoice }) {
       <Page size="A4" style={s.page}>
         {/* Watermark */}
         {biz?.plan !== 'premium' && (
-          <View style={s.watermarkContainer} pointerEvents="none">
+          <View style={s.watermarkContainer} pointerEvents="none" fixed>
             <Text style={s.watermarkText}>GoodSynk</Text>
           </View>
         )}
@@ -166,20 +166,14 @@ export default function Template1({ invoice }) {
               {client?.address?.city && <Text style={s.infoText}>{client.address.city}, {client.address.state} {client.address.pincode}</Text>}
               {client?.phone && <Text style={s.infoText}>{client.phone}</Text>}
             </View>
+            {isQuotation && biz?.bankDetails?.accountNumber && (
             <View style={s.infoCol}>
               <Text style={s.infoTitle}>Payment Details</Text>
-              {(!isQuotation && biz?.bankDetails?.accountNumber) ? (
-                <>
-                  {biz.bankDetails.bankName && <Text style={s.infoText}>Bank: {biz.bankDetails.bankName}</Text>}
-                  <Text style={s.infoText}>Account: {biz.bankDetails.accountNumber}</Text>
-                  {biz.bankDetails.ifscCode && <Text style={s.infoText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
-                </>
-              ) : (
-                <>
-                  {invoice.paymentInfo && <Text style={s.infoText}>{invoice.paymentInfo}</Text>}
-                </>
-              )}
+              {biz.bankDetails.bankName && <Text style={s.infoText}>Bank: {biz.bankDetails.bankName}</Text>}
+              <Text style={s.infoText}>Account: {biz.bankDetails.accountNumber}</Text>
+              {biz.bankDetails.ifscCode && <Text style={s.infoText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
             </View>
+            )}
           </View>
 
           {/* Table */}

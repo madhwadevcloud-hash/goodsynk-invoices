@@ -203,13 +203,13 @@ export default function Template5({ invoice }) {
         {/* Footer */}
         <View style={s.bottomSection}>
           <View style={s.leftBottom}>
-            {(!isQuotation && biz?.bankDetails?.accountNumber) && (
+            {isQuotation && biz?.bankDetails?.accountNumber && (
               <View style={{ marginBottom: 20 }}>
                 <Text style={s.metaLabel}>Payment Information</Text>
                 <Text style={s.metaVal}>
                   {biz.bankDetails.bankName && `Bank: ${biz.bankDetails.bankName}\n`}
-                  Account Name: {biz.bankDetails.accountName}{'\n'}
-                  Account No.: {biz.bankDetails.accountNumber}{'\n'}
+                  Account Name: {biz.bankDetails.accountName}{`\n`}
+                  Account No.: {biz.bankDetails.accountNumber}{`\n`}
                   {biz.bankDetails.ifscCode && `IFSC: ${biz.bankDetails.ifscCode}`}
                 </Text>
               </View>

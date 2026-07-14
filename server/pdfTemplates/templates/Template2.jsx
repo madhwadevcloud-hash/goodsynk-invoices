@@ -117,7 +117,7 @@ export default function Template2({ invoice }) {
       <Page size="A4" style={s.page}>
         {/* Watermark */}
         {biz?.plan !== 'premium' && (
-          <View style={s.watermarkContainer} pointerEvents="none">
+          <View style={s.watermarkContainer} pointerEvents="none" fixed>
             <Text style={s.watermarkText}>GoodSynk</Text>
           </View>
         )}
