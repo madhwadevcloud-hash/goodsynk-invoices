@@ -90,6 +90,15 @@ const userSchema = new mongoose.Schema(
       type: Object,
       default: null,
     },
+    plan: {
+      type: String,
+      enum: ['free', 'growth', 'enterprise'],
+      default: 'free',
+    },
+    planUpdatedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
   { timestamps: true }
 );

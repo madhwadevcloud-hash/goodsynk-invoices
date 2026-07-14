@@ -86,7 +86,14 @@ export default function ClientForm() {
           navigate('/clients');
         }
       }
-    } catch (err) { toast.error(err.response?.data?.message || 'Failed to save client'); }
+    } catch (err) {
+      if (err.response?.status === 403 && err.response?.data?.code === 'PLAN_LIMIT_CLIENTS') {
+        toast.error(err.response.data.message);
+        navigate('/upgrade');
+        return;
+      }
+      toast.error(err.response?.data?.message || 'Failed to save client');
+    }
     finally { setSaving(false); }
   };
 

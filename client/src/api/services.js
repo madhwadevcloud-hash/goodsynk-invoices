@@ -9,6 +9,7 @@ export const authAPI = {
   updateMe: (data) => api.put('/auth/me', data),
   changePassword: (data) => api.put('/auth/change-password', data),
   deleteAccount: () => api.delete('/auth/me'),
+  upgradePlan: (plan) => api.put('/auth/upgrade-plan', { plan }),
   uploadAvatar: (file) => {
     const form = new FormData();
     form.append('avatar', file);
@@ -27,6 +28,7 @@ export const invoiceAPI = {
   updateStatus: (id, data) => api.patch(`/invoices/${id}/status`, data),
   delete: (id) => api.delete(`/invoices/${id}`),
   getStats: () => api.get('/invoices/stats'),
+  getUsage: () => api.get('/invoices/usage'),
 
   sendEmail: (id, { to, cc, subject, body, pdfBlob, pdfFileName, viewUrl }) => {
     const form = new FormData();

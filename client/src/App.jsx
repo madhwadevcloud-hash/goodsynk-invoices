@@ -3,11 +3,9 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { isProfileComplete } from './utils/profileValidation';
 
-// Auth pages
 const Login = lazy(() => import('./pages/auth/Login'));
 const Register = lazy(() => import('./pages/auth/Register'));
 
-// App pages
 const AppLayout = lazy(() => import('./components/layout/AppLayout'));
 const Dashboard = lazy(() => import('./pages/dashboard/Dashboard'));
 const InvoiceList = lazy(() => import('./pages/invoices/InvoiceList'));
@@ -22,49 +20,38 @@ const ProfileEdit = lazy(() => import('./pages/profile/ProfileEdit'));
 const ProfileSetup = lazy(() => import('./pages/profile/ProfileSetup'));
 const Templates = lazy(() => import('./pages/settings/Templates'));
 const Home = lazy(() => import('./pages/home/Home'));
+const UpgradePage = lazy(() => import('./pages/upgrade/UpgradePage'));
 
-// Public share page — no auth required
 const PublicDocumentView = lazy(() => import('./pages/public/PublicDocumentView'));
 
-// ── Guards ──────────────────────────────────────────────────────────────────
-
-// Requires authentication
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
   if (loading) return <div className="page-loader"><div className="spinner" /></div>;
   if (!user) return <Navigate to="/" replace />;
-  // Allow login, register, and profile-setup pages for authenticated users
   if (location.pathname !== '/login' && location.pathname !== '/register' && location.pathname !== '/profile-setup') {
     return <Navigate to="/dashboard" replace />;
   }
   return children;
 };
 
-
-// Public-only (redirect to /dashboard if already logged in)
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div className="page-loader"><div className="spinner" /></div>;
   if (user) {
-    // If user exists but businessName not set, redirect to profile setup
     if (!user.businessName) return <Navigate to="/profile-setup" replace />;
     return <Navigate to="/dashboard" replace />;
   }
   return children;
 };
 
-// Requires authentication AND a complete profile (businessName set)
-// We removed the businessName check so users can skip profile setup.
 const ProfileGuard = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div className="page-loader"><div className="spinner" /></div>;
   if (!user) return <Navigate to="/" replace />;
-  // Removed: if (!user.businessName) return <Navigate to="/profile-setup" replace />;
   return children;
 };
 
-// Strict guard for generating invoices/quotations
 const RequireProfile = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return <div className="page-loader"><div className="spinner" /></div>;
@@ -73,37 +60,27 @@ const RequireProfile = ({ children }) => {
   return children;
 };
 
-// Shared fallback shown while any lazy chunk is loading
 const PageFallback = () => <div className="page-loader"><div className="spinner" /></div>;
-
-// ── App ─────────────────────────────────────────────────────────────────────
 
 export default function App() {
   return (
     <Suspense fallback={<PageFallback />}>
       <Routes>
-
-        {/* Homepage — always accessible */}
         <Route path="/" element={<Home />} />
-
-        {/* Public auth routes */}
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-
-        {/* Public share page — no login, no guard, anyone with the link can view */}
         <Route path="/share/:docType/:token" element={<PublicDocumentView />} />
 
-        {/* Profile setup — requires token but not a complete profile */}
         <Route
           path="/profile-setup"
           element={<ProtectedRoute><ProfileSetup /></ProtectedRoute>}
         />
 
-        {/* Protected app routes — requires auth AND complete profile */}
         <Route element={<ProfileGuard><AppLayout /></ProfileGuard>}>
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="profile" element={<ProfileEdit />} />
           <Route path="templates" element={<Templates />} />
+          <Route path="upgrade" element={<UpgradePage />} />
 
           <Route path="invoices" element={<InvoiceList />} />
           <Route path="invoices/new" element={<RequireProfile><InvoiceForm /></RequireProfile>} />
@@ -124,7 +101,6 @@ export default function App() {
           <Route path="products/:id/edit" element={<ProductForm />} />
         </Route>
 
-        {/* Catch-all → Home */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

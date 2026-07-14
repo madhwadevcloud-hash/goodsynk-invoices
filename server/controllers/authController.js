@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { PLAN_LIMITS } = require('../utils/planLimits');
 
 // Helper: generate JWT
 const generateToken = (id) =>
@@ -33,6 +34,7 @@ const register = async (req, res) => {
         email: user.email,
         businessName: user.businessName,
         currency: user.currency,
+        plan: user.plan,
       },
     });
   } catch (err) {
@@ -77,6 +79,7 @@ const login = async (req, res) => {
         currency: user.currency,
         bankDetails: user.bankDetails,
         bankAccounts: user.bankAccounts,
+        plan: user.plan,
       },
     });
   } catch (err) {
@@ -249,6 +252,7 @@ const googleLogin = async (req, res) => {
         currency: user.currency,
         bankDetails: user.bankDetails,
         bankAccounts: user.bankAccounts,
+        plan: user.plan,
       },
     });
   } catch (err) {
@@ -256,4 +260,31 @@ const googleLogin = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe, updateMe, changePassword, deleteMe, googleLogin };
+// @desc    Upgrade / change subscription plan
+// @route   PUT /api/auth/upgrade-plan
+// @access  Private
+const upgradePlan = async (req, res) => {
+  try {
+    const { plan } = req.body;
+
+    if (!plan || !Object.keys(PLAN_LIMITS).includes(plan)) {
+      return res.status(400).json({ success: false, message: 'Invalid plan selected' });
+    }
+
+    if (req.user.plan === plan) {
+      return res.status(400).json({ success: false, message: `You are already on the ${plan} plan` });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { plan, planUpdatedAt: new Date() },
+      { new: true }
+    );
+
+    res.json({ success: true, message: `Upgraded to ${plan} plan`, user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+module.exports = { register, login, getMe, updateMe, changePassword, deleteMe, googleLogin, upgradePlan };

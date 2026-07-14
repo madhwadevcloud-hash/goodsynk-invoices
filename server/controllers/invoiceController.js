@@ -1,5 +1,7 @@
 const Invoice = require('../models/Invoice');
 const { upsertProductsFromItems } = require('../utils/productHelper');
+const Quotation = require('../models/Quotation');
+const { getLimits } = require('../utils/planLimits');
 
 // Helper: recalculate invoice totals from items
 const calcTotals = (items, isInterstate) => {
@@ -33,7 +35,36 @@ const calcTotals = (items, isInterstate) => {
 
   return { items: recalculated, subtotal, discountAmount, cgstTotal, sgstTotal, igstTotal, taxTotal, total: grandTotal };
 };
+const getUsage = async (req, res) => {
+  try {
+    const Client = require('../models/Client');
+    const userId = req.user._id;
+    const limits = getLimits(req.user.plan);
 
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const [clientCount, invoiceCount, quotationCount] = await Promise.all([
+      Client.countDocuments({ user: userId }),
+      Invoice.countDocuments({ user: userId, createdAt: { $gte: startOfMonth } }),
+      Quotation.countDocuments({ user: userId, createdAt: { $gte: startOfMonth } }),
+    ]);
+
+    res.json({
+      success: true,
+      usage: {
+        plan: req.user.plan,
+        clients: clientCount,
+        clientsLimit: limits.clients,
+        documentsThisMonth: invoiceCount + quotationCount,
+        documentsLimit: limits.invoicesPerMonth,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 // @desc    Get all invoices for logged-in user
 // @route   GET /api/invoices
 // @access  Private
@@ -88,7 +119,7 @@ const createInvoice = async (req, res) => {
     const { items = [], isInterstate = false, ...rest } = req.body;
     const totals = calcTotals(items, isInterstate);
     const invoice = await Invoice.create({ ...rest, ...totals, isInterstate, user: req.user._id, template: req.body.template || req.user.invoiceTemplate || 'template1' });
-    
+
     // Automatically reflect items in products/services database
     await upsertProductsFromItems(req.user._id, items);
 
@@ -202,4 +233,4 @@ const getStats = async (req, res) => {
   }
 };
 
-module.exports = { getInvoices, getInvoice, createInvoice, updateInvoice, updateInvoiceStatus, deleteInvoice, getStats };
+module.exports = { getInvoices, getInvoice, createInvoice, updateInvoice, updateInvoiceStatus, deleteInvoice, getStats, getUsage };

@@ -4,6 +4,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 const { sendQuotationEmail } = require('../controllers/emailController');
+const { checkDocumentLimit } = require('../middleware/planLimitMiddleware');
 const {
   getQuotations,
   getQuotation,
@@ -21,5 +22,6 @@ router.route('/:id').get(getQuotation).put(updateQuotation).delete(deleteQuotati
 router.route('/:id/status').patch(updateQuotationStatus);
 router.route('/:id/convert').post(convertToInvoice);
 router.post('/:id/send-email', upload.single('pdf'), sendQuotationEmail);
+router.post('/', protect, checkDocumentLimit, createQuotation);
 
 module.exports = router;

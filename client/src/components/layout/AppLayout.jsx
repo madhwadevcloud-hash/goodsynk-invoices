@@ -11,6 +11,7 @@ import {
   UserCircle2,
   ClipboardList,
   Palette,
+  Sparkles,
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { isProfileComplete } from '../../utils/profileValidation';
@@ -23,6 +24,7 @@ const navItems = [
   { to: '/products', icon: Package, label: 'Products & Services' },
   { to: '/templates', icon: Palette, label: 'Invoice Templates' },
   { to: '/profile', icon: UserCircle2, label: 'My Profile' },
+
 ];
 
 const pageTitles = {
@@ -37,6 +39,7 @@ const pageTitles = {
   '/products/new': 'New Product',
   '/templates': 'Invoice Templates',
   '/profile': 'My Profile',
+  '/upgrade': 'Upgrade Plan',
 };
 
 export default function AppLayout() {
@@ -85,6 +88,19 @@ export default function AppLayout() {
               {label}
             </NavLink>
           ))}
+          <NavLink
+            to="/upgrade"
+            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+            style={{
+              marginTop: 10,
+              border: '1.5px dashed var(--primary)',
+              color: 'var(--primary)',
+              fontWeight: 700,
+            }}
+          >
+            <Sparkles size={17} />
+            Upgrade plan
+          </NavLink>
         </nav>
 
         <div className="sidebar-footer">

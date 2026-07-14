@@ -151,6 +151,12 @@ export default function InvoiceForm() {
       toast.success('Client added');
       setNewClientModal(false);
     } catch (err) {
+      if (err.response?.status === 403 && err.response?.data?.code === 'PLAN_LIMIT_CLIENTS') {
+        toast.error(err.response.data.message);
+        setNewClientModal(false);
+        navigate('/upgrade');
+        return;
+      }
       toast.error(err.response?.data?.message || 'Failed to create client');
     } finally {
       setCreatingClient(false);
@@ -493,6 +499,11 @@ export default function InvoiceForm() {
 
       navigate(`${basePath}/${savedInvoice._id}`);
     } catch (err) {
+      if (err.response?.status === 403 && err.response?.data?.code === 'PLAN_LIMIT_DOCUMENTS') {
+        toast.error(err.response.data.message);
+        navigate('/upgrade');
+        return;
+      }
       toast.error(err.response?.data?.message || 'Failed to save invoice');
     } finally {
       setSaving(false);
@@ -1159,7 +1170,7 @@ export default function InvoiceForm() {
               {notePoints.length < 5 ? (
                 <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('notes', serializeNotes([...notePoints, 'New note']))}><Plus size={14} /> Add point</button>
               ) : (
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => toast('Upgrade your plan to add more than 5 note points', { icon: '🔒' })}><Lock size={14} /> Upgrade to add more</button>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => { toast('Upgrade your plan to add more than 5 note points', { icon: '🔒' }); navigate('/upgrade'); }}><Lock size={14} /> Upgrade to add more</button>
               )}
             </div>
           </div>
@@ -1203,6 +1214,7 @@ export default function InvoiceForm() {
                       onClick={() => {
                         if (isLocked) {
                           toast('Upgrade your plan to unlock this template', { icon: '🔒' });
+                          navigate('/upgrade');
                           return;
                         }
                         setField('template', t.id);
