@@ -1,4 +1,5 @@
 const Client = require('../models/Client');
+const { getLimits } = require('../utils/planLimits');
 
 // @desc    Get all clients for logged-in user
 // @route   GET /api/clients
@@ -30,10 +31,19 @@ const getClient = async (req, res) => {
 // @access  Private
 const createClient = async (req, res) => {
   try {
-    const count = await Client.countDocuments({ user: req.user._id });
-    if (count >= 3) {
-      return res.status(403).json({ success: false, message: 'Client limit reached. Get a subscription to add more clients.' });
+    const limits = getLimits(req.user.plan);
+    if (limits.clients !== Infinity) {
+      const count = await Client.countDocuments({ user: req.user._id });
+      if (count >= limits.clients) {
+        return res.status(403).json({
+          success: false,
+          code: 'PLAN_LIMIT_CLIENTS',
+          message: `You have reached your plan limit of ${limits.clients} clients. Please upgrade to add more.`,
+          limitReached: true,
+        });
+      }
     }
+    
     const client = await Client.create({ ...req.body, user: req.user._id });
     res.status(201).json({ success: true, client });
   } catch (err) {
