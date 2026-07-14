@@ -195,20 +195,15 @@ export default function Template6({ invoice }) {
           </View>
 
           <View style={s.paymentInfoBlock}>
-            {(!isQuotation && biz?.bankDetails?.accountNumber) ? (
-              <>
-                <Text style={s.paymentTitle}>Payment Info :</Text>
-                <View style={s.payRow}><Text style={s.payLabel}>Account No</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.accountNumber}</Text></View>
-                <View style={s.payRow}><Text style={s.payLabel}>A/C Name</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.accountName}</Text></View>
-                {biz.bankDetails.bankName && <View style={s.payRow}><Text style={s.payLabel}>Bank Name</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.bankName}</Text></View>}
-                {biz.bankDetails.ifscCode && <View style={s.payRow}><Text style={s.payLabel}>IFSC Code</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.ifscCode}</Text></View>}
-              </>
-            ) : invoice.paymentInfo ? (
-              <>
-                <Text style={s.paymentTitle}>Payment Info :</Text>
-                <Text style={s.payVal}>{invoice.paymentInfo}</Text>
-              </>
-            ) : null}
+            {isQuotation && biz?.bankDetails?.accountNumber ? (
+            <>
+              <Text style={s.paymentTitle}>Payment Info :</Text>
+              <View style={s.payRow}><Text style={s.payLabel}>Account No</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.accountNumber}</Text></View>
+              <View style={s.payRow}><Text style={s.payLabel}>A/C Name</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.accountName}</Text></View>
+              {biz.bankDetails.bankName && <View style={s.payRow}><Text style={s.payLabel}>Bank Name</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.bankName}</Text></View>}
+              {biz.bankDetails.ifscCode && <View style={s.payRow}><Text style={s.payLabel}>IFSC Code</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.ifscCode}</Text></View>}
+            </>
+          ) : null}
           </View>
         </View>
 

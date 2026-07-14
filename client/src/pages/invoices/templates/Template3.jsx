@@ -178,19 +178,17 @@ export default function Template3({ invoice }) {
             </Text>
           </View>
 
-          <View style={s.metaColumn}>
-            <Text style={s.metaLabel}>Payment Details</Text>
-            {(!isQuotation && biz?.bankDetails?.accountNumber) ? (
+          {isQuotation && biz?.bankDetails?.accountNumber && (
+            <View style={s.metaColumn}>
+              <Text style={s.metaLabel}>Payment Details</Text>
               <View>
                 {biz.bankDetails.bankName && <Text style={s.billToText}>Bank: {biz.bankDetails.bankName}</Text>}
                 <Text style={s.billToText}>A/C Name: {biz.bankDetails.accountName}</Text>
                 <Text style={s.billToText}>A/C Number: {biz.bankDetails.accountNumber}</Text>
                 {biz.bankDetails.ifscCode && <Text style={s.billToText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
               </View>
-            ) : (
-              <Text style={s.billToText}>{invoice.paymentInfo || '—'}</Text>
-            )}
-          </View>
+            </View>
+          )}
         </View>
 
         {/* Table */}
