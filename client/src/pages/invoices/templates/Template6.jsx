@@ -253,17 +253,18 @@ export default function Template6({ invoice }) {
         {/* Lower Grid */}
         <View style={s.bottomGrid}>
           <View style={s.leftBottom}>
-            {invoice.termsAndConditions ? (
-              <View style={{ marginBottom: 20 }}>
-                <Text style={s.termsTitle}>Terms & Condition</Text>
-                <Text style={s.termsText}>{invoice.termsAndConditions}</Text>
-              </View>
-            ) : invoice.notes ? (
-              <View style={{ marginBottom: 20 }}>
+            {invoice.notes && (
+              <View style={{ marginBottom: 15 }}>
                 <Text style={s.termsTitle}>Notes</Text>
                 <Text style={s.termsText}>{invoice.notes}</Text>
               </View>
-            ) : null}
+            )}
+            {invoice.termsAndConditions && (
+              <View style={{ marginBottom: 15 }}>
+                <Text style={s.termsTitle}>Terms & Condition</Text>
+                <Text style={s.termsText}>{invoice.termsAndConditions}</Text>
+              </View>
+            )}
           </View>
 
           <View style={s.rightBottom}>
