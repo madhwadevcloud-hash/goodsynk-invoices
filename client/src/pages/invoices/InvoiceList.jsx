@@ -235,7 +235,7 @@ export default function InvoiceList() {
           >
             <option value="all">All Status</option>
             <option value="draft">Draft</option>
-            <option value="sent">Sent</option>
+            <option value="pending">Pending</option>
             <option value="paid">Paid</option>
           </select>
         </div>
@@ -310,29 +310,29 @@ export default function InvoiceList() {
                           background:
                             inv.status === 'paid'
                               ? 'rgba(34,197,94,0.15)'
-                              : inv.status === 'sent'
-                                ? 'rgba(59,130,246,0.15)'
+                              : inv.status === 'pending'
+                                ? 'rgba(234,179,8,0.15)'
                                 : 'rgba(107,114,128,0.15)',
 
                           color:
                             inv.status === 'paid'
                               ? '#22c55e'
-                              : inv.status === 'sent'
-                                ? '#60a5fa'
+                              : inv.status === 'pending'
+                                ? '#eab308'
                                 : '#9ca3af',
 
                           border:
                             inv.status === 'paid'
                               ? '1px solid rgba(34,197,94,0.3)'
-                              : inv.status === 'sent'
-                                ? '1px solid rgba(59,130,246,0.3)'
+                              : inv.status === 'pending'
+                                ? '1px solid rgba(234,179,8,0.3)'
                                 : '1px solid rgba(107,114,128,0.35)',
 
                           fontWeight: 600
                         }}
                       >
                         <option value="draft">Draft</option>
-                        <option value="sent">Sent</option>
+                        <option value="pending">Pending</option>
                         <option value="paid">Paid</option>
                       </select>
                     </td>
