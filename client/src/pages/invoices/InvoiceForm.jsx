@@ -551,6 +551,7 @@ export default function InvoiceForm() {
 
   const displayedProducts = filteredLineProducts.slice(0, 8);
   const notePoints = form.notes ? form.notes.split('\n') : [];
+  const termsPoints = form.termsAndConditions ? form.termsAndConditions.split('\n') : [];
 
   if (loading) return <div className="flex-center" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
 
@@ -1250,16 +1251,35 @@ export default function InvoiceForm() {
                   <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setField('notes', serializeNotes(notePoints.filter((_, i) => i !== noteIdx)))}><X size={14} /></button>
                 </div>
               ))}
-              {notePoints.length < 5 ? (
+              {notePoints.length < 5 && (
                 <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('notes', serializeNotes([...notePoints, 'New note']))}><Plus size={14} /> Add point</button>
-              ) : (
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => { toast('Upgrade your plan to add more than 5 note points', { icon: '🔒' }); navigate('/upgrade'); }}><Lock size={14} /> Upgrade to add more</button>
               )}
             </div>
           </div>
           <div className="form-group">
             <label className="form-label">Terms & Conditions</label>
-            <textarea className="form-control" rows={3} placeholder="Payment due within 30 days..." value={form.termsAndConditions} onChange={(e) => setField('termsAndConditions', e.target.value)} />
+            <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 10, background: 'var(--bg-elevated)' }}>
+              {termsPoints.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: 8 }}>Add bullet-point terms for this {docLabel.toLowerCase()}.</p>}
+              {termsPoints.map((point, termIdx) => (
+                <div key={termIdx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style={{ color: 'var(--primary)', fontWeight: 700 }}>•</span>
+                  <input
+                    className="form-control"
+                    value={point}
+                    onChange={(e) => {
+                      const next = [...termsPoints];
+                      next[termIdx] = e.target.value;
+                      setField('termsAndConditions', serializeNotes(next));
+                    }}
+                    placeholder={`Term ${termIdx + 1}`}
+                  />
+                  <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setField('termsAndConditions', serializeNotes(termsPoints.filter((_, i) => i !== termIdx)))}><X size={14} /></button>
+                </div>
+              ))}
+              {termsPoints.length < 5 && (
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('termsAndConditions', serializeNotes([...termsPoints, 'New term']))}><Plus size={14} /> Add point</button>
+              )}
+            </div>
           </div>
         </div>
 
