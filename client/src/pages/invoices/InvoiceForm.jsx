@@ -597,7 +597,7 @@ export default function InvoiceForm() {
           </div>
         </div>
 
-        <div className="form-grid">
+        <div className="form-grid-3">
           {/* ── Client search-select ── */}
           <div className="form-group" style={{ position: 'relative' }}>
             <label className="form-label">Client *</label>
@@ -671,9 +671,23 @@ export default function InvoiceForm() {
               style={{ opacity: 0.7, cursor: 'not-allowed' }}
             />
           </div>
+          <div className="form-group">
+            <label className="form-label">Currency *</label>
+            <div style={{ position: 'relative' }}>
+              <select
+                className="form-control"
+                style={{ paddingRight: 28, appearance: 'none', width: '100%' }}
+                value={form.currency || 'INR'}
+                onChange={(e) => setField('currency', e.target.value)}
+              >
+                {CURRENCIES.map((c) => <option key={c.code} value={c.code}>{c.label}</option>)}
+              </select>
+              <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }} />
+            </div>
+          </div>
         </div>
         {/* ── Configure Tax / Currency / Format toolbar ── */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, flexWrap: 'wrap', marginTop: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
 
           <button
             type="button"
@@ -695,21 +709,6 @@ export default function InvoiceForm() {
                   ? <span style={{ fontSize: '0.7rem', color: 'var(--primary-light)', marginLeft: 2 }}>(IGST)</span>
                   : <span style={{ fontSize: '0.7rem', color: 'var(--primary-light)', marginLeft: 2 }}>(CGST+SGST)</span>}
           </button>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <label className="form-label">Currency *</label>
-            <div style={{ position: 'relative' }}>
-              <select
-                className="form-control"
-                style={{ paddingRight: 28, appearance: 'none', minWidth: 200 }}
-                value={form.currency || 'INR'}
-                onChange={(e) => setField('currency', e.target.value)}
-              >
-                {CURRENCIES.map((c) => <option key={c.code} value={c.code}>{c.label}</option>)}
-              </select>
-              <ChevronDown size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)' }} />
-            </div>
-          </div>
 
           <button
             type="button"

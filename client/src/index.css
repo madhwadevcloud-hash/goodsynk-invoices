@@ -962,8 +962,8 @@ input::-ms-clear {
     width: 100%;
   }
 
-  .page-header .btn,
-  .page-header button {
+  .page-header .btn:not(.btn-sm),
+  .page-header button:not(.btn-sm) {
     width: 100%;
     justify-content: center;
   }
