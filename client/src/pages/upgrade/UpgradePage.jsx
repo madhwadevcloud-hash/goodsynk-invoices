@@ -18,6 +18,7 @@ const PLANS = [
         bg: 'var(--bg-elevated)',
         clientsLimit: 3,
         invoicesLimit: 10,
+        cycle: 'both', // shown regardless of monthly/yearly toggle
         features: [
             { label: '3 clients', included: true },
             { label: '10 invoices & quotations / month', included: true },
@@ -25,7 +26,6 @@ const PLANS = [
             { label: 'Up to 5 note points per document', included: true },
             { label: 'All 6 templates + custom colors', included: false },
             { label: 'Multiple bank accounts', included: true },
-
         ],
         cta: 'Stay on Free Trial',
     },
@@ -43,13 +43,13 @@ const PLANS = [
         popular: true,
         clientsLimit: 15,
         invoicesLimit: 50,
+        cycle: 'monthly',
         features: [
             { label: '15 clients', included: true },
             { label: '50 invoices & quotations / month', included: true },
             { label: 'All 6 templates + custom colors', included: true },
             { label: 'Unlimited note points', included: true },
             { label: 'Multiple bank accounts', included: true },
-
         ],
         cta: 'Upgrade to Growth',
     },
@@ -61,19 +61,19 @@ const PLANS = [
         price: 2388,
         priceLabel: '₹2,388',
         priceSuffix: '/ year',
-        blurb: "Annual plan with a discount.",
+        blurb: 'Annual plan with a discount.',
         color: 'var(--primary)',
         bg: 'var(--primary-bg)',
-        popular: false,
+        popular: true,
         clientsLimit: 15,
         invoicesLimit: 50,
+        cycle: 'yearly',
         features: [
             { label: '15 clients', included: true },
             { label: '50 invoices & quotations / month', included: true },
             { label: 'All 6 templates + custom colors', included: true },
             { label: 'Unlimited note points', included: true },
             { label: 'Multiple bank accounts', included: true },
-
         ],
         cta: 'Upgrade to Growth (Yearly)',
     },
@@ -90,13 +90,13 @@ const PLANS = [
         bg: 'var(--warning-bg)',
         clientsLimit: Infinity,
         invoicesLimit: Infinity,
+        cycle: 'monthly',
         features: [
             { label: 'Unlimited clients', included: true },
             { label: 'Unlimited invoices & quotations', included: true },
             { label: 'All 6 templates + custom colors', included: true },
             { label: 'Unlimited note points', included: true },
             { label: 'Multiple bank accounts', included: true },
-
         ],
         cta: 'Go Enterprise',
     },
@@ -113,25 +113,24 @@ const PLANS = [
         bg: 'var(--warning-bg)',
         clientsLimit: Infinity,
         invoicesLimit: Infinity,
+        cycle: 'yearly',
         features: [
             { label: 'Unlimited clients', included: true },
             { label: 'Unlimited invoices & quotations', included: true },
             { label: 'All 6 templates + custom colors', included: true },
             { label: 'Unlimited note points', included: true },
             { label: 'Multiple bank accounts', included: true },
-
         ],
         cta: 'Upgrade to Enterprise (Yearly)',
     },
 ];
 
 const COMPARISON_ROWS = [
-    ['Clients', ['3', '15', '15', 'Unlimited', 'Unlimited']],
-    ['Invoices & quotations / month', ['10', '50', '50', 'Unlimited', 'Unlimited']],
-    ['Templates', ['2 (Classic Blue, Minimalist)', 'All 6 + colors', 'All 6 + colors', 'All 6 + colors', 'All 6 + colors']],
-    ['Note points per document', ['5', 'Unlimited', 'Unlimited', 'Unlimited', 'Unlimited']],
-    ['Multiple bank accounts', [true, true, true, true, true]],
-
+    ['Clients', { free: '3', growth: '15', growth_yearly: '15', enterprise: 'Unlimited', enterprise_yearly: 'Unlimited' }],
+    ['Invoices & quotations / month', { free: '10', growth: '50', growth_yearly: '50', enterprise: 'Unlimited', enterprise_yearly: 'Unlimited' }],
+    ['Templates', { free: '2 (Classic Blue, Minimalist)', growth: 'All 6 + colors', growth_yearly: 'All 6 + colors', enterprise: 'All 6 + colors', enterprise_yearly: 'All 6 + colors' }],
+    ['Note points per document', { free: '5', growth: 'Unlimited', growth_yearly: 'Unlimited', enterprise: 'Unlimited', enterprise_yearly: 'Unlimited' }],
+    ['Multiple bank accounts', { free: true, growth: true, growth_yearly: true, enterprise: true, enterprise_yearly: true }],
 ];
 
 export default function UpgradePage() {
@@ -141,6 +140,10 @@ export default function UpgradePage() {
     const [usage, setUsage] = useState({ clients: null, invoices: null });
     const [loadingUsage, setLoadingUsage] = useState(true);
     const [upgradingId, setUpgradingId] = useState(null);
+    // Default to yearly if the user's current plan is a yearly one, otherwise monthly
+    const [billingCycle, setBillingCycle] = useState(
+        currentPlan.includes('yearly') ? 'yearly' : 'monthly'
+    );
 
     useEffect(() => {
         invoiceAPI.getUsage()
@@ -156,9 +159,13 @@ export default function UpgradePage() {
             })
             .finally(() => setLoadingUsage(false));
     }, []);
+
     const activePlanConfig = PLANS.find((p) => p.id === currentPlan) || PLANS[0];
     const clientPct = activePlanConfig.clientsLimit === Infinity ? 0 : Math.min(100, ((usage.clients || 0) / activePlanConfig.clientsLimit) * 100);
     const nearLimit = clientPct >= 80;
+
+    // Plans visible for the selected billing cycle: Free always shows, plus the matching cycle variants
+    const visiblePlans = PLANS.filter((p) => p.cycle === 'both' || p.cycle === billingCycle);
 
     const handleSelect = async (plan) => {
         if (plan.id === currentPlan) return;
@@ -223,8 +230,71 @@ export default function UpgradePage() {
                 </div>
             </div>
 
+            {/* Billing cycle toggle */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+                <div
+                    style={{
+                        display: 'inline-flex',
+                        background: 'var(--bg-elevated)',
+                        borderRadius: 10,
+                        padding: 4,
+                        gap: 4,
+                    }}
+                >
+                    <button
+                        type="button"
+                        onClick={() => setBillingCycle('monthly')}
+                        className="btn"
+                        style={{
+                            padding: '8px 20px',
+                            borderRadius: 7,
+                            fontWeight: 700,
+                            fontSize: '0.85rem',
+                            border: 'none',
+                            background: billingCycle === 'monthly' ? 'var(--primary)' : 'transparent',
+                            color: billingCycle === 'monthly' ? '#fff' : 'var(--text-secondary)',
+                            transition: 'all 0.15s ease',
+                        }}
+                    >
+                        Monthly
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setBillingCycle('yearly')}
+                        className="btn"
+                        style={{
+                            padding: '8px 20px',
+                            borderRadius: 7,
+                            fontWeight: 700,
+                            fontSize: '0.85rem',
+                            border: 'none',
+                            background: billingCycle === 'yearly' ? 'var(--primary)' : 'transparent',
+                            color: billingCycle === 'yearly' ? '#fff' : 'var(--text-secondary)',
+                            transition: 'all 0.15s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                        }}
+                    >
+                        Yearly
+                        <span
+                            style={{
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                padding: '1px 6px',
+                                borderRadius: 999,
+                                background: billingCycle === 'yearly' ? 'rgba(255,255,255,0.25)' : 'var(--success-bg)',
+                                color: billingCycle === 'yearly' ? '#fff' : 'var(--success)',
+                            }}
+                        >
+                            Save
+                        </span>
+                    </button>
+                </div>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginBottom: '32px' }}>
-                {PLANS.map((plan) => {
+                {visiblePlans.map((plan) => {
                     const Icon = plan.icon;
                     const isCurrent = plan.id === currentPlan;
                     return (
@@ -306,20 +376,23 @@ export default function UpgradePage() {
                         <thead>
                             <tr>
                                 <th>Feature</th>
-                                {PLANS.map((p) => <th key={p.id}>{p.name}</th>)}
+                                {visiblePlans.map((p) => <th key={p.id}>{p.name}</th>)}
                             </tr>
                         </thead>
                         <tbody>
-                            {COMPARISON_ROWS.map(([label, values]) => (
+                            {COMPARISON_ROWS.map(([label, valuesById]) => (
                                 <tr key={label}>
                                     <td>{label}</td>
-                                    {values.map((v, i) => (
-                                        <td key={i}>
-                                            {typeof v === 'boolean'
-                                                ? (v ? <Check size={15} color={PLANS[i].color} /> : <Minus size={15} color="var(--text-muted)" />)
-                                                : v}
-                                        </td>
-                                    ))}
+                                    {visiblePlans.map((p) => {
+                                        const v = valuesById[p.id];
+                                        return (
+                                            <td key={p.id}>
+                                                {typeof v === 'boolean'
+                                                    ? (v ? <Check size={15} color={p.color} /> : <Minus size={15} color="var(--text-muted)" />)
+                                                    : v}
+                                            </td>
+                                        );
+                                    })}
                                 </tr>
                             ))}
                         </tbody>
