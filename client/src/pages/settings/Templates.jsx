@@ -11,6 +11,7 @@ const TEMPLATES = [
   { id: 'template4', name: 'Elegant Navy', desc: 'Navy blue and gold accents for a premium agency feel.', img: '/templates/t4.png' },
   { id: 'template5', name: 'Corporate Bright', desc: 'High contrast blue table headers and minimalist layout.', img: '/templates/t5.png' },
   { id: 'template6', name: 'Angular Orange', desc: 'Striking orange and navy blue angular design.', img: '/templates/t6.png' },
+  { id: 'template7', name: 'Standard Layout', desc: 'Traditional invoice layout with side-by-side details.', img: '/templates/t7.png' },
 ];
 
 const DEFAULT_COLORS = {
@@ -20,6 +21,7 @@ const DEFAULT_COLORS = {
   template4: { primary: '#1C2541', secondary: '#d4af37' },
   template5: { primary: '#0A66C2' },
   template6: { primary: '#E8662B', secondary: '#1C2541' },
+  template7: { primary: '#B565D8' },
 };
 
 const FREE_TEMPLATES = ['template1', 'template2'];
@@ -42,7 +44,7 @@ export default function Templates() {
 
   const selectTemplate = async (templateId) => {
 
-    if (!FREE_TEMPLATES.includes(templateId)) {
+    if (!FREE_TEMPLATES.includes(templateId) && (!user?.plan || user.plan === 'free')) {
       toast('Upgrade your plan to unlock this template', {
         icon: '🔒',
       });
@@ -84,7 +86,7 @@ export default function Templates() {
       }}>
         {TEMPLATES.map((tmpl) => {
           const isActive = activeTemplate === tmpl.id;
-          const isLocked = !FREE_TEMPLATES.includes(tmpl.id);
+          const isLocked = !FREE_TEMPLATES.includes(tmpl.id) && (!user?.plan || user.plan === 'free');
           return (
             <div
               key={tmpl.id}
