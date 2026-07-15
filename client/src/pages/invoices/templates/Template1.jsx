@@ -1,10 +1,11 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
-
+import { buildScaledStyles } from './Pdfheaderscaling';
 // Register fonts (same as before)
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-SemiBold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-Bold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYMZhrib2Bg-4.ttf' });
+Font.registerHyphenationCallback(word => [word]);
 
 const B = 'Inter-Bold';
 const M = 'Inter-SemiBold';
@@ -26,6 +27,7 @@ export default function Template1({ invoice }) {
   const { client, user: biz } = invoice;
   const colors = invoice.templateColors || { primary: '#4A72D4' };
   const PRIMARY = colors.primary;
+  const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
     page: { paddingTop: 40, paddingBottom: 120, fontFamily: 'Inter', color: '#000' },
@@ -33,10 +35,10 @@ export default function Template1({ invoice }) {
     topSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 40, marginBottom: 20 },
     headerText: { fontFamily: B, fontSize: 32, letterSpacing: 2, textTransform: 'uppercase', color: PRIMARY, marginTop: 10 },
 
-    bizInfoTop: { alignItems: 'flex-end', maxWidth: '65%' },
-    topLogo: { height: 45, maxWidth: 140, objectFit: 'contain', marginBottom: 6 },
-    bizNameTop: { fontFamily: B, fontSize: 13, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
-    bizSubText: { fontSize: 8.5, color: '#444', marginTop: 1, lineHeight: 1.3 },
+    bizInfoTop: { alignItems: 'flex-end', maxWidth: scaled.bizInfoMaxWidth },
+    topLogo: { height: scaled.logoHeight, maxWidth: 140, objectFit: 'contain', marginBottom: 6 },
+    bizNameTop: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
+    bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight, textAlign: 'right' },
 
     blueBar: { backgroundColor: PRIMARY, height: 12, width: '100%', marginBottom: 15 },
     detailsRow: { flexDirection: 'row', paddingHorizontal: 40, marginBottom: 25, gap: 40 },
@@ -166,14 +168,20 @@ export default function Template1({ invoice }) {
               {client?.address?.city && <Text style={s.infoText}>{client.address.city}, {client.address.state} {client.address.pincode}</Text>}
               {client?.phone && <Text style={s.infoText}>{client.phone}</Text>}
             </View>
-            {isQuotation && biz?.bankDetails?.accountNumber && (
             <View style={s.infoCol}>
               <Text style={s.infoTitle}>Payment Details</Text>
-              {biz.bankDetails.bankName && <Text style={s.infoText}>Bank: {biz.bankDetails.bankName}</Text>}
-              <Text style={s.infoText}>Account: {biz.bankDetails.accountNumber}</Text>
-              {biz.bankDetails.ifscCode && <Text style={s.infoText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
+              {(!isQuotation && biz?.bankDetails?.accountNumber) ? (
+                <>
+                  {biz.bankDetails.bankName && <Text style={s.infoText}>Bank: {biz.bankDetails.bankName}</Text>}
+                  <Text style={s.infoText}>Account: {biz.bankDetails.accountNumber}</Text>
+                  {biz.bankDetails.ifscCode && <Text style={s.infoText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
+                </>
+              ) : (
+                <>
+                  {invoice.paymentInfo && <Text style={s.infoText}>{invoice.paymentInfo}</Text>}
+                </>
+              )}
             </View>
-            )}
           </View>
 
           {/* Table */}

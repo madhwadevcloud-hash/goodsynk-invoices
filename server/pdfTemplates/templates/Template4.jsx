@@ -1,9 +1,11 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
+import { buildScaledStyles } from './Pdfheaderscaling';
 
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-SemiBold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-Bold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYMZhrib2Bg-4.ttf' });
+Font.registerHyphenationCallback(word => [word]);
 
 const B = 'Inter-Bold';
 const M = 'Inter-SemiBold';
@@ -27,16 +29,16 @@ export default function Template4({ invoice }) {
   const NAVY = colors.primary;
   const GOLD = colors.secondary;
   const BEIGE = '#F9F7F1';
+  const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
     page: { paddingTop: 40, paddingBottom: 60, paddingHorizontal: 40, fontFamily: 'Inter', color: NAVY },
 
     headerArea: { flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1.5, borderBottomColor: NAVY, borderBottomStyle: 'solid', paddingBottom: 15, marginBottom: 10 },
-    bizInfoBox: { maxWidth: '65%' },
-    logoBox: { height: 45, maxWidth: 140, objectFit: 'contain', marginBottom: 6 },
-    bizNameText: { fontFamily: B, fontSize: 13, color: NAVY, textTransform: 'uppercase', marginBottom: 2 },
-    bizSubText: { fontSize: 8.5, color: '#444', marginTop: 1, lineHeight: 1.3 },
-
+    bizInfoBox: { maxWidth: scaled.bizInfoMaxWidth },
+    logoBox: { height: scaled.logoHeight, maxWidth: 140, objectFit: 'contain', marginBottom: 6 },
+    bizNameText: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: NAVY, textTransform: 'uppercase', marginBottom: 2 },
+    bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight },
     titleBox: { alignItems: 'flex-end', paddingTop: 8 },
     invoiceTitle: { fontFamily: 'Inter', fontWeight: 300, fontSize: 26, letterSpacing: 4, color: NAVY },
 

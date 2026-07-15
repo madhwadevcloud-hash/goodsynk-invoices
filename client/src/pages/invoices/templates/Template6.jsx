@@ -1,9 +1,11 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image, Svg, Polygon } from '@react-pdf/renderer';
+import { buildScaledStyles } from './Pdfheaderscaling';
 
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-SemiBold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-Bold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYMZhrib2Bg-4.ttf' });
+Font.registerHyphenationCallback(word => [word]);
 
 const B = 'Inter-Bold';
 const M = 'Inter-SemiBold';
@@ -26,6 +28,7 @@ export default function Template6({ invoice }) {
   const colors = invoice.templateColors || { primary: '#E8662B', secondary: '#1C2541' };
   const ORANGE = colors.primary;
   const NAVY = colors.secondary;
+  const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
     page: { paddingBottom: 60, fontFamily: 'Inter', color: '#000' },
@@ -34,9 +37,9 @@ export default function Template6({ invoice }) {
     headerContent: { position: 'absolute', top: 0, left: 0, right: 0, height: 160, flexDirection: 'row', paddingTop: 30, paddingHorizontal: 40 },
 
     headerLeft: { width: '30%', paddingTop: 0 },
-    bizNameHeader: { fontSize: 15, fontFamily: B, color: '#FFF', textTransform: 'uppercase', marginBottom: 2 },
-    bizSubTextHeader: { fontSize: 8.5, color: '#ffffffff', lineHeight: 1.3 },
-    logoImgHeader: { height: 40, maxWidth: 120, objectFit: 'contain', marginBottom: 6 },
+    bizNameHeader: { fontSize: scaled.bizNameFontSize + 2, fontFamily: B, color: '#FFF', textTransform: 'uppercase', marginBottom: 2 },
+    bizSubTextHeader: { fontSize: scaled.bizSubTextFontSize, color: '#ffffffff', lineHeight: scaled.bizSubTextLineHeight },
+    logoImgHeader: { height: Math.min(scaled.logoHeight, 40), maxWidth: 120, objectFit: 'contain', marginBottom: 6 },
 
     headerRight: { width: '70%', alignItems: 'flex-end', paddingTop: 25 },
     invoiceTitleHeader: { fontSize: 28, fontFamily: B, color: '#FFF', letterSpacing: 2, marginBottom: 12 },
@@ -195,15 +198,20 @@ export default function Template6({ invoice }) {
           </View>
 
           <View style={s.paymentInfoBlock}>
-            {isQuotation && biz?.bankDetails?.accountNumber ? (
-            <>
-              <Text style={s.paymentTitle}>Payment Info :</Text>
-              <View style={s.payRow}><Text style={s.payLabel}>Account No</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.accountNumber}</Text></View>
-              <View style={s.payRow}><Text style={s.payLabel}>A/C Name</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.accountName}</Text></View>
-              {biz.bankDetails.bankName && <View style={s.payRow}><Text style={s.payLabel}>Bank Name</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.bankName}</Text></View>}
-              {biz.bankDetails.ifscCode && <View style={s.payRow}><Text style={s.payLabel}>IFSC Code</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.ifscCode}</Text></View>}
-            </>
-          ) : null}
+            {(!isQuotation && biz?.bankDetails?.accountNumber) ? (
+              <>
+                <Text style={s.paymentTitle}>Payment Info :</Text>
+                <View style={s.payRow}><Text style={s.payLabel}>Account No</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.accountNumber}</Text></View>
+                <View style={s.payRow}><Text style={s.payLabel}>A/C Name</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.accountName}</Text></View>
+                {biz.bankDetails.bankName && <View style={s.payRow}><Text style={s.payLabel}>Bank Name</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.bankName}</Text></View>}
+                {biz.bankDetails.ifscCode && <View style={s.payRow}><Text style={s.payLabel}>IFSC Code</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.ifscCode}</Text></View>}
+              </>
+            ) : invoice.paymentInfo ? (
+              <>
+                <Text style={s.paymentTitle}>Payment Info :</Text>
+                <Text style={s.payVal}>{invoice.paymentInfo}</Text>
+              </>
+            ) : null}
           </View>
         </View>
 

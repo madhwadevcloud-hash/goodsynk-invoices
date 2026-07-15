@@ -1,9 +1,11 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
+import { buildScaledStyles } from './Pdfheaderscaling';
 
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-SemiBold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-Bold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYMZhrib2Bg-4.ttf' });
+Font.registerHyphenationCallback(word => [word]);
 
 const B = 'Inter-Bold';
 const M = 'Inter-SemiBold';
@@ -24,6 +26,7 @@ export default function Template5({ invoice }) {
   const { client, user: biz } = invoice;
   const colors = invoice.templateColors || { primary: '#0A66C2' };
   const BLUE = colors.primary;
+  const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
     page: { paddingTop: 32, paddingBottom: 36, paddingHorizontal: 40, fontFamily: 'Inter', color: '#000' },
@@ -33,11 +36,11 @@ export default function Template5({ invoice }) {
     headerRight: { width: '50%', alignItems: 'flex-end' },
 
     invoiceTitle: { fontFamily: B, fontSize: 24, color: BLUE, textTransform: 'uppercase', letterSpacing: 1 },
-    logoImage: { height: 45, maxWidth: 130, objectFit: 'contain' },
+    logoImage: { height: scaled.logoHeight, maxWidth: 130, objectFit: 'contain' },
 
     bizInfo: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8 },
-    bizText: { fontSize: 8, color: '#444', textAlign: 'right', lineHeight: 1.3 },
-    bizName: { fontSize: 13, fontFamily: B, color: '#000', marginBottom: 2, textAlign: 'right' },
+    bizText: { fontSize: scaled.bizSubTextFontSize, color: '#444', textAlign: 'right', lineHeight: scaled.bizSubTextLineHeight },
+    bizName: { fontSize: scaled.bizNameFontSize, fontFamily: B, color: '#000', marginBottom: 2, textAlign: 'right' },
 
     metaSection: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, borderTop: `2pt solid ${BLUE}`, paddingTop: 12 },
     metaCol: { width: '45%' },
@@ -72,7 +75,6 @@ export default function Template5({ invoice }) {
 
     footer: { position: 'absolute', bottom: 20, left: 40, right: 40, borderTop: '0.5pt solid #EEE', paddingTop: 8, flexDirection: 'row', justifyContent: 'center', gap: 30 },
     footerText: { fontSize: 8, color: '#666' },
-
     watermarkContainer: {
       position: 'absolute',
       top: 0,
@@ -203,13 +205,13 @@ export default function Template5({ invoice }) {
         {/* Footer */}
         <View style={s.bottomSection}>
           <View style={s.leftBottom}>
-            {isQuotation && biz?.bankDetails?.accountNumber && (
+            {(!isQuotation && biz?.bankDetails?.accountNumber) && (
               <View style={{ marginBottom: 20 }}>
                 <Text style={s.metaLabel}>Payment Information</Text>
                 <Text style={s.metaVal}>
                   {biz.bankDetails.bankName && `Bank: ${biz.bankDetails.bankName}\n`}
-                  Account Name: {biz.bankDetails.accountName}{`\n`}
-                  Account No.: {biz.bankDetails.accountNumber}{`\n`}
+                  Account Name: {biz.bankDetails.accountName}{'\n'}
+                  Account No.: {biz.bankDetails.accountNumber}{'\n'}
                   {biz.bankDetails.ifscCode && `IFSC: ${biz.bankDetails.ifscCode}`}
                 </Text>
               </View>

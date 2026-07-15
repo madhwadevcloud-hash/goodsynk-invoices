@@ -1,9 +1,10 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
-
+import { buildScaledStyles } from './Pdfheaderscaling';
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-SemiBold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-Bold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYMZhrib2Bg-4.ttf' });
+Font.registerHyphenationCallback(word => [word]);
 
 const B = 'Inter-Bold';
 const M = 'Inter-SemiBold';
@@ -26,16 +27,16 @@ export default function Template3({ invoice }) {
   const colors = invoice.templateColors || { primary: '#1B365D', secondary: '#F0F4F8' };
   const DARK_BLUE = colors.primary;
   const LIGHT_BLUE = colors.secondary;
+  const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
     page: { paddingBottom: 60, fontFamily: 'Inter', color: '#000' },
 
     headerBlock: { backgroundColor: DARK_BLUE, paddingTop: 30, paddingBottom: 25, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-    headerLeft: { width: '65%' },
-    headerRight: { width: '30%', alignItems: 'flex-end' },
-    logoImage: { height: 45, maxWidth: 140, objectFit: 'contain', marginBottom: 8 },
-    bizNameText: { color: '#FFF', fontFamily: B, fontSize: 13, textTransform: 'uppercase' },
-    bizInfoText: { color: '#FFF', fontSize: 8.5, marginTop: 2, lineHeight: 1.4, opacity: 0.85 },
+    headerLeft: { width: scaled.bizInfoMaxWidth },
+    logoImage: { height: scaled.logoHeight, maxWidth: 140, objectFit: 'contain', marginBottom: 8 },
+    bizNameText: { color: '#FFF', fontFamily: B, fontSize: scaled.bizNameFontSize, textTransform: 'uppercase' },
+    bizInfoText: { color: '#FFF', fontSize: scaled.bizSubTextFontSize, marginTop: 2, lineHeight: scaled.bizSubTextLineHeight, opacity: 0.85 },
     invoiceTitle: { color: '#FFF', fontFamily: B, fontSize: 26, letterSpacing: 2, marginTop: 10 },
 
     separator: { width: '100%', height: 1, backgroundColor: '#EEE' },

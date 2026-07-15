@@ -1,9 +1,11 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
+import { buildScaledStyles } from './Pdfheaderscaling';
 
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-SemiBold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-Bold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYMZhrib2Bg-4.ttf' });
+Font.registerHyphenationCallback(word => [word]);
 
 const B = 'Inter-Bold';
 const M = 'Inter-SemiBold';
@@ -25,16 +27,16 @@ export default function Template2({ invoice }) {
   const { client, user: biz } = invoice;
   const colors = invoice.templateColors || { primary: '#000000' };
   const PRIMARY = colors.primary;
+  const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
     page: { paddingTop: 50, paddingBottom: 100, paddingHorizontal: 40, fontFamily: 'Inter', color: '#000' },
 
     topHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 },
-    bizBox: { maxWidth: '60%' },
-    logoImg: { height: 45, maxWidth: 140, objectFit: 'contain', marginBottom: 6 },
-    bizName: { fontFamily: B, fontSize: 13, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
-    bizSubText: { fontSize: 8.5, color: '#444', marginTop: 1, lineHeight: 1.3 },
-
+    bizBox: { maxWidth: scaled.bizInfoMaxWidth },
+    logoImg: { height: scaled.logoHeight, maxWidth: 140, objectFit: 'contain', marginBottom: 6 },
+    bizName: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
+    bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight },
     titleBox: { alignItems: 'flex-end' },
     headerText: { fontFamily: M, fontSize: 26, letterSpacing: 4, textTransform: 'uppercase', color: '#000' },
 
@@ -173,15 +175,19 @@ export default function Template2({ invoice }) {
             {client?.phone && <Text style={s.metaText}>Phone: {client.phone}</Text>}
           </View>
 
-          {isQuotation && biz?.bankDetails?.accountNumber && (
-            <View style={s.metaColumn}>
-              <Text style={s.metaTitle}>Payment Details:</Text>
-              {biz.bankDetails.bankName && <Text style={s.metaText}>Bank: {biz.bankDetails.bankName}</Text>}
-              <Text style={s.metaText}>A/C Name: {biz.bankDetails.accountName}</Text>
-              <Text style={s.metaText}>A/C No: {biz.bankDetails.accountNumber}</Text>
-              {biz.bankDetails.ifscCode && <Text style={s.metaText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
-            </View>
-          )}
+          <View style={s.metaColumn}>
+            <Text style={s.metaTitle}>Payment Details:</Text>
+            {(!isQuotation && biz?.bankDetails?.accountNumber) ? (
+              <>
+                {biz.bankDetails.bankName && <Text style={s.metaText}>Bank: {biz.bankDetails.bankName}</Text>}
+                <Text style={s.metaText}>A/C Name: {biz.bankDetails.accountName}</Text>
+                <Text style={s.metaText}>A/C No: {biz.bankDetails.accountNumber}</Text>
+                {biz.bankDetails.ifscCode && <Text style={s.metaText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
+              </>
+            ) : (
+              <Text style={s.metaText}>{invoice.paymentInfo || '—'}</Text>
+            )}
+          </View>
         </View>
 
         {/* Table */}
