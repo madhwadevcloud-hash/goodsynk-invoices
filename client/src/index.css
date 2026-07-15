@@ -830,6 +830,47 @@ input::-ms-clear {
   align-items: start;
 }
 
+.landing-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  height: 64px;
+  background: var(--sidebar-bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.landing-section-hero {
+  text-align: center;
+  padding: 100px 24px 80px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.18) 0%, transparent 65%);
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-section-features {
+  padding: 72px 48px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.landing-section-cta {
+  padding: 0 48px 80px;
+}
+
+.landing-footer {
+  border-top: 1px solid var(--border);
+  padding: 24px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 /* ─── Mobile Responsiveness Overrides ────────────────────────────────────────── */
 /* Hide sidebar toggle button by default on desktop */
 .sidebar-toggle {
@@ -941,5 +982,27 @@ input::-ms-clear {
 
   .profile-layout-grid {
     grid-template-columns: 1fr !important;
+  }
+
+  .landing-nav {
+    padding: 0 16px !important;
+  }
+  
+  .landing-section-hero {
+    padding: 60px 16px 48px !important;
+  }
+
+  .landing-section-features {
+    padding: 48px 16px !important;
+  }
+
+  .landing-section-cta {
+    padding: 0 16px 48px !important;
+  }
+
+  .landing-footer {
+    padding: 24px 16px !important;
+    flex-direction: column !important;
+    text-align: center !important;
   }
 }

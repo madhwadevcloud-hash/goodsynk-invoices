@@ -54,18 +54,7 @@ export default function Home() {
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif' }}>
 
       {/* ── Navbar ── */}
-      <nav style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 48px',
-        height: '64px',
-        background: 'var(--sidebar-bg)',
-        borderBottom: '1px solid var(--border)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-      }}>
+      <nav className="landing-nav">
         {/* Logo */}
         <Link to="/" className="sidebar-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="sidebar-logo-icon">
@@ -85,13 +74,7 @@ export default function Home() {
       </nav>
 
       {/* ── Hero ── */}
-      <section style={{
-        textAlign: 'center',
-        padding: '100px 24px 80px',
-        background: 'radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.18) 0%, transparent 65%)',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
+      <section className="landing-section-hero">
         {/* Glow blob */}
         <div style={{
           position: 'absolute', top: -80, left: '50%', transform: 'translateX(-50%)',
@@ -162,7 +145,7 @@ export default function Home() {
       </section>
 
       {/* ── Features Grid ── */}
-      <section style={{ padding: '72px 48px', maxWidth: 1100, margin: '0 auto' }}>
+      <section className="landing-section-features">
         <div style={{ textAlign: 'center', marginBottom: 52 }}>
           <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: 10 }}>Everything you need</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>
@@ -201,7 +184,7 @@ export default function Home() {
       </section>
 
       {/* ── CTA Banner ── */}
-      <section style={{ padding: '0 48px 80px' }}>
+      <section className="landing-section-cta">
         <div style={{
           maxWidth: 1100, margin: '0 auto',
           background: 'linear-gradient(135deg, rgba(99,102,241,0.18) 0%, rgba(129,140,248,0.1) 100%)',
@@ -227,15 +210,7 @@ export default function Home() {
       </section>
 
       {/* ── Footer ── */}
-      <footer style={{
-        borderTop: '1px solid var(--border)',
-        padding: '24px 48px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: 12,
-      }}>
+      <footer className="landing-footer">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{
             width: 28, height: 28,
