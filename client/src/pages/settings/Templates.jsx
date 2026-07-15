@@ -1,9 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../api/services';
 import toast from 'react-hot-toast';
 import { Palette, CheckCircle2, X, Lock } from 'lucide-react';
-
 const TEMPLATES = [
   { id: 'template1', name: 'Classic Blue', desc: 'A clean, universally trusted design with blue accents.', img: '/templates/t1.png' },
   { id: 'template2', name: 'Minimalist Monochrome', desc: 'Elegant black and white. Perfect for ultra-clean printing.', img: '/templates/t2.png' },
@@ -13,7 +13,6 @@ const TEMPLATES = [
   { id: 'template6', name: 'Angular Orange', desc: 'Striking orange and navy blue angular design.', img: '/templates/t6.png' },
   { id: 'template7', name: 'Standard Layout', desc: 'Traditional invoice layout with side-by-side details.', img: '/templates/t7.png' },
 ];
-
 const DEFAULT_COLORS = {
   template1: { primary: '#4A72D4' },
   template2: { primary: '#000000' },
@@ -23,16 +22,14 @@ const DEFAULT_COLORS = {
   template6: { primary: '#E8662B', secondary: '#1C2541' },
   template7: { primary: '#B565D8' },
 };
-
 const FREE_TEMPLATES = ['template1', 'template2'];
-
 export default function Templates() {
   const { user, updateUser } = useAuth();
+  const navigate = useNavigate();
   const [activeTemplate, setActiveTemplate] = useState(user?.invoiceTemplate || 'template1');
   const [templateColors, setTemplateColors] = useState(user?.invoiceTemplateColors || null);
   const [saving, setSaving] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState(null);
-
   const handleOpenPreview = (tmpl) => {
     setPreviewTemplate(tmpl);
     if (user?.invoiceTemplate === tmpl.id && user?.invoiceTemplateColors) {
@@ -41,19 +38,16 @@ export default function Templates() {
       setTemplateColors(DEFAULT_COLORS[tmpl.id]);
     }
   };
-
   const selectTemplate = async (templateId) => {
-
     if (!FREE_TEMPLATES.includes(templateId) && (!user?.plan || user.plan === 'free')) {
       toast('Upgrade your plan to unlock this template', {
         icon: '🔒',
       });
+      navigate('/upgrade');
       return;
     }
-
     setActiveTemplate(templateId);
     setSaving(true);
-
     try {
       const { data } = await authAPI.updateMe({
         invoiceTemplate: templateId,
@@ -69,7 +63,6 @@ export default function Templates() {
       setSaving(false);
     }
   };
-
   return (
     <div>
       <div className="page-header">
@@ -78,7 +71,6 @@ export default function Templates() {
           <p className="page-subtitle">Choose the default design for all your new invoices and quotations.</p>
         </div>
       </div>
-
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
@@ -95,9 +87,9 @@ export default function Templates() {
                   toast('Upgrade your plan to unlock this template', {
                     icon: '🔒',
                   });
+                  navigate('/upgrade');
                   return;
                 }
-
                 handleOpenPreview(tmpl);
               }}
               style={{
@@ -135,7 +127,6 @@ export default function Templates() {
                     objectFit: 'cover'
                   }}
                 />
-
                 {isLocked && (
                   <div
                     style={{
@@ -166,7 +157,6 @@ export default function Templates() {
                   </div>
                 )}
               </div>
-
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>{tmpl.name}</h3>
                 {isActive && (
@@ -175,7 +165,6 @@ export default function Templates() {
                   </div>
                 )}
               </div>
-
               <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                 {tmpl.desc}
               </p>
@@ -183,7 +172,6 @@ export default function Templates() {
           );
         })}
       </div>
-
       {/* Preview Modal */}
       {previewTemplate && (
         <div style={{
@@ -203,10 +191,8 @@ export default function Templates() {
                 <X size={24} />
               </button>
             </div>
-
             <div style={{ flex: 1, overflow: 'auto', padding: '24px', backgroundColor: 'var(--bg-elevated)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
               <img src={previewTemplate.img} alt={previewTemplate.name} style={{ height: 'auto', width: '100%', maxWidth: '500px', objectFit: 'contain', boxShadow: 'var(--shadow-lg)', borderRadius: '8px' }} />
-
               {/* Color Customization UI */}
               <div style={{
                 width: '100%', maxWidth: '500px', padding: '20px',
@@ -221,7 +207,6 @@ export default function Templates() {
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Configure default colors for this template</p>
                   </div>
                 </div>
-
                 <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Primary Color</label>
@@ -235,7 +220,6 @@ export default function Templates() {
                       <span style={{ fontSize: '0.85rem', fontFamily: 'monospace', fontWeight: 600 }}>{templateColors?.primary}</span>
                     </div>
                   </div>
-
                   {DEFAULT_COLORS[previewTemplate.id]?.secondary && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Secondary Color</label>
@@ -250,7 +234,6 @@ export default function Templates() {
                       </div>
                     </div>
                   )}
-
                   <button
                     type="button"
                     className="btn btn-ghost btn-sm"
@@ -262,7 +245,6 @@ export default function Templates() {
                 </div>
               </div>
             </div>
-
             <div style={{ padding: '20px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '12px', background: 'var(--bg-card)' }}>
               <button className="btn btn-ghost" onClick={() => setPreviewTemplate(null)}>Cancel</button>
               {activeTemplate === previewTemplate.id ? (
