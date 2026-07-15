@@ -871,6 +871,24 @@ input::-ms-clear {
   gap: 12px;
 }
 
+.product-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 16px;
+  flex-wrap: wrap;
+}
+
+.product-search-input {
+  width: 350px;
+}
+
+.product-filter-tabs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 /* ─── Mobile Responsiveness Overrides ────────────────────────────────────────── */
 /* Hide sidebar toggle button by default on desktop */
 .sidebar-toggle {
@@ -1004,5 +1022,19 @@ input::-ms-clear {
     padding: 24px 16px !important;
     flex-direction: column !important;
     text-align: center !important;
+  }
+
+  .product-filter-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  
+  .product-search-input {
+    width: 100% !important;
+  }
+  
+  .product-filter-tabs {
+    justify-content: flex-start !important;
   }
 }

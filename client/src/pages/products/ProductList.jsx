@@ -124,78 +124,69 @@ export default function ProductList() {
       </div>
 
       <div className="card" style={{ padding: 0 }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '24px',
-            padding: '16px',
-            flexWrap: 'wrap'
-          }}
-        >
+        <div className="product-filter-bar">
           <input
             type="text"
             placeholder="Search products or services..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="form-control"
-            style={{
-              width: '350px'
-            }}
+            className="form-control product-search-input"
           />
 
-          <button
-            type="button"
-            onClick={() => setFilter('all')}
-            className="btn btn-sm"
-            style={{
-              background:
-                filter === 'all'
-                  ? 'var(--primary)'
-                  : 'transparent',
-              color:
-                filter === 'all'
-                  ? 'white'
-                  : 'var(--text-primary)'
-            }}
-          >
-            All
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter('products')}
-            className="btn btn-sm"
-            style={{
-              background:
-                filter === 'products'
-                  ? 'var(--primary)'
-                  : 'transparent',
-              color:
-                filter === 'products'
-                  ? 'white'
-                  : 'var(--text-primary)'
-            }}
-          >
-            Products
-          </button>
+          <div className="product-filter-tabs">
+            <button
+              type="button"
+              onClick={() => setFilter('all')}
+              className="btn btn-sm"
+              style={{
+                background:
+                  filter === 'all'
+                    ? 'var(--primary)'
+                    : 'transparent',
+                color:
+                  filter === 'all'
+                    ? 'white'
+                    : 'var(--text-primary)'
+              }}
+            >
+              All
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilter('products')}
+              className="btn btn-sm"
+              style={{
+                background:
+                  filter === 'products'
+                    ? 'var(--primary)'
+                    : 'transparent',
+                color:
+                  filter === 'products'
+                    ? 'white'
+                    : 'var(--text-primary)'
+              }}
+            >
+              Products
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setFilter('services')}
-            className="btn btn-sm"
-            style={{
-              background:
-                filter === 'services'
-                  ? 'var(--primary)'
-                  : 'transparent',
-              color:
-                filter === 'services'
-                  ? 'white'
-                  : 'var(--text-primary)'
-            }}
-          >
-            Services
-          </button>
+            <button
+              type="button"
+              onClick={() => setFilter('services')}
+              className="btn btn-sm"
+              style={{
+                background:
+                  filter === 'services'
+                    ? 'var(--primary)'
+                    : 'transparent',
+                color:
+                  filter === 'services'
+                    ? 'white'
+                    : 'var(--text-primary)'
+              }}
+            >
+              Services
+            </button>
+          </div>
         </div>
         {loading ? (
           <div className="flex-center" style={{ padding: '60px' }}><div className="spinner" /></div>
