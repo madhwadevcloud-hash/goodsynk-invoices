@@ -261,11 +261,11 @@ export default function Template1({ invoice }) {
         </View>
 
         {/* Signature */}
-        <View style={{ marginTop: 16, alignItems: 'flex-end', paddingHorizontal: 40 }}>
+        <View style={{ marginTop: 10, alignItems: 'flex-end', paddingHorizontal: 40 }} wrap={false}>
           {biz?.businessSignature && (
-            <Image src={biz.businessSignature} style={{ width: 160, height: 55, objectFit: 'contain', marginBottom: 4 }} />
+            <Image src={biz.businessSignature} style={{ width: 140, height: 40, objectFit: 'contain', marginBottom: 2 }} />
           )}
-          <View style={{ width: 120, borderTopWidth: 0.5, borderTopColor: '#1a3a6b', borderTopStyle: 'solid', paddingTop: 4 }}>
+          <View style={{ width: 120, borderTopWidth: 0.5, borderTopColor: '#1a3a6b', borderTopStyle: 'solid', paddingTop: 2 }}>
             <Text style={{ fontSize: 8, color: '#1a3a6b', textAlign: 'center' }}>Authorised Signature</Text>
           </View>
         </View>
