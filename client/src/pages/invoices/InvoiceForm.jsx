@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { invoiceAPI, clientAPI, productAPI, quotationAPI } from '../../api/services';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, Save, Download, Loader2, X, ChevronDown, Percent, Tag, Lock, Landmark } from 'lucide-react';
+import { Plus, Trash2, Save, Download, Loader2, X, ChevronDown, Percent, Tag, Lock, Landmark, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const defaultItem = () => ({
@@ -557,9 +557,14 @@ export default function InvoiceForm() {
   return (
     <form onSubmit={handleSubmit}>
       <div className="page-header">
-        <div>
-          <h1 className="page-title">{isEdit ? `Edit ${docLabel}` : `New ${docLabel}`}</h1>
-          <p className="page-subtitle">{isEdit ? `Editing ${form.invoiceNumber}` : `Fill in the details to create a ${docLabel.toLowerCase()}`}</p>
+        <div className="flex gap-3" style={{ alignItems: 'center' }}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate(basePath)}>
+            <ArrowLeft size={16} />
+          </button>
+          <div>
+            <h1 className="page-title">{isEdit ? `Edit ${docLabel}` : `New ${docLabel}`}</h1>
+            <p className="page-subtitle">{isEdit ? `Editing ${form.invoiceNumber}` : `Fill in the details to create a ${docLabel.toLowerCase()}`}</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <button
