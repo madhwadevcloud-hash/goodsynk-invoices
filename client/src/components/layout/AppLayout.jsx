@@ -12,6 +12,8 @@ import {
   ClipboardList,
   Palette,
   Sparkles,
+  Menu,
+  X,
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { isProfileComplete } from '../../utils/profileValidation';
@@ -47,6 +49,7 @@ export default function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [showProfilePrompt, setShowProfilePrompt] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Removed aggressive auto-popup on mount to avoid annoying users on every page load
   // useEffect(() => {
@@ -71,9 +74,17 @@ export default function AppLayout() {
 
   return (
     <div className="app-layout">
+      {/* Sidebar Backdrop (Mobile only) */}
+      {isSidebarOpen && (
+        <div 
+          className="sidebar-backdrop" 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="sidebar">
-        <Link to="/" className="sidebar-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
+      <aside className={`sidebar${isSidebarOpen ? ' open' : ''}`}>
+        <Link to="/" className="sidebar-logo" style={{ textDecoration: 'none', color: 'inherit' }} onClick={() => setIsSidebarOpen(false)}>
           <div className="sidebar-logo-icon">
             <Receipt size={18} />
           </div>
@@ -83,7 +94,7 @@ export default function AppLayout() {
         <nav className="sidebar-nav">
           <span className="nav-section-label">Main Menu</span>
           {navItems.map(({ to, icon: Icon, label }) => (
-            <NavLink key={to} to={to} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            <NavLink key={to} to={to} className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`} onClick={() => setIsSidebarOpen(false)}>
               <Icon size={17} />
               {label}
             </NavLink>
@@ -91,6 +102,7 @@ export default function AppLayout() {
           <NavLink
             to="/upgrade"
             className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+            onClick={() => setIsSidebarOpen(false)}
             style={{
               marginTop: 10,
               border: '1.5px dashed var(--primary)',
@@ -104,7 +116,7 @@ export default function AppLayout() {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="user-card">
+          <div className="user-card" onClick={() => { setIsSidebarOpen(false); navigate('/profile'); }}>
             <div className="user-avatar">{initials}</div>
             <div className="user-info">
               <div className="user-name">{user?.businessName || user?.name}</div>
@@ -114,7 +126,7 @@ export default function AppLayout() {
           <button
             className="btn btn-ghost w-full mt-2"
             style={{ justifyContent: 'flex-start', gap: '8px', padding: '8px 10px' }}
-            onClick={handleLogout}
+            onClick={() => { setIsSidebarOpen(false); handleLogout(); }}
           >
             <LogOut size={15} />
             Logout
@@ -125,7 +137,17 @@ export default function AppLayout() {
       {/* Main */}
       <div className="main-content">
         <header className="topbar">
-          <span className="topbar-title">{title}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button 
+              type="button" 
+              className="sidebar-toggle" 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              aria-label="Toggle Sidebar"
+            >
+              {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+            <span className="topbar-title">{title}</span>
+          </div>
           <ThemeToggle />
         </header>
         <main className="page-container">

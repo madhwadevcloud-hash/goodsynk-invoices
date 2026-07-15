@@ -816,3 +816,102 @@ input::-ms-reveal,
 input::-ms-clear {
   display: none;
 }
+
+/* ─── Mobile Responsiveness Overrides ────────────────────────────────────────── */
+/* Hide sidebar toggle button by default on desktop */
+.sidebar-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 4px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+}
+
+.sidebar-toggle:hover {
+  background: var(--bg-hover);
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 99;
+}
+
+@media (max-width: 768px) {
+  .sidebar-toggle {
+    display: flex;
+  }
+
+  .sidebar {
+    width: 240px !important;
+    transform: translateX(-100%) !important;
+    z-index: 1000 !important;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.15) !important;
+    transition: transform var(--transition) !important;
+  }
+
+  .sidebar.open {
+    transform: translateX(0) !important;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+  }
+
+  .topbar {
+    padding: 0 16px !important;
+  }
+
+  .page-container {
+    padding: 16px !important;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .page-header > div {
+    width: 100%;
+  }
+
+  .page-header .btn,
+  .page-header button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Form layouts */
+  .form-grid,
+  .form-grid-3 {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Stat Cards */
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* General Cards */
+  .card {
+    padding: 16px !important;
+  }
+
+  /* Allow side-scrolling for wide tables */
+  .table-wrapper {
+    margin-left: -16px;
+    margin-right: -16px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+}
