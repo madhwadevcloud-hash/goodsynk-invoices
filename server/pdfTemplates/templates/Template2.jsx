@@ -78,7 +78,11 @@ export default function Template2({ invoice }) {
 
     signatureArea: { marginTop: 40, alignItems: 'flex-end', paddingRight: 40 },
     signatureLine: { width: 120, borderTopWidth: 0.5, borderTopColor: '#000', borderTopStyle: 'solid', paddingTop: 6, alignItems: 'center' },
-    footer: { position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'column', alignItems: 'center', borderTopWidth: 0.5, borderTopColor: '#999', borderTopStyle: 'solid', paddingTop: 8 },
+    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: PRIMARY, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
+    footerText: { fontSize: 8.5, color: '#FFF' },
+    footerBrandLine: { fontSize: 7, fontFamily: M, color: '#FFF', letterSpacing: 0.3, textAlign: 'center' },
+    footerLink: { fontSize: 7, fontFamily: M, color: '#FFF', letterSpacing: 0.3 },
+    footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.75, marginTop: 1.5, textAlign: 'center' },
     watermarkContainer: {
       position: 'absolute',
       top: 0,
@@ -97,7 +101,6 @@ export default function Template2({ invoice }) {
       transform: 'rotate(-45deg)',
       letterSpacing: 5,
     },
-    footerText: { fontSize: 8, color: '#333' },
   });
   const currency = invoice._currency || invoice.currency || 'INR';
   const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency, currencyDisplay: 'code' }).format(n || 0).replace(currency, '').trim();
@@ -266,16 +269,14 @@ export default function Template2({ invoice }) {
 
 
 
-        {/* Footer: contact details & branding */}
-        <View style={s.footer} fixed>
-          {(biz?.phone || biz?.email) && (
-            <View style={{ flexDirection: 'row', gap: 20, marginBottom: 2 }}>
-              {biz?.phone && <Text style={s.footerText}>Phone: {biz.phone}</Text>}
-              {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
-            </View>
-          )}
-          <Text style={{ fontSize: 6.5, color: '#666', opacity: 0.8 }}>
-            Powered by GoodSynk — Invoice Banega, Payment Badega.
+        {/* Footer: branding */}
+        <View style={s.footerBox} fixed>
+          <Text style={s.footerBrandLine}>
+            Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
+            <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
+          </Text>
+          <Text style={s.footerTrustLine}>
+            Generated securely by Goodsynk Billing. This is a digitally signed document.
           </Text>
         </View>
       </Page>

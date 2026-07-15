@@ -1,5 +1,6 @@
-const APP_NAME = 'Goodsynk Invoices';
-const TAGLINE = 'Invoice Banega, Payment Badega.';
+const APP_NAME = 'Goodsynk Billing';
+const BRAND_LINE = 'Goodsynk Billing | Simple Invoicing, Billing & Quotations | Visit invoice.goodsynk.com';
+const TRUST_LINE = 'Generated securely by Goodsynk Billing. This is a digitally signed document.';
 
 const CURRENCY_SYMBOLS = { INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ', SGD: 'S$' };
 
@@ -23,7 +24,9 @@ const buildDocumentEmailHTML = ({
     const stripMarkers = [
       '*** DISCLAIMER ***',
       'This is an automated email sent from',
-      'Powered by Goodsynk'
+      'Powered by Goodsynk',
+      'Goodsynk Billing |',
+      'Generated securely by Goodsynk'
     ];
     for (const marker of stripMarkers) {
       const idx = cleanBody.indexOf(marker);
@@ -73,7 +76,7 @@ const buildDocumentEmailHTML = ({
           insertIndex = idx;
         }
       }
-      
+
       if (insertIndex !== -1) {
         // Insert the button before the signature/attachment text block, preserving layouts
         bodyHtml = bodyHtml.slice(0, insertIndex) + viewButtonHtml + '<br/>' + bodyHtml.slice(insertIndex);
@@ -92,8 +95,8 @@ const buildDocumentEmailHTML = ({
         </tr>
 
         <tr>
-          <td style="padding: 20px 32px 0; font-size: 12px; color: #94a3b8;">
-            Powered by <strong>${APP_NAME}</strong><br/>${TAGLINE}
+          <td style="padding: 20px 32px 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
+            ${BRAND_LINE}<br/>${TRUST_LINE}
           </td>
         </tr>
 
@@ -119,7 +122,7 @@ const buildDocumentEmailHTML = ({
   const greetingRow = `<tr><td style="padding: 28px 32px 0; font-size: 15px; color: #334155; font-weight: 600;">Hello ${clientName || 'Customer'},</td></tr>`;
   const formattedAmount = Number(amount || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
   const amountLabel = docLabel === 'Invoice' ? 'Amount Due' : 'Amount';
-  
+
   const thankYouIntro = docLabel === 'Invoice'
     ? 'Thank you for your business.'
     : `Thank you for choosing <strong>${businessName}</strong>.`;
@@ -185,8 +188,8 @@ const buildDocumentEmailHTML = ({
       </tr>
 
       <tr>
-        <td style="padding: 20px 32px 0; font-size: 12px; color: #94a3b8;">
-          Powered by <strong>${APP_NAME}</strong><br/>${TAGLINE}
+        <td style="padding: 20px 32px 0; font-size: 12px; color: #94a3b8; line-height: 1.5;">
+          ${BRAND_LINE}<br/>${TRUST_LINE}
         </td>
       </tr>
 
@@ -208,4 +211,4 @@ const buildDocumentEmailHTML = ({
   `;
 };
 
-module.exports = { buildDocumentEmailHTML, APP_NAME, TAGLINE, CURRENCY_SYMBOLS };
+module.exports = { buildDocumentEmailHTML, APP_NAME, BRAND_LINE, TRUST_LINE, CURRENCY_SYMBOLS };

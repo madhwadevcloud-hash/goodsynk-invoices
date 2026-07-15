@@ -30,7 +30,7 @@ export default function Template1({ invoice }) {
   const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
-    page: { paddingTop: 40, paddingBottom: 120, fontFamily: 'Inter', color: '#000' },
+    page: { paddingTop: 40, paddingBottom: 130, fontFamily: 'Inter', color: '#000' },
     container: { paddingHorizontal: 40 },
     topSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 40, marginBottom: 20 },
     headerText: { fontFamily: B, fontSize: 32, letterSpacing: 2, textTransform: 'uppercase', color: PRIMARY, marginTop: 10 },
@@ -76,7 +76,7 @@ export default function Template1({ invoice }) {
     infoTitle: { fontFamily: B, fontSize: 10, textTransform: 'uppercase', marginBottom: 6, paddingBottom: 4, borderBottom: `1pt solid ${PRIMARY}` },
     infoText: { fontSize: 9, color: '#333', marginBottom: 3, lineHeight: 1.4 },
 
-    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 40, backgroundColor: PRIMARY, flexDirection: 'column', justifyContent: 'center', alignItems: 'center' },
+    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: PRIMARY, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
     watermarkContainer: {
       position: 'absolute',
       top: 0,
@@ -96,6 +96,9 @@ export default function Template1({ invoice }) {
       letterSpacing: 5,
     },
     footerText: { fontSize: 8.5, color: '#FFF' },
+    footerBrandLine: { fontSize: 7, fontFamily: M, color: '#FFF', letterSpacing: 0.3, textAlign: 'center' },
+    footerLink: { fontSize: 7, fontFamily: M, color: '#FFF', letterSpacing: 0.3 },
+    footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.75, marginTop: 1.5, textAlign: 'center' },
   });
 
   const currency = invoice._currency || invoice.currency || 'INR';
@@ -272,13 +275,17 @@ export default function Template1({ invoice }) {
         {/* Footer: contact details & branding */}
         <View style={s.footerBox} fixed>
           {(biz?.phone || biz?.email) && (
-            <View style={{ flexDirection: 'row', gap: 30, marginBottom: 2 }}>
+            <View style={{ flexDirection: 'row', gap: 30, marginBottom: 3 }}>
               {biz?.phone && <Text style={s.footerText}>Phone: {biz.phone}</Text>}
               {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
             </View>
           )}
-          <Text style={{ fontSize: 6.5, color: '#FFF', opacity: 0.8 }}>
-            Powered by GoodSynk — Invoice Banega, Payment Badega.
+          <Text style={s.footerBrandLine}>
+            Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
+            <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
+          </Text>
+          <Text style={s.footerTrustLine}>
+            Generated securely by Goodsynk Billing. This is a digitally signed document.
           </Text>
         </View>
       </Page>

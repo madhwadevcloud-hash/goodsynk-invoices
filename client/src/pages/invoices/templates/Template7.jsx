@@ -144,13 +144,11 @@ export default function Template7({ invoice }) {
     sigLine: { fontSize: 7, color: '#444', paddingTop: 4, width: 100, textAlign: 'center' },
 
     // Footer
-    footerBox: { position: 'absolute', bottom: 30, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-    footerLeft: { width: '70%' },
-    footerRight: { width: '30%', alignItems: 'flex-end' },
-    footerLink: { fontSize: 7, color: PRIMARY, textDecoration: 'none', marginBottom: 2 },
-    footerText: { fontSize: 6.5, color: '#000', fontFamily: B },
-    footerLogoText: { fontSize: 7, color: '#000' },
-    footerLogoBold: { fontFamily: B, fontSize: 10 }
+    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: PRIMARY, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
+    footerText: { fontSize: 8.5, color: '#FFF' },
+    footerBrandLine: { fontSize: 7, fontFamily: B, color: '#FFF', letterSpacing: 0.3, textAlign: 'center' },
+    footerLink: { fontSize: 7, fontFamily: B, color: '#FFF', letterSpacing: 0.3 },
+    footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.75, marginTop: 1.5, textAlign: 'center' },
   });
 
   const currency = invoice._currency || invoice.currency || 'INR';
@@ -313,14 +311,13 @@ export default function Template7({ invoice }) {
         </View>
 
         <View style={s.footerBox} fixed>
-          <View style={s.footerLeft}>
-            <Text style={s.footerLink}>GoodSynk | Simple Invoicing, Billing and Payments | Visit goodsynk.com</Text>
-            <Text style={s.footerText}>Page <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} /> • This is a digitally signed document.</Text>
-          </View>
-          <View style={s.footerRight}>
-            <Text style={s.footerLogoText}>Powered By</Text>
-            <Text style={s.footerLogoBold}>GoodSynk</Text>
-          </View>
+          <Text style={s.footerBrandLine}>
+            Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
+            <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
+          </Text>
+          <Text style={s.footerTrustLine}>
+            Generated securely by Goodsynk Billing. This is a digitally signed document.
+          </Text>
         </View>
 
       </Page>

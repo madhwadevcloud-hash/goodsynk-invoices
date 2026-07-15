@@ -30,7 +30,7 @@ export default function Template3({ invoice }) {
   const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
-    page: { paddingBottom: 60, fontFamily: 'Inter', color: '#000' },
+    page: { paddingBottom: 70, fontFamily: 'Inter', color: '#000' },
 
     headerBlock: { backgroundColor: DARK_BLUE, paddingTop: 30, paddingBottom: 25, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
     headerLeft: { width: scaled.bizInfoMaxWidth },
@@ -83,8 +83,11 @@ export default function Template3({ invoice }) {
     paymentTitle: { fontSize: 10, fontFamily: B, color: DARK_BLUE, marginBottom: 6 },
     paymentText: { fontSize: 9, color: '#000', marginBottom: 3 },
 
-    footer: { position: 'absolute', bottom: 30, left: 40, right: 40, borderTop: '0.5pt solid #EEE', paddingTop: 10, flexDirection: 'row', justifyContent: 'center', gap: 30 },
-    footerText: { fontSize: 8.5, color: '#666' },
+    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: DARK_BLUE, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
+    footerText: { fontSize: 8.5, color: '#FFF' },
+    footerBrandLine: { fontSize: 7, fontFamily: M, color: '#FFF', letterSpacing: 0.3, textAlign: 'center' },
+    footerLink: { fontSize: 7, fontFamily: M, color: '#FFF', letterSpacing: 0.3 },
+    footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.75, marginTop: 1.5, textAlign: 'center' },
 
 
     watermarkContainer: {
@@ -274,16 +277,14 @@ export default function Template3({ invoice }) {
           </View>
         </View>
 
-        {/* Footer: contact details & branding */}
-        <View style={s.footer} fixed>
-          {(biz?.phone || biz?.email) && (
-            <View style={{ flexDirection: 'row', gap: 20, marginBottom: 2 }}>
-              {biz?.phone && <Text style={s.footerText}>Phone: {biz.phone}</Text>}
-              {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
-            </View>
-          )}
-          <Text style={{ fontSize: 6.5, color: '#666', opacity: 0.8 }}>
-            Powered by GoodSynk — Invoice Banega, Payment Badega.
+        {/* Footer: branding */}
+        <View style={s.footerBox} fixed>
+          <Text style={s.footerBrandLine}>
+            Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
+            <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
+          </Text>
+          <Text style={s.footerTrustLine}>
+            Generated securely by Goodsynk Billing. This is a digitally signed document.
           </Text>
         </View>
       </Page>

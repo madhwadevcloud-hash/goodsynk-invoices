@@ -96,11 +96,9 @@ export default function Template6({ invoice }) {
     sigText: { fontSize: 9, fontFamily: M, color: '#444' },
 
     thankYou: { fontSize: 9, marginTop: 20, textAlign: 'center' },
-    footerContactBox: { position: 'absolute', bottom: 55, left: 40 },
-    contactLine: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-    contactIconCircle: { width: 14, height: 14, borderRadius: 7, backgroundColor: ORANGE, marginRight: 8, position: 'relative' },
-    contactIconBg: { position: 'absolute', top: 3, left: 3, width: 8, height: 8, borderRadius: 4, backgroundColor: '#FFF' },
-    contactText: { fontSize: 8.5, color: '#444' },
+    footerBrandLine: { fontSize: 7, fontFamily: M, color: NAVY, letterSpacing: 0.3, textAlign: 'center' },
+    footerLink: { fontSize: 7, fontFamily: M, color: NAVY, letterSpacing: 0.3 },
+    footerTrustLine: { fontSize: 6, color: '#666', opacity: 0.85, marginTop: 1.5, textAlign: 'center' },
 
     watermarkContainer: {
       position: 'absolute',
@@ -293,24 +291,14 @@ export default function Template6({ invoice }) {
 
         <Text style={s.thankYou}>Thank you for your business</Text>
 
-        {/* Fixed Footer Contact Info */}
-        <View style={s.footerContactBox} fixed>
-          <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-            {biz?.phone && (
-              <View style={s.contactLine}>
-                <View style={s.contactIconCircle}><View style={s.contactIconBg} /></View>
-                <Text style={s.contactText}>{biz.phone}</Text>
-              </View>
-            )}
-            {biz?.email && (
-              <View style={s.contactLine}>
-                <View style={s.contactIconCircle}><View style={s.contactIconBg} /></View>
-                <Text style={s.contactText}>{biz.email}</Text>
-              </View>
-            )}
-          </View>
-          <Text style={{ fontSize: 6.5, color: '#666', textAlign: 'center', width: '100%' }}>
-            Powered by GoodSynk — Invoice Banega, Payment Badega.
+        {/* Fixed Footer Branding */}
+        <View style={{ position: 'absolute', bottom: 46, left: 0, right: 0, flexDirection: 'column', alignItems: 'center', paddingHorizontal: 40 }} fixed>
+          <Text style={s.footerBrandLine}>
+            Goodsynk Billing  |  Simple Invoising, Billing & Quotations  |  Visit{' '}
+            <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
+          </Text>
+          <Text style={s.footerTrustLine}>
+            Generated securely by Goodsynk Billing. This is a digitally signed document.
           </Text>
         </View>
 
