@@ -817,6 +817,19 @@ input::-ms-clear {
   display: none;
 }
 
+.bank-accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.profile-layout-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
 /* ─── Mobile Responsiveness Overrides ────────────────────────────────────────── */
 /* Hide sidebar toggle button by default on desktop */
 .sidebar-toggle {
@@ -861,8 +874,15 @@ input::-ms-clear {
     transform: translateX(0) !important;
   }
 
+  .app-layout {
+    width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
   .main-content {
     margin-left: 0 !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
   }
 
   .topbar {
@@ -913,5 +933,13 @@ input::-ms-clear {
     border-radius: 0;
     border-left: none;
     border-right: none;
+  }
+
+  .bank-accounts-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .profile-layout-grid {
+    grid-template-columns: 1fr !important;
   }
 }

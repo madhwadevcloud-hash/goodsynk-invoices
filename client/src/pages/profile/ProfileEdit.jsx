@@ -459,7 +459,7 @@ export default function ProfileEdit() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 24, alignItems: 'start' }}>
+      <div className="profile-layout-grid">
 
         {/* ── LEFT: Avatar card ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -636,7 +636,7 @@ export default function ProfileEdit() {
                   <button type="button" className="btn btn-secondary btn-sm" onClick={() => openBankModal()}><Landmark size={14} /> Add Bank Account</button>
                 </div>
                 {bankAccounts.length ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
+                  <div className="bank-accounts-grid">
                     {bankAccounts.map((bank, index) => (
                       <BankCard key={`${bank.accountNumber || bank.bankName}-${index}`} bank={bank} index={index} editing onEdit={openBankModal} onDelete={deleteBank} onPrimary={makePrimaryBank} />
                     ))}
@@ -676,7 +676,7 @@ export default function ProfileEdit() {
                     <button className="btn btn-secondary btn-sm" onClick={() => { setEditing(true); openBankModal(); }}><Landmark size={13} /> Add Bank Account</button>
                   </div>
                   {bankAccounts.length ? (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
+                    <div className="bank-accounts-grid">
                       {bankAccounts.map((bank, index) => (
                         <BankCard key={`${bank.accountNumber || bank.bankName}-${index}`} bank={bank} index={index} editing={false} />
                       ))}
