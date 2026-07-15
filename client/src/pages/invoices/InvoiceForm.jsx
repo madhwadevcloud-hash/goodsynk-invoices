@@ -53,8 +53,9 @@ export const DEFAULT_COLORS = {
   template2: { primary: '#000000' },
   template3: { primary: '#1a3a6b', secondary: '#F0F4F8' },
   template4: { primary: '#1C2541', secondary: '#d4af37' }, // Navy, Gold
-  template5: { primary: '#0A66C2' },
+  template5: { primary: '#0A66C2' }, // LinkedIn blue
   template6: { primary: '#E8662B', secondary: '#1C2541' }, // Orange, Navy
+  template7: { primary: '#B565D8' }, // Quotation purple
 };
 
 
@@ -1268,6 +1269,7 @@ export default function InvoiceForm() {
               template4: '/templates/t4.png',
               template5: '/templates/t5.png',
               template6: '/templates/t6.png',
+              template7: '/templates/t7.png',
             };
             const defaultKey = (currentUser?.invoiceTemplate || 'template1').toLowerCase();
             const defaultImg = TEMPLATE_IMGS[defaultKey] || '/templates/t1.png';
@@ -1279,12 +1281,13 @@ export default function InvoiceForm() {
               { id: 'template4', name: 'Elegant Navy', img: '/templates/t4.png' },
               { id: 'template5', name: 'Corporate Bright', img: '/templates/t5.png' },
               { id: 'template6', name: 'Angular Orange', img: '/templates/t6.png' },
+              { id: 'template7', name: 'Standard Layout', img: '/templates/t7.png' },
             ];
             return (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginTop: 8 }}>
                 {TEMPLATES.map((t) => {
                   const isSelected = (form.template || '') === t.id;
-                  const isLocked = t.id && !FREE_TEMPLATES.includes(t.id);
+                  const isLocked = t.id && !FREE_TEMPLATES.includes(t.id) && (!currentUser?.plan || currentUser.plan === 'free');
                   return (
                     <button
                       key={t.id}
