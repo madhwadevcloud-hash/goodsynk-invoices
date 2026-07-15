@@ -169,16 +169,20 @@ export default function Template1({ invoice }) {
               {client?.phone && <Text style={s.infoText}>{client.phone}</Text>}
             </View>
             <View style={s.infoCol}>
-              <Text style={s.infoTitle}>Payment Details</Text>
-              {(!isQuotation && biz?.bankDetails?.accountNumber) ? (
+              {isQuotation && (
                 <>
-                  {biz.bankDetails.bankName && <Text style={s.infoText}>Bank: {biz.bankDetails.bankName}</Text>}
-                  <Text style={s.infoText}>Account: {biz.bankDetails.accountNumber}</Text>
-                  {biz.bankDetails.ifscCode && <Text style={s.infoText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
-                </>
-              ) : (
-                <>
-                  {invoice.paymentInfo && <Text style={s.infoText}>{invoice.paymentInfo}</Text>}
+                  <Text style={s.infoTitle}>Payment Details</Text>
+                  {biz?.bankDetails?.accountNumber ? (
+                    <>
+                      {biz.bankDetails.bankName && <Text style={s.infoText}>Bank: {biz.bankDetails.bankName}</Text>}
+                      <Text style={s.infoText}>Account: {biz.bankDetails.accountNumber}</Text>
+                      {biz.bankDetails.ifscCode && <Text style={s.infoText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
+                    </>
+                  ) : (
+                    <>
+                      {invoice.paymentInfo && <Text style={s.infoText}>{invoice.paymentInfo}</Text>}
+                    </>
+                  )}
                 </>
               )}
             </View>

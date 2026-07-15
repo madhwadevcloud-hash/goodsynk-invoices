@@ -176,16 +176,20 @@ export default function Template2({ invoice }) {
           </View>
 
           <View style={s.metaColumn}>
-            <Text style={s.metaTitle}>Payment Details:</Text>
-            {(!isQuotation && biz?.bankDetails?.accountNumber) ? (
+            {isQuotation && (
               <>
-                {biz.bankDetails.bankName && <Text style={s.metaText}>Bank: {biz.bankDetails.bankName}</Text>}
-                <Text style={s.metaText}>A/C Name: {biz.bankDetails.accountName}</Text>
-                <Text style={s.metaText}>A/C No: {biz.bankDetails.accountNumber}</Text>
-                {biz.bankDetails.ifscCode && <Text style={s.metaText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
+                <Text style={s.metaTitle}>Payment Details:</Text>
+                {biz?.bankDetails?.accountNumber ? (
+                  <>
+                    {biz.bankDetails.bankName && <Text style={s.metaText}>Bank: {biz.bankDetails.bankName}</Text>}
+                    <Text style={s.metaText}>A/C Name: {biz.bankDetails.accountName}</Text>
+                    <Text style={s.metaText}>A/C No: {biz.bankDetails.accountNumber}</Text>
+                    {biz.bankDetails.ifscCode && <Text style={s.metaText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
+                  </>
+                ) : (
+                  <Text style={s.metaText}>{invoice.paymentInfo || '—'}</Text>
+                )}
               </>
-            ) : (
-              <Text style={s.metaText}>{invoice.paymentInfo || '—'}</Text>
             )}
           </View>
         </View>

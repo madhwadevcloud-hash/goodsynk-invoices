@@ -207,7 +207,7 @@ export default function Template4({ invoice }) {
         {/* Bottom */}
         <View style={s.bottomSection}>
           <View style={s.paymentBox}>
-            {(!isQuotation && biz?.bankDetails?.accountNumber) && (
+            {(isQuotation && biz?.bankDetails?.accountNumber) && (
               <View style={{ marginBottom: 20 }}>
                 <Text style={s.infoLabel}>Payment Info</Text>
                 <Text style={s.infoTextBold}>{biz.bankDetails.bankName}</Text>

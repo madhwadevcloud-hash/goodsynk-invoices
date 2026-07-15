@@ -205,7 +205,7 @@ export default function Template5({ invoice }) {
         {/* Footer */}
         <View style={s.bottomSection}>
           <View style={s.leftBottom}>
-            {(!isQuotation && biz?.bankDetails?.accountNumber) && (
+            {(isQuotation && biz?.bankDetails?.accountNumber) && (
               <View style={{ marginBottom: 20 }}>
                 <Text style={s.metaLabel}>Payment Information</Text>
                 <Text style={s.metaVal}>
