@@ -23,7 +23,6 @@ const PLANS = [
             { label: '3 clients', included: true },
             { label: '10 invoices & quotations / month', included: true },
             { label: 'Classic Blue & Minimalist templates', included: true },
-            { label: 'Up to 5 note points per document', included: true },
             { label: 'All 6 templates + custom colors', included: false },
             { label: 'Multiple bank accounts', included: true },
         ],
@@ -48,7 +47,6 @@ const PLANS = [
             { label: '15 clients', included: true },
             { label: '50 invoices & quotations / month', included: true },
             { label: 'All 6 templates + custom colors', included: true },
-            { label: 'Unlimited note points', included: true },
             { label: 'Multiple bank accounts', included: true },
         ],
         cta: 'Upgrade to Growth',
@@ -72,7 +70,6 @@ const PLANS = [
             { label: '15 clients', included: true },
             { label: '50 invoices & quotations / month', included: true },
             { label: 'All 6 templates + custom colors', included: true },
-            { label: 'Unlimited note points', included: true },
             { label: 'Multiple bank accounts', included: true },
         ],
         cta: 'Upgrade to Growth (Yearly)',
@@ -95,7 +92,6 @@ const PLANS = [
             { label: 'Unlimited clients', included: true },
             { label: 'Unlimited invoices & quotations', included: true },
             { label: 'All 6 templates + custom colors', included: true },
-            { label: 'Unlimited note points', included: true },
             { label: 'Multiple bank accounts', included: true },
         ],
         cta: 'Go Enterprise',
@@ -118,7 +114,6 @@ const PLANS = [
             { label: 'Unlimited clients', included: true },
             { label: 'Unlimited invoices & quotations', included: true },
             { label: 'All 6 templates + custom colors', included: true },
-            { label: 'Unlimited note points', included: true },
             { label: 'Multiple bank accounts', included: true },
         ],
         cta: 'Upgrade to Enterprise (Yearly)',
@@ -129,7 +124,6 @@ const COMPARISON_ROWS = [
     ['Clients', { free: '3', growth: '15', growth_yearly: '15', enterprise: 'Unlimited', enterprise_yearly: 'Unlimited' }],
     ['Invoices & quotations / month', { free: '10', growth: '50', growth_yearly: '50', enterprise: 'Unlimited', enterprise_yearly: 'Unlimited' }],
     ['Templates', { free: '2 (Classic Blue, Minimalist)', growth: 'All 6 + colors', growth_yearly: 'All 6 + colors', enterprise: 'All 6 + colors', enterprise_yearly: 'All 6 + colors' }],
-    ['Note points per document', { free: '5', growth: 'Unlimited', growth_yearly: 'Unlimited', enterprise: 'Unlimited', enterprise_yearly: 'Unlimited' }],
     ['Multiple bank accounts', { free: true, growth: true, growth_yearly: true, enterprise: true, enterprise_yearly: true }],
 ];
 
@@ -277,18 +271,7 @@ export default function UpgradePage() {
                         }}
                     >
                         Yearly
-                        <span
-                            style={{
-                                fontSize: '0.68rem',
-                                fontWeight: 700,
-                                padding: '1px 6px',
-                                borderRadius: 999,
-                                background: billingCycle === 'yearly' ? 'rgba(255,255,255,0.25)' : 'var(--success-bg)',
-                                color: billingCycle === 'yearly' ? '#fff' : 'var(--success)',
-                            }}
-                        >
-                            Save
-                        </span>
+
                     </button>
                 </div>
             </div>
