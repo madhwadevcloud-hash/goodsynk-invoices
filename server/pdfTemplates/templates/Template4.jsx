@@ -40,7 +40,7 @@ export default function Template4({ invoice }) {
     bizNameText: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: NAVY, textTransform: 'uppercase', marginBottom: 2 },
     bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight },
     titleBox: { alignItems: 'flex-end', paddingTop: 8 },
-    invoiceTitle: { fontFamily: 'Inter', fontWeight: 300, fontSize: 26, letterSpacing: 4, color: NAVY },
+    invoiceTitle: { fontFamily: 'Inter', fontWeight: 300, fontSize: 26, letterSpacing: 4, color: NAVY, paddingLeft: 10 },
 
     infoGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 40 },
     infoCol: { width: '30%' },
@@ -136,7 +136,7 @@ export default function Template4({ invoice }) {
             {biz?.gstin && <Text style={[s.bizSubText, { color: GOLD, fontFamily: B }]}>GSTIN: {biz.gstin}</Text>}
           </View>
           <View style={s.titleBox}>
-            <Text style={s.invoiceTitle}>{isQuotation ? 'QUOTATION' : 'INVOICE'}</Text>
+            <Text style={s.invoiceTitle}>{isQuotation ? '  QUOTATION' : '  INVOICE'}</Text>
           </View>
         </View>
 
