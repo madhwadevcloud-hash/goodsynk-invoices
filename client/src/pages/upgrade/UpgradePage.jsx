@@ -215,7 +215,7 @@ export default function UpgradePage() {
                         <FileText size={20} />
                     </div>
                     <div className="stat-body">
-                        <div className="stat-label">Invoices (per month)</div>
+                        <div className="stat-label">Invoices & Quotations (per month)</div>
                         <div className="stat-value">
                             {loadingUsage ? '—' : `${usage.invoices} / ${activePlanConfig.invoicesLimit === Infinity ? '∞' : activePlanConfig.invoicesLimit}`}
                         </div>
@@ -267,7 +267,7 @@ export default function UpgradePage() {
                                 <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{plan.priceSuffix}</span>
                             </div>
                             <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 18 }}>
-                                {plan.clientsLimit === Infinity ? 'Unlimited' : plan.clientsLimit} clients · {plan.invoicesLimit === Infinity ? 'unlimited' : plan.invoicesLimit} invoices/month
+                                {plan.clientsLimit === Infinity ? 'Unlimited' : plan.clientsLimit} clients · {plan.invoicesLimit === Infinity ? 'unlimited' : plan.invoicesLimit} invoices & quotations/month
                             </div>
 
                             <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px', display: 'flex', flexDirection: 'column', gap: 9, flex: 1 }}>
