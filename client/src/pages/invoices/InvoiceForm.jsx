@@ -1284,12 +1284,16 @@ export default function InvoiceForm() {
                       setField('notes', serializeNotes(next));
                     }}
                     placeholder={`Point ${noteIdx + 1}`}
+                    maxLength={80}
                   />
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', minWidth: 40, textAlign: 'right' }}>
+                    {point.length}/80
+                  </span>
                   <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setField('notes', serializeNotes(notePoints.filter((_, i) => i !== noteIdx)))}><X size={14} /></button>
                 </div>
               ))}
               {notePoints.length < 5 && (
-                <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('notes', serializeNotes([...notePoints, 'New note']))}><Plus size={14} /> Add point</button>
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('notes', serializeNotes([...notePoints, '']))}><Plus size={14} /> Add point</button>
               )}
             </div>
           </div>
@@ -1309,12 +1313,16 @@ export default function InvoiceForm() {
                       setField('termsAndConditions', serializeNotes(next));
                     }}
                     placeholder={`Term ${termIdx + 1}`}
+                    maxLength={80}
                   />
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', minWidth: 40, textAlign: 'right' }}>
+                    {point.length}/80
+                  </span>
                   <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setField('termsAndConditions', serializeNotes(termsPoints.filter((_, i) => i !== termIdx)))}><X size={14} /></button>
                 </div>
               ))}
               {termsPoints.length < 5 && (
-                <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('termsAndConditions', serializeNotes([...termsPoints, 'New term']))}><Plus size={14} /> Add point</button>
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('termsAndConditions', serializeNotes([...termsPoints, '']))}><Plus size={14} /> Add point</button>
               )}
             </div>
           </div>
