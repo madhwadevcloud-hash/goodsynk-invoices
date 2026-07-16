@@ -136,11 +136,11 @@ export default function InvoiceView() {
           ) : (
             <>
               {invoice.status === 'draft' && (
-                <button className="btn btn-secondary" onClick={() => updateStatus('sent')}>
-                  <Send size={15} /> Mark Sent
+                <button className="btn btn-secondary" onClick={() => updateStatus('pending')}>
+                  <Send size={15} /> Mark Pending
                 </button>
               )}
-              {invoice.status === 'sent' && (
+              {invoice.status === 'pending' && (
                 <button className="btn btn-secondary" style={{ color: 'var(--success)' }} onClick={() => updateStatus('paid')}>
                   <CheckCircle size={15} /> Mark Paid
                 </button>
