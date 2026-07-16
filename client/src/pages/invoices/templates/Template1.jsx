@@ -32,7 +32,7 @@ export default function Template1({ invoice }) {
   const s = StyleSheet.create({
     page: { paddingTop: 30, paddingBottom: 75, fontFamily: 'Inter', color: '#000' },
     container: { paddingHorizontal: 40 },
-    topSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 40, marginBottom: 20 },
+    topSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 40, marginBottom: 10 },
     headerText: { fontFamily: B, fontSize: 32, letterSpacing: 2, textTransform: 'uppercase', color: PRIMARY, marginTop: 10 },
 
     bizInfoTop: { alignItems: 'flex-end', maxWidth: scaled.bizInfoMaxWidth },
@@ -40,13 +40,13 @@ export default function Template1({ invoice }) {
     bizNameTop: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
     bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight, textAlign: 'right' },
 
-    blueBar: { backgroundColor: PRIMARY, height: 12, width: '100%', marginBottom: 15 },
+    blueBar: { backgroundColor: PRIMARY, height: 12, width: '100%', marginBottom: 10 },
     detailsRow: { flexDirection: 'row', paddingHorizontal: 40, marginBottom: 25, gap: 40 },
     detailsCol: {},
     detailsLabel: { fontSize: 7.5, fontFamily: B, color: '#666', textTransform: 'uppercase', marginBottom: 3 },
     detailsValue: { fontSize: 9.5, fontFamily: M, color: '#000' },
 
-    table: { width: '100%', marginTop: 10 },
+    table: { width: '100%', marginTop: 5 },
     tHeadRow: { flexDirection: 'row', borderBottom: `1pt solid ${PRIMARY}`, paddingBottom: 8, marginBottom: 8 },
     tRow: { flexDirection: 'row', borderBottom: `0.5pt solid ${PRIMARY}`, paddingVertical: 10 },
     th: { fontSize: 9.5, fontFamily: B, color: '#000' },
@@ -71,7 +71,7 @@ export default function Template1({ invoice }) {
     grandTotalLabel: { fontSize: 11, fontFamily: B, width: 80, textAlign: 'right', paddingRight: 8, color: '#000', marginTop: 4 },
     grandTotalVal: { fontSize: 11, fontFamily: B, width: 80, textAlign: 'right', color: PRIMARY, marginTop: 4 },
 
-    infoBlock: { flexDirection: 'row', marginTop: 15, justifyContent: 'space-between' },
+    infoBlock: { flexDirection: 'row', marginTop: 10, justifyContent: 'space-between' },
     infoCol: { width: '30%' },
     infoTitle: { fontFamily: B, fontSize: 10, textTransform: 'uppercase', marginBottom: 6, paddingBottom: 4, borderBottom: `1pt solid ${PRIMARY}` },
     infoText: { fontSize: 9, color: '#333', marginBottom: 3, lineHeight: 1.4 },
