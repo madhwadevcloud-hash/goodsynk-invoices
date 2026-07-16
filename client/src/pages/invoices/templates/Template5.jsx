@@ -253,7 +253,7 @@ export default function Template5({ invoice }) {
         </View>
 
         {/* Signature */}
-        <View style={{ marginTop: -10, alignItems: 'flex-end' }}>
+        <View style={{ marginTop: 30, alignItems: 'flex-end' }}>
           {biz?.businessSignature && (
             <Image src={biz.businessSignature} style={{ width: 160, height: 55, objectFit: 'contain', marginBottom: 4 }} />
           )}
