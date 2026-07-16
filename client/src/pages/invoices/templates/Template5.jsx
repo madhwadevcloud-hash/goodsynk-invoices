@@ -29,7 +29,7 @@ export default function Template5({ invoice }) {
   const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
-    page: { paddingTop: 32, paddingBottom: 120, paddingHorizontal: 40, fontFamily: 'Inter', color: '#000' },
+    page: { paddingTop: 32, paddingBottom: 75, paddingHorizontal: 40, fontFamily: 'Inter', color: '#000' },
 
     headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
     headerLeft: { width: '50%' },
@@ -169,6 +169,22 @@ export default function Template5({ invoice }) {
               {client?.phone && `${client.phone}`}
             </Text>
           </View>
+
+          {isQuotation && (
+            <View style={s.metaCol}>
+              <Text style={s.metaLabel}>Payment Information</Text>
+              {biz?.bankDetails?.accountNumber ? (
+                <Text style={s.metaVal}>
+                  {biz.bankDetails.bankName && `Bank: ${biz.bankDetails.bankName}\n`}
+                  Account Name: {biz.bankDetails.accountName}{'\n'}
+                  Account No.: {biz.bankDetails.accountNumber}{'\n'}
+                  {biz.bankDetails.ifscCode && `IFSC: ${biz.bankDetails.ifscCode}`}
+                </Text>
+              ) : invoice.paymentInfo ? (
+                <Text style={s.metaVal}>{invoice.paymentInfo}</Text>
+              ) : null}
+            </View>
+          )}
         </View>
 
         {/* Table */}
@@ -209,17 +225,7 @@ export default function Template5({ invoice }) {
         {/* Bottom Section */}
         <View style={s.bottomSection}>
           <View style={s.leftBottom}>
-            {(isQuotation && biz?.bankDetails?.accountNumber) && (
-              <View style={{ marginBottom: 20 }}>
-                <Text style={s.metaLabel}>Payment Information</Text>
-                <Text style={s.metaVal}>
-                  {biz.bankDetails.bankName && `Bank: ${biz.bankDetails.bankName}\n`}
-                  Account Name: {biz.bankDetails.accountName}{'\n'}
-                  Account No.: {biz.bankDetails.accountNumber}{'\n'}
-                  {biz.bankDetails.ifscCode && `IFSC: ${biz.bankDetails.ifscCode}`}
-                </Text>
-              </View>
-            )}
+
 
             {invoice.notes && (
               <View style={{ marginBottom: 15 }}>
