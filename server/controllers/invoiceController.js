@@ -71,7 +71,7 @@ const getUsage = async (req, res) => {
 const getInvoices = async (req, res) => {
   try {
     const { status, invoiceType, page = 1, limit = 20 } = req.query;
-    const filter = { user: req.user._id };
+    const filter = { user: req.user._id, isDeleted: { $ne: true } };
     if (status) filter.status = status;
     if (invoiceType) filter.invoiceType = invoiceType;
 
@@ -93,7 +93,7 @@ const getInvoices = async (req, res) => {
 // @access  Private
 const getInvoice = async (req, res) => {
   try {
-    const invoice = await Invoice.findOne({ _id: req.params.id, user: req.user._id })
+    const invoice = await Invoice.findOne({ _id: req.params.id, user: req.user._id, isDeleted: { $ne: true } })
       .populate('client')
       .populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors');
     if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
@@ -160,7 +160,7 @@ const createInvoice = async (req, res) => {
 const updateInvoice = async (req, res) => {
   try {
     const { items, isInterstate, template, ...rest } = req.body;
-    const existing = await Invoice.findOne({ _id: req.params.id, user: req.user._id });
+    const existing = await Invoice.findOne({ _id: req.params.id, user: req.user._id, isDeleted: { $ne: true } });
     if (!existing) return res.status(404).json({ success: false, message: 'Invoice not found' });
 
     const updatedItems = items || existing.items;
@@ -169,8 +169,8 @@ const updateInvoice = async (req, res) => {
     // Preserve the stored template unless the user explicitly chose a new one or cleared it
     const resolvedTemplate = (template !== undefined) ? template.toLowerCase() : existing.template;
 
-    const invoice = await Invoice.findByIdAndUpdate(
-      req.params.id,
+    const invoice = await Invoice.findOneAndUpdate(
+      { _id: req.params.id, user: req.user._id, isDeleted: { $ne: true } },
       { ...rest, ...totals, isInterstate: interstate, template: resolvedTemplate },
       { new: true, runValidators: true }
     ).populate('client', 'name email phone');
@@ -193,7 +193,7 @@ const updateInvoiceStatus = async (req, res) => {
   try {
     const { status, paidAmount, paidDate } = req.body;
     const invoice = await Invoice.findOneAndUpdate(
-      { _id: req.params.id, user: req.user._id },
+      { _id: req.params.id, user: req.user._id, isDeleted: { $ne: true } },
       { status, ...(paidAmount !== undefined && { paidAmount }), ...(paidDate && { paidDate }) },
       { new: true }
     );
@@ -209,7 +209,11 @@ const updateInvoiceStatus = async (req, res) => {
 // @access  Private
 const deleteInvoice = async (req, res) => {
   try {
-    const invoice = await Invoice.findOneAndDelete({ _id: req.params.id, user: req.user._id });
+    const invoice = await Invoice.findOneAndUpdate(
+      { _id: req.params.id, user: req.user._id, isDeleted: { $ne: true } },
+      { isDeleted: true },
+      { new: true }
+    );
     if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
     res.json({ success: true, message: 'Invoice deleted' });
   } catch (err) {
@@ -224,19 +228,19 @@ const getStats = async (req, res) => {
   try {
     const userId = req.user._id;
     const [totalInvoices, paidCount, sentCount, draftCount, overdue] = await Promise.all([
-      Invoice.countDocuments({ user: userId }),
-      Invoice.countDocuments({ user: userId, status: 'paid' }),
-      Invoice.countDocuments({ user: userId, status: 'sent' }),
-      Invoice.countDocuments({ user: userId, status: 'draft' }),
-      Invoice.countDocuments({ user: userId, status: 'overdue' }),
+      Invoice.countDocuments({ user: userId, isDeleted: { $ne: true } }),
+      Invoice.countDocuments({ user: userId, status: 'paid', isDeleted: { $ne: true } }),
+      Invoice.countDocuments({ user: userId, status: 'sent', isDeleted: { $ne: true } }),
+      Invoice.countDocuments({ user: userId, status: 'draft', isDeleted: { $ne: true } }),
+      Invoice.countDocuments({ user: userId, status: 'overdue', isDeleted: { $ne: true } }),
     ]);
 
     const revenueAgg = await Invoice.aggregate([
-      { $match: { user: userId, status: 'paid' } },
+      { $match: { user: userId, status: 'paid', isDeleted: { $ne: true } } },
       { $group: { _id: null, total: { $sum: '$total' } } },
     ]);
     const outstandingAgg = await Invoice.aggregate([
-      { $match: { user: userId, status: { $in: ['sent', 'overdue'] } } },
+      { $match: { user: userId, status: { $in: ['sent', 'overdue'] }, isDeleted: { $ne: true } } },
       { $group: { _id: null, total: { $sum: '$total' } } },
     ]);
 

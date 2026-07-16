@@ -22,7 +22,7 @@ const streamToBuffer = (stream) =>
 // ── Raw PDF stream (used by the Download button) ──
 const streamDocumentPdf = async (req, res, { Model, docLabel, numberField }) => {
     try {
-        const doc = await Model.findOne({ shareToken: req.params.token })
+        const doc = await Model.findOne({ shareToken: req.params.token, isDeleted: { $ne: true } })
             .populate('client')
             .populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors');
 
@@ -47,7 +47,7 @@ const streamDocumentPdf = async (req, res, { Model, docLabel, numberField }) => 
 // ── JSON summary (used by the public share page) ──
 const getPublicDocument = async (req, res, { Model, docLabel, numberField, dueDateField }) => {
     try {
-        const doc = await Model.findOne({ shareToken: req.params.token })
+        const doc = await Model.findOne({ shareToken: req.params.token, isDeleted: { $ne: true } })
             .populate('client', 'name email phone')
             .populate('user', 'name email businessName businessLogo');
 

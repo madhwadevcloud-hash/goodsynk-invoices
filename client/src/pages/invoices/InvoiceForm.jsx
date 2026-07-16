@@ -90,6 +90,8 @@ export default function InvoiceForm() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [usage, setUsage] = useState(null);
+  const [checkingLimit, setCheckingLimit] = useState(false);
   const { user: currentUser } = useAuth();
   const [showHsn, setShowHsn] = useState(true);
   const [lineSearchQuery, setLineSearchQuery] = useState('');
@@ -127,12 +129,26 @@ export default function InvoiceForm() {
   const [creatingClient, setCreatingClient] = useState(false);
 
   const openNewClientModal = () => {
+    if (usage && usage.clientsLimit !== null && usage.clientsLimit !== undefined && usage.clientsLimit !== Infinity) {
+      if (usage.clients >= usage.clientsLimit) {
+        toast.error(`Your ${usage.plan} plan allows up to ${usage.clientsLimit} clients. Upgrade to add more.`);
+        navigate('/upgrade');
+        return;
+      }
+    }
     setNewClientForm({ name: clientQuery && !form.client ? clientQuery : '', email: '', phone: '', gstin: '' });
     setClientDropdownOpen(false);
     setNewClientModal(true);
   };
 
   const openFullClientForm = (draft = null) => {
+    if (usage && usage.clientsLimit !== null && usage.clientsLimit !== undefined && usage.clientsLimit !== Infinity) {
+      if (usage.clients >= usage.clientsLimit) {
+        toast.error(`Your ${usage.plan} plan allows up to ${usage.clientsLimit} clients. Upgrade to add more.`);
+        navigate('/upgrade');
+        return;
+      }
+    }
     setClientDropdownOpen(false);
     setNewClientModal(false);
     navigate('/clients/new', {
@@ -228,6 +244,27 @@ export default function InvoiceForm() {
     templateColors: null, // { primary, secondary }
     items: [],
   });
+
+  useEffect(() => {
+    setCheckingLimit(true);
+    invoiceAPI.getUsage()
+      .then((res) => {
+        setUsage(res.data.usage);
+        const { documentsThisMonth, documentsLimit, plan } = res.data.usage;
+        if (!isEdit && documentsLimit !== null && documentsLimit !== undefined && documentsLimit !== Infinity) {
+          if (documentsThisMonth >= documentsLimit) {
+            toast.error(`Your ${plan} plan allows up to ${documentsLimit} invoices & quotations per month. Upgrade to add more.`);
+            navigate('/upgrade');
+          }
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load usage limits:', err);
+      })
+      .finally(() => {
+        setCheckingLimit(false);
+      });
+  }, [isEdit, navigate]);
 
   useEffect(() => {
     setLoading(true);
@@ -553,7 +590,7 @@ export default function InvoiceForm() {
   const notePoints = form.notes ? form.notes.split('\n') : [];
   const termsPoints = form.termsAndConditions ? form.termsAndConditions.split('\n') : [];
 
-  if (loading) return <div className="flex-center" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
+  if (loading || checkingLimit) return <div className="flex-center" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
 
   return (
     <form onSubmit={handleSubmit}>

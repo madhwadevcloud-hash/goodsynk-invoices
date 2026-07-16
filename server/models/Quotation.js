@@ -66,6 +66,7 @@ const quotationSchema = new mongoose.Schema(
     termsAndConditions: { type: String, default: '' },
     template: { type: String, default: 'template1' },
     templateColors: { type: Object, default: null },
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

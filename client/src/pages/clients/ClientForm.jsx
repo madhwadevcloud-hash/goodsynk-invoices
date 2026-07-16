@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { clientAPI } from '../../api/services';
+import { clientAPI, invoiceAPI } from '../../api/services';
 import toast from 'react-hot-toast';
 import { Save, ArrowLeft } from 'lucide-react';
 
@@ -16,6 +16,7 @@ export default function ClientForm() {
   const clientDraft = location.state?.clientDraft;
 
   const [saving, setSaving] = useState(false);
+  const [checkingLimit, setCheckingLimit] = useState(false);
   const [form, setForm] = useState({
     name: clientDraft?.name || '',
     email: clientDraft?.email || '',
@@ -31,6 +32,28 @@ export default function ClientForm() {
       country: clientDraft?.address?.country || 'India',
     },
   });
+
+  useEffect(() => {
+    if (!isEdit) {
+      setCheckingLimit(true);
+      invoiceAPI.getUsage()
+        .then((res) => {
+          const { clients, clientsLimit, plan } = res.data.usage;
+          if (clientsLimit !== null && clientsLimit !== undefined && clientsLimit !== Infinity) {
+            if (clients >= clientsLimit) {
+              toast.error(`Your ${plan} plan allows up to ${clientsLimit} clients. Upgrade to add more.`);
+              navigate('/upgrade');
+            }
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to load usage limits:', err);
+        })
+        .finally(() => {
+          setCheckingLimit(false);
+        });
+    }
+  }, [isEdit, navigate]);
 
   useEffect(() => {
     if (isEdit) {
@@ -96,6 +119,10 @@ export default function ClientForm() {
     }
     finally { setSaving(false); }
   };
+
+  if (checkingLimit) {
+    return <div className="page-loader"><div className="spinner" /></div>;
+  }
 
   return (
     <form onSubmit={handleSubmit}>

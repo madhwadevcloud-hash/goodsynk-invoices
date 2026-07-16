@@ -45,7 +45,7 @@ const calcTotals = (items, isInterstate, taxType = 'gst_india') => {
 const getQuotations = async (req, res) => {
   try {
     const { status, page = 1, limit = 20 } = req.query;
-    const filter = { user: req.user._id };
+    const filter = { user: req.user._id, isDeleted: { $ne: true } };
     if (status) filter.status = status;
 
     const total = await Quotation.countDocuments(filter);
@@ -73,7 +73,7 @@ const getQuotations = async (req, res) => {
 // @route GET /api/quotations/:id
 const getQuotation = async (req, res) => {
   try {
-    const quotation = await Quotation.findOne({ _id: req.params.id, user: req.user._id })
+    const quotation = await Quotation.findOne({ _id: req.params.id, user: req.user._id, isDeleted: { $ne: true } })
       .populate('client')
       .populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors');
     if (!quotation) return res.status(404).json({ success: false, message: 'Quotation not found' });
@@ -156,7 +156,7 @@ const createQuotation = async (req, res) => {
 const updateQuotation = async (req, res) => {
   try {
     const { items, isInterstate, taxType, dueDate, invoiceNumber, invoiceType, template, ...rest } = req.body;
-    const existing = await Quotation.findOne({ _id: req.params.id, user: req.user._id });
+    const existing = await Quotation.findOne({ _id: req.params.id, user: req.user._id, isDeleted: { $ne: true } });
     if (!existing) return res.status(404).json({ success: false, message: 'Quotation not found' });
 
     const updatedItems = items || existing.items;
@@ -166,8 +166,8 @@ const updateQuotation = async (req, res) => {
     // Preserve the stored template unless the user explicitly chose a new one or cleared it
     const resolvedTemplate = (template !== undefined) ? template.toLowerCase() : existing.template;
 
-    const quotation = await Quotation.findByIdAndUpdate(
-      req.params.id,
+    const quotation = await Quotation.findOneAndUpdate(
+      { _id: req.params.id, user: req.user._id, isDeleted: { $ne: true } },
       {
         ...rest,
         ...totals,
@@ -201,7 +201,7 @@ const updateQuotationStatus = async (req, res) => {
   try {
     const { status } = req.body;
     const quotation = await Quotation.findOneAndUpdate(
-      { _id: req.params.id, user: req.user._id },
+      { _id: req.params.id, user: req.user._id, isDeleted: { $ne: true } },
       { status },
       { new: true }
     );
@@ -216,7 +216,11 @@ const updateQuotationStatus = async (req, res) => {
 // @route DELETE /api/quotations/:id
 const deleteQuotation = async (req, res) => {
   try {
-    const quotation = await Quotation.findOneAndDelete({ _id: req.params.id, user: req.user._id });
+    const quotation = await Quotation.findOneAndUpdate(
+      { _id: req.params.id, user: req.user._id, isDeleted: { $ne: true } },
+      { isDeleted: true },
+      { new: true }
+    );
     if (!quotation) return res.status(404).json({ success: false, message: 'Quotation not found' });
     res.json({ success: true, message: 'Quotation deleted' });
   } catch (err) {
@@ -253,7 +257,7 @@ const convertToInvoice = async (req, res) => {
       }
     }
 
-    const quotation = await Quotation.findOne({ _id: req.params.id, user: req.user._id })
+    const quotation = await Quotation.findOne({ _id: req.params.id, user: req.user._id, isDeleted: { $ne: true } })
       .populate('client');
     if (!quotation) return res.status(404).json({ success: false, message: 'Quotation not found' });
 

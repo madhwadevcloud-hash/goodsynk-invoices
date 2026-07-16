@@ -97,6 +97,7 @@ const invoiceSchema = new mongoose.Schema(
     paidDate: { type: Date },
     template: { type: String, default: 'template1' },
     templateColors: { type: Object, default: null },
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

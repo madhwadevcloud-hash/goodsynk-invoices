@@ -103,11 +103,11 @@ export default function Template6({ invoice }) {
     footerLink: { fontSize: 7.5, fontFamily: B, color: ORANGE, letterSpacing: 0.4 },
     footerContact: { fontSize: 8, color: '#FFF', flexDirection: 'row', gap: 30, marginBottom: 3 },
     footerContactText: { fontSize: 8, color: '#FFF' },
-    footerTagline: { fontSize: 6.5, color: '#FFF', opacity: 0.9, textAlign: 'center', marginTop: 3 },
-    footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.6, marginTop: 3, textAlign: 'center' },
-    poweredByContainer: { alignItems: 'center', marginTop: 6 },
-    poweredByLabel: { fontSize: 6, color: hexToRgba(ORANGE, 0.65), letterSpacing: 0.5 },
-    poweredByValue: { fontSize: 9.5, fontFamily: M, color: ORANGE, letterSpacing: 0.5, marginTop: 1 },
+    footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.6, marginTop: 5, textAlign: 'center' },
+    poweredByOnOrange: { position: 'absolute', bottom: 6, right: 24, width: 150, alignItems: 'center' },
+    poweredByLabelOnOrange: { fontSize: 5.5, color: hexToRgba('#1C2541', 0.7), letterSpacing: 0.5 },
+    poweredByValueOnOrange: { fontSize: 9, fontFamily: B, color: '#1C2541', letterSpacing: 0.5, marginTop: 1 },
+    footerTaglineOnOrange: { fontSize: 6, fontFamily: M, color: '#1C2541', opacity: 0.85, textAlign: 'center', marginTop: 2 },
 
     watermarkContainer: {
       position: 'absolute',
@@ -311,11 +311,6 @@ export default function Template6({ invoice }) {
             Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
             <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
           </Text>
-          <View style={s.poweredByContainer}>
-            <Text style={s.poweredByLabel}>Powered By</Text>
-            <Text style={s.poweredByValue}>GoodSynk</Text>
-          </View>
-          <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
           <Text style={s.footerTrustLine}>
             Generated securely by Goodsynk Billing. This is a digitally signed document.
           </Text>
@@ -328,6 +323,14 @@ export default function Template6({ invoice }) {
             <Polygon points="420,40 800,40 800,0 460,0" fill={ORANGE} />
           </Svg>
         </View>
+
+        {/* Powered By + Tagline, sitting inside the orange corner of the decor */}
+        <View style={s.poweredByOnOrange} fixed>
+          <Text style={s.poweredByLabelOnOrange}>Powered By</Text>
+          <Text style={s.poweredByValueOnOrange}>GoodSynk</Text>
+          <Text style={s.footerTaglineOnOrange}>Invoice Banega, Payment Badega.</Text>
+        </View>
+
 
       </Page>
     </Document>
