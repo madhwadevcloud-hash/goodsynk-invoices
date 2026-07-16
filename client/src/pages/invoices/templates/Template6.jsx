@@ -31,7 +31,7 @@ export default function Template6({ invoice }) {
   const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
-    page: { paddingBottom: 60, fontFamily: 'Inter', color: '#000' },
+    page: { paddingBottom: 100, fontFamily: 'Inter', color: '#000' },
 
     headerContainer: { height: 160, position: 'relative' },
     headerContent: { position: 'absolute', top: 0, left: 0, right: 0, height: 160, flexDirection: 'row', paddingTop: 30, paddingHorizontal: 40 },
@@ -47,7 +47,7 @@ export default function Template6({ invoice }) {
     headerTextLabel: { fontSize: 8.5, color: '#B0C4DE', marginRight: 6 },
     headerTextValue: { fontSize: 8.5, color: '#FFF', fontFamily: M },
 
-    metaSection: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 40, marginTop: 20, marginBottom: 15 },
+    metaSection: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 40, marginTop: 15, marginBottom: 10 },
     billToBlock: { width: '33%', marginRight: 10 },
     billToTitle: { fontSize: 10, textTransform: 'uppercase', marginBottom: 6, color: '#333', fontFamily: B },
     billToName: { fontSize: 13, fontFamily: B, color: '#000', marginBottom: 2 },
@@ -84,8 +84,8 @@ export default function Template6({ invoice }) {
     colTax: { flex: 0.8, textAlign: 'center' },
     colTotal: { flex: 1.2, textAlign: 'right', paddingRight: 10 },
 
-    bottomGrid: { flexDirection: 'row', paddingHorizontal: 40, marginTop: 10 },
-    leftBottom: { width: '55%' },
+    bottomGrid: { flexDirection: 'row', paddingHorizontal: 40, marginTop: 5 },
+    leftBottom: { width: '55%', paddingRight: 15 },
     rightBottom: { width: '45%' },
 
     termsTitle: { fontSize: 10, fontFamily: B, color: '#000', marginBottom: 4 },
@@ -99,11 +99,11 @@ export default function Template6({ invoice }) {
     grandTotalLabel: { fontSize: 10, fontFamily: B, color: '#FFF' },
     grandTotalVal: { fontSize: 10, fontFamily: B, color: '#FFF' },
 
-    signatureBlock: { marginTop: 25, alignItems: 'flex-end' },
+    signatureBlock: { marginTop: 15, alignItems: 'flex-end' },
     sigLine: { width: 150, height: 1, backgroundColor: '#DDD', marginBottom: 4 },
     sigText: { fontSize: 9, fontFamily: M, color: '#444' },
 
-    thankYou: { fontSize: 9, marginTop: 20, textAlign: 'center' },
+    thankYou: { fontSize: 9, marginTop: 8, textAlign: 'center' },
     footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: NAVY, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingTop: 10, paddingBottom: 46 },
     footerText: { fontSize: 8.5, color: '#FFF' },
     footerDivider: { width: 36, height: 1, backgroundColor: hexToRgba(ORANGE, 0.4), marginBottom: 5 },
@@ -293,7 +293,7 @@ export default function Template6({ invoice }) {
         </View>
 
         {/* Signature — bottom right */}
-        <View style={{ paddingHorizontal: 40, alignItems: 'flex-end', marginTop: 10 }}>
+        <View style={{ paddingHorizontal: 40, alignItems: 'flex-end', marginTop: 5 }}>
           <View style={{ width: 160, alignItems: 'center' }}>
             {biz?.businessSignature && (
               <Image src={biz.businessSignature} style={{ width: 160, height: 55, objectFit: 'contain', marginBottom: 4 }} />

@@ -74,7 +74,7 @@ export default function Template2({ invoice }) {
 
     calcRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 6 },
     calcLabel: { fontFamily: B, fontSize: 9, textTransform: 'uppercase', marginRight: 20 },
-    calcVal: { fontSize: 9.5, fontFamily: B, width: 60, textAlign: 'right' },
+    calcVal: { fontSize: 9.5, fontFamily: B, width: 100, textAlign: 'right' },
 
     signatureArea: { marginTop: 10, alignItems: 'flex-end', marginRight: -20 },
     signatureLine: { width: 120, borderTopWidth: 0.5, borderTopColor: '#000', borderTopStyle: 'solid', paddingTop: 6, alignItems: 'center' },
