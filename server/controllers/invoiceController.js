@@ -46,7 +46,7 @@ const getUsage = async (req, res) => {
     startOfMonth.setHours(0, 0, 0, 0);
 
     const [clientCount, invoiceCount, quotationCount] = await Promise.all([
-      Client.countDocuments({ user: userId }),
+      Client.countDocuments({ user: userId, createdAt: { $gte: startOfMonth } }),
       Invoice.countDocuments({ user: userId, createdAt: { $gte: startOfMonth } }),
       Quotation.countDocuments({ user: userId, createdAt: { $gte: startOfMonth } }),
     ]);

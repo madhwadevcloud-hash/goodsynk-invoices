@@ -41,7 +41,7 @@ export default function ClientForm() {
           const { clients, clientsLimit, plan } = res.data.usage;
           if (clientsLimit !== null && clientsLimit !== undefined && clientsLimit !== Infinity) {
             if (clients >= clientsLimit) {
-              toast.error(`Your ${plan} plan allows up to ${clientsLimit} clients. Upgrade to add more.`);
+              toast.error(`Your ${plan} plan allows up to ${clientsLimit} clients per month. Upgrade to add more.`, { id: 'client-limit-toast' });
               navigate('/upgrade');
             }
           }
@@ -111,7 +111,7 @@ export default function ClientForm() {
       }
     } catch (err) {
       if (err.response?.status === 403 && err.response?.data?.code === 'PLAN_LIMIT_CLIENTS') {
-        toast.error(err.response.data.message);
+        toast.error(err.response.data.message, { id: 'client-limit-toast' });
         navigate('/upgrade');
         return;
       }

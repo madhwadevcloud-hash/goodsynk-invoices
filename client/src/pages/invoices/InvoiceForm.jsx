@@ -131,7 +131,7 @@ export default function InvoiceForm() {
   const openNewClientModal = () => {
     if (usage && usage.clientsLimit !== null && usage.clientsLimit !== undefined && usage.clientsLimit !== Infinity) {
       if (usage.clients >= usage.clientsLimit) {
-        toast.error(`Your ${usage.plan} plan allows up to ${usage.clientsLimit} clients. Upgrade to add more.`);
+        toast.error(`Your ${usage.plan} plan allows up to ${usage.clientsLimit} clients per month. Upgrade to add more.`, { id: 'client-limit-toast' });
         navigate('/upgrade');
         return;
       }
@@ -144,7 +144,7 @@ export default function InvoiceForm() {
   const openFullClientForm = (draft = null) => {
     if (usage && usage.clientsLimit !== null && usage.clientsLimit !== undefined && usage.clientsLimit !== Infinity) {
       if (usage.clients >= usage.clientsLimit) {
-        toast.error(`Your ${usage.plan} plan allows up to ${usage.clientsLimit} clients. Upgrade to add more.`);
+        toast.error(`Your ${usage.plan} plan allows up to ${usage.clientsLimit} clients per month. Upgrade to add more.`, { id: 'client-limit-toast' });
         navigate('/upgrade');
         return;
       }
@@ -178,7 +178,7 @@ export default function InvoiceForm() {
       setNewClientModal(false);
     } catch (err) {
       if (err.response?.status === 403 && err.response?.data?.code === 'PLAN_LIMIT_CLIENTS') {
-        toast.error(err.response.data.message);
+        toast.error(err.response.data.message, { id: 'client-limit-toast' });
         setNewClientModal(false);
         navigate('/upgrade');
         return;
@@ -253,7 +253,7 @@ export default function InvoiceForm() {
         const { documentsThisMonth, documentsLimit, plan } = res.data.usage;
         if (!isEdit && documentsLimit !== null && documentsLimit !== undefined && documentsLimit !== Infinity) {
           if (documentsThisMonth >= documentsLimit) {
-            toast.error(`Your ${plan} plan allows up to ${documentsLimit} invoices & quotations per month. Upgrade to add more.`);
+            toast.error(`Your ${plan} plan allows up to ${documentsLimit} invoices & quotations per month. Upgrade to add more.`, { id: 'document-limit-toast' });
             navigate('/upgrade');
           }
         }
@@ -549,7 +549,7 @@ export default function InvoiceForm() {
       navigate(`${basePath}/${savedInvoice._id}`);
     } catch (err) {
       if (err.response?.status === 403 && err.response?.data?.code === 'PLAN_LIMIT_DOCUMENTS') {
-        toast.error(err.response.data.message);
+        toast.error(err.response.data.message, { id: 'document-limit-toast' });
         navigate('/upgrade');
         return;
       }

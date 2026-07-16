@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useOutletContext } from 'react-router-dom';
-import { quotationAPI } from '../../api/services';
+import { quotationAPI, invoiceAPI } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { Plus, Pencil, Trash2, Eye, Send, Mail, MessageCircle, Loader2 } from 'lucide-react';
@@ -34,6 +34,7 @@ export default function QuotationList() {
   const [emailModalData, setEmailModalData] = useState(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [usage, setUsage] = useState(null);
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
 
@@ -43,6 +44,14 @@ export default function QuotationList() {
       const missing = getMissingProfileField(user);
       toast.error(`${missing} is missing, fill that to complete the profile`);
       setShowProfilePrompt(true);
+      return;
+    }
+    if (usage && usage.documentsLimit !== null && usage.documentsLimit !== undefined && usage.documentsLimit !== Infinity) {
+      if (usage.documentsThisMonth >= usage.documentsLimit) {
+        e.preventDefault();
+        toast.error(`Your ${usage.plan} plan allows up to ${usage.documentsLimit} invoices & quotations per month. Upgrade to add more.`, { id: 'document-limit-toast' });
+        navigate('/upgrade');
+      }
     }
   };
 
@@ -54,7 +63,12 @@ export default function QuotationList() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(fetchQuotations, []);
+  useEffect(() => {
+    fetchQuotations();
+    invoiceAPI.getUsage()
+      .then((res) => setUsage(res.data.usage))
+      .catch(console.error);
+  }, []);
 
   const filteredQuotations = quotations.filter((q) => {
     const matchesSearch =

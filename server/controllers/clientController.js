@@ -33,12 +33,16 @@ const createClient = async (req, res) => {
   try {
     const limits = getLimits(req.user.plan);
     if (limits.clients !== Infinity) {
-      const count = await Client.countDocuments({ user: req.user._id });
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const count = await Client.countDocuments({ user: req.user._id, createdAt: { $gte: startOfMonth } });
       if (count >= limits.clients) {
         return res.status(403).json({
           success: false,
           code: 'PLAN_LIMIT_CLIENTS',
-          message: `You have reached your plan limit of ${limits.clients} clients. Please upgrade to add more.`,
+          message: `You have reached your plan limit of ${limits.clients} clients per month. Please upgrade to add more.`,
           limitReached: true,
         });
       }

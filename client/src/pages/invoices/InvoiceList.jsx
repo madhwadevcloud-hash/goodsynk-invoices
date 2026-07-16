@@ -27,12 +27,22 @@ export default function InvoiceList() {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
 
+  const [usage, setUsage] = useState(null);
+
   const handleCreate = (e) => {
     if (!isProfileComplete(user)) {
       e.preventDefault();
       const missing = getMissingProfileField(user);
       toast.error(`${missing} is missing, fill that to complete the profile`);
       setShowProfilePrompt(true);
+      return;
+    }
+    if (usage && usage.documentsLimit !== null && usage.documentsLimit !== undefined && usage.documentsLimit !== Infinity) {
+      if (usage.documentsThisMonth >= usage.documentsLimit) {
+        e.preventDefault();
+        toast.error(`Your ${usage.plan} plan allows up to ${usage.documentsLimit} invoices & quotations per month. Upgrade to add more.`, { id: 'document-limit-toast' });
+        navigate('/upgrade');
+      }
     }
   };
 
@@ -41,7 +51,12 @@ export default function InvoiceList() {
     invoiceAPI.getAll().then((r) => setInvoices(r.data.invoices)).catch(console.error).finally(() => setLoading(false));
   };
 
-  useEffect(fetchInvoices, []);
+  useEffect(() => {
+    fetchInvoices();
+    invoiceAPI.getUsage()
+      .then((res) => setUsage(res.data.usage))
+      .catch(console.error);
+  }, []);
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this invoice?')) return;

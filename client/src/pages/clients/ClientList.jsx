@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { clientAPI } from '../../api/services';
+import { clientAPI, invoiceAPI } from '../../api/services';
 import toast from 'react-hot-toast';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 
@@ -8,6 +8,7 @@ export default function ClientList() {
   const [clients, setClients] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [usage, setUsage] = useState(null);
   const navigate = useNavigate();
 
   const fetchClients = () => {
@@ -15,7 +16,22 @@ export default function ClientList() {
     clientAPI.getAll().then((r) => setClients(r.data.clients)).catch(console.error).finally(() => setLoading(false));
   };
 
-  useEffect(fetchClients, []);
+  useEffect(() => {
+    fetchClients();
+    invoiceAPI.getUsage()
+      .then((res) => setUsage(res.data.usage))
+      .catch(console.error);
+  }, []);
+
+  const handleAddClient = (e) => {
+    if (usage && usage.clientsLimit !== null && usage.clientsLimit !== undefined && usage.clientsLimit !== Infinity) {
+      if (usage.clients >= usage.clientsLimit) {
+        e.preventDefault();
+        toast.error(`Your ${usage.plan} plan allows up to ${usage.clientsLimit} clients per month. Upgrade to add more.`, { id: 'client-limit-toast' });
+        navigate('/upgrade');
+      }
+    }
+  };
 
   const filteredClients = clients.filter((c) =>
     c.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -39,7 +55,7 @@ export default function ClientList() {
           <h1 className="page-title">Clients</h1>
           <p className="page-subtitle">Manage your client directory</p>
         </div>
-        <Link to="/clients/new" className="btn btn-primary"><Plus size={16} /> New Client</Link>
+        <Link to="/clients/new" onClick={handleAddClient} className="btn btn-primary"><Plus size={16} /> New Client</Link>
       </div>
 
       <div className="card" style={{ padding: 0 }}>
@@ -71,7 +87,7 @@ export default function ClientList() {
             <div className="empty-state-desc">
               No clients match your search
             </div>
-            <Link to="/clients/new" className="btn btn-primary"><Plus size={15} /> Add Client</Link>
+            <Link to="/clients/new" onClick={handleAddClient} className="btn btn-primary"><Plus size={15} /> Add Client</Link>
           </div>
         ) : (
           <div className="table-wrapper" style={{ border: 'none', borderRadius: 'var(--radius-lg)' }}>
