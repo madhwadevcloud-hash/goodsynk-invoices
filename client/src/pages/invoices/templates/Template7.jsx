@@ -91,9 +91,9 @@ export default function Template7({ invoice }) {
     topLogo: { height: 35, maxWidth: 140, objectFit: 'contain', alignSelf: 'flex-end' },
     // Meta & Info Columns
     gridRow: { flexDirection: 'row', paddingHorizontal: 40, marginBottom: 10 },
-    col1: { width: '38%' },
-    col2: { width: '40%' },
-    col3: { width: '22%', alignItems: 'flex-end' },
+    col1: { width: '33%' },
+    col2: { width: '33%' },
+    col3: { width: '34%' },
     
     metaLabel: { fontSize: 7.5, color: '#444' },
     metaValue: { fontSize: 7.5, color: '#000', fontFamily: B },
@@ -234,7 +234,23 @@ export default function Template7({ invoice }) {
             {client?.address?.city && <Text style={s.infoText}>{client.address.city}, {client.address.state}</Text>}
             {client?.address?.pincode && <Text style={s.infoText}>{client.address.pincode}</Text>}
           </View>
-          <View style={s.col3}></View>
+          <View style={s.col3}>
+            {(isQuotation && biz?.bankDetails?.accountNumber) && (
+              <>
+                <Text style={s.bankLabel}>Bank Details:</Text>
+                {biz.bankDetails.bankName && (
+                  <View style={s.bankRow}><Text style={s.bankKey}>Bank:</Text><Text style={s.bankVal}>{biz.bankDetails.bankName}</Text></View>
+                )}
+                <View style={s.bankRow}><Text style={s.bankKey}>Account #:</Text><Text style={s.bankVal}>{biz.bankDetails.accountNumber}</Text></View>
+                {biz.bankDetails.ifscCode && (
+                  <View style={s.bankRow}><Text style={s.bankKey}>IFSC Code:</Text><Text style={s.bankVal}>{biz.bankDetails.ifscCode}</Text></View>
+                )}
+                {biz.bankDetails.branch && (
+                  <View style={s.bankRow}><Text style={s.bankKey}>Branch:</Text><Text style={s.bankVal}>{biz.bankDetails.branch}</Text></View>
+                )}
+              </>
+            )}
+          </View>
         </View>
 
         {/* Table */}
@@ -288,24 +304,25 @@ export default function Template7({ invoice }) {
           <Text style={s.wordsText}>Total amount (in words): INR {totalInWords} Rupees Only.</Text>
         </View>
 
-        <View style={s.bottomRow}>
-          <View style={s.bankCol}>
-            {(isQuotation && biz?.bankDetails?.accountNumber) && (
-              <>
-                <Text style={s.bankLabel}>Bank Details:</Text>
-                {biz.bankDetails.bankName && (
-                  <View style={s.bankRow}><Text style={s.bankKey}>Bank:</Text><Text style={s.bankVal}>{biz.bankDetails.bankName}</Text></View>
-                )}
-                <View style={s.bankRow}><Text style={s.bankKey}>Account #:</Text><Text style={s.bankVal}>{biz.bankDetails.accountNumber}</Text></View>
-                {biz.bankDetails.ifscCode && (
-                  <View style={s.bankRow}><Text style={s.bankKey}>IFSC Code:</Text><Text style={s.bankVal}>{biz.bankDetails.ifscCode}</Text></View>
-                )}
-                {biz.bankDetails.branch && (
-                  <View style={s.bankRow}><Text style={s.bankKey}>Branch:</Text><Text style={s.bankVal}>{biz.bankDetails.branch}</Text></View>
-                )}
-              </>
+        {/* Notes & Terms */}
+        {(invoice.notes || invoice.termsAndConditions) && (
+          <View style={{ paddingHorizontal: 40, marginBottom: 10 }}>
+            {invoice.notes && (
+              <View style={{ marginBottom: 8 }}>
+                <Text style={{ fontSize: 8, fontFamily: B, color: '#000', marginBottom: 3 }}>Notes</Text>
+                <Text style={{ fontSize: 7, color: '#444', lineHeight: 1.4 }}>{invoice.notes}</Text>
+              </View>
+            )}
+            {invoice.termsAndConditions && (
+              <View>
+                <Text style={{ fontSize: 8, fontFamily: B, color: '#000', marginBottom: 3 }}>Terms & Conditions</Text>
+                <Text style={{ fontSize: 7, color: '#444', lineHeight: 1.4 }}>{invoice.termsAndConditions}</Text>
+              </View>
             )}
           </View>
+        )}
+
+        <View style={{ paddingHorizontal: 40, alignItems: 'flex-end' }}>
           <View style={s.sigCol}>
             <Text style={s.sigText}>For {bizName}</Text>
             {biz?.businessSignature && (
