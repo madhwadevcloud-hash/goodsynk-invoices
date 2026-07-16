@@ -80,10 +80,11 @@ export default function Template2({ invoice }) {
     signatureLine: { width: 120, borderTopWidth: 0.5, borderTopColor: '#000', borderTopStyle: 'solid', paddingTop: 6, alignItems: 'center' },
     footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: PRIMARY, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
     footerText: { fontSize: 8.5, color: '#FFF' },
-    footerBrandLine: { fontSize: 7, fontFamily: M, color: hexToRgba('#FFF', 0.75), letterSpacing: 0.3, textAlign: 'center' },
-    footerLink: { fontSize: 7, fontFamily: M, color: hexToRgba('#FFF', 0.75), letterSpacing: 0.3 },
+    footerDivider: { width: 36, height: 1, backgroundColor: hexToRgba('#FFF', 0.3), marginBottom: 5 },
+    footerBrandLine: { fontSize: 7.5, fontFamily: B, color: '#F2C94C', letterSpacing: 0.4, textAlign: 'center' },
+    footerLink: { fontSize: 7.5, fontFamily: B, color: '#F2C94C', letterSpacing: 0.4 },
     footerTagline: { fontSize: 6.5, color: '#FFF', opacity: 0.9, textAlign: 'center', marginTop: 3 },
-    footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.75, marginTop: 1.5, textAlign: 'center' },
+    footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.6, marginTop: 3, textAlign: 'center' },
     watermarkContainer: {
       position: 'absolute',
       top: 0,
@@ -160,11 +161,11 @@ export default function Template2({ invoice }) {
           </View>
           <View style={s.detailsItem}>
             <Text style={s.detailsLabel}>Date of Issue</Text>
-            <Text style={s.detailsValue} wrap={false}>{new Date(invoice.issueDate).toLocaleDateString()}</Text>
+            <Text style={s.detailsValue} wrap={false}>{new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text>
           </View>
           <View style={s.detailsItem}>
             <Text style={s.detailsLabel}>Due Date</Text>
-            <Text style={s.detailsValue} wrap={false}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'Upon Receipt'}</Text>
+            <Text style={s.detailsValue} wrap={false}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US') : 'Upon Receipt'}</Text>
           </View>
         </View>
 
@@ -279,18 +280,19 @@ export default function Template2({ invoice }) {
               {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
             </View>
           )}
+          <View style={s.footerDivider} />
           <Text style={s.footerBrandLine}>
             Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
             <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
-          </Text>
-          <Text style={s.footerTrustLine}>
-            Generated securely by Goodsynk Billing. This is a digitally signed document.
           </Text>
           <View style={s.poweredByContainer}>
             <Text style={s.poweredByLabel}>Powered By</Text>
             <Text style={s.poweredByValue}>GoodSynk</Text>
           </View>
           <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
+          <Text style={s.footerTrustLine}>
+            Generated securely by Goodsynk Billing. This is a digitally signed document.
+          </Text>
         </View>
       </Page>
     </Document>

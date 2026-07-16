@@ -40,7 +40,7 @@ export default function Template4({ invoice }) {
     bizNameText: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: NAVY, textTransform: 'uppercase', marginBottom: 2 },
     bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight },
     titleBox: { alignItems: 'flex-end', paddingTop: 8 },
-    invoiceTitle: { fontFamily: 'Inter', fontWeight: 300, fontSize: 26, letterSpacing: 4, color: NAVY },
+    invoiceTitle: { fontFamily: M, fontSize: 26, letterSpacing: 4, color: NAVY },
 
     infoGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 40 },
     infoCol: { width: '30%' },
@@ -76,10 +76,11 @@ export default function Template4({ invoice }) {
 
     footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: NAVY, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
     footerText: { fontSize: 8.5, color: '#FFF' },
-    footerBrandLine: { fontSize: 7, fontFamily: M, color: hexToRgba(GOLD, 0.75), letterSpacing: 0.3, textAlign: 'center' },
-    footerLink: { fontSize: 7, fontFamily: M, color: hexToRgba(GOLD, 0.75), letterSpacing: 0.3 },
+    footerDivider: { width: 36, height: 1, backgroundColor: hexToRgba(GOLD, 0.4), marginBottom: 5 },
+    footerBrandLine: { fontSize: 7.5, fontFamily: B, color: GOLD, letterSpacing: 0.4, textAlign: 'center' },
+    footerLink: { fontSize: 7.5, fontFamily: B, color: GOLD, letterSpacing: 0.4 },
     footerTagline: { fontSize: 6.5, color: '#FFF', opacity: 0.9, textAlign: 'center', marginTop: 3 },
-    footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.75, marginTop: 1.5, textAlign: 'center' },
+    footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.6, marginTop: 3, textAlign: 'center' },
 
     watermarkContainer: {
       position: 'absolute',
@@ -100,8 +101,8 @@ export default function Template4({ invoice }) {
       letterSpacing: 5,
     },
     poweredByContainer: { alignItems: 'center', marginTop: 6 },
-    poweredByLabel: { fontSize: 6, color: hexToRgba(GOLD, 0.65), letterSpacing: 0.5 },
-    poweredByValue: { fontSize: 9.5, fontFamily: B, color: GOLD, letterSpacing: 0.5, marginTop: 1 },
+    poweredByLabel: { fontSize: 6, color: hexToRgba('#FFF', 0.65), letterSpacing: 0.5 },
+    poweredByValue: { fontSize: 9.5, fontFamily: B, color: '#FFF', letterSpacing: 0.5, marginTop: 1 },
   });
   const currency = invoice._currency || invoice.currency || 'INR';
   const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency, currencyDisplay: 'code' }).format(n || 0).replace(currency, '').trim();
@@ -170,8 +171,8 @@ export default function Template4({ invoice }) {
           <View style={s.infoCol}>
             <Text style={s.infoLabel}>Details</Text>
             <Text style={s.infoText}>{isQuotation ? 'Quotation No' : 'Invoice No'}: {invoice.invoiceNumber || invoice.quotationNumber}</Text>
-            <Text style={s.infoText}>Date of Issue: {new Date(invoice.issueDate).toLocaleDateString()}</Text>
-            <Text style={s.infoText}>Due Date: {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'Upon Receipt'}</Text>
+            <Text style={s.infoText}>Date of Issue: {new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text>
+            <Text style={s.infoText}>Due Date: {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US') : 'Upon Receipt'}</Text>
             <Text style={[s.infoText, { marginTop: 10, fontFamily: B }]}>Amount Due: {currency} {fmt(invoice.total)}</Text>
           </View>
         </View>
@@ -267,18 +268,19 @@ export default function Template4({ invoice }) {
               {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
             </View>
           )}
+          <View style={s.footerDivider} />
           <Text style={s.footerBrandLine}>
             Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
             <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
-          </Text>
-          <Text style={s.footerTrustLine}>
-            Generated securely by Goodsynk Billing. This is a digitally signed document.
           </Text>
           <View style={s.poweredByContainer}>
             <Text style={s.poweredByLabel}>Powered By</Text>
             <Text style={s.poweredByValue}>GoodSynk</Text>
           </View>
           <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
+          <Text style={s.footerTrustLine}>
+            Generated securely by Goodsynk Billing. This is a digitally signed document.
+          </Text>
         </View>
       </Page>
     </Document>

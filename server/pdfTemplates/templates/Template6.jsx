@@ -96,14 +96,15 @@ export default function Template6({ invoice }) {
     sigText: { fontSize: 9, fontFamily: M, color: '#444' },
 
     thankYou: { fontSize: 9, marginTop: 20, textAlign: 'center' },
-    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: NAVY, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
+    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: NAVY, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingTop: 10, paddingBottom: 46 },
     footerText: { fontSize: 8.5, color: '#FFF' },
-    footerBrandLine: { fontSize: 7, fontFamily: M, color: hexToRgba(ORANGE, 0.8), letterSpacing: 0.3, textAlign: 'center' },
-    footerLink: { fontSize: 7, fontFamily: M, color: hexToRgba(ORANGE, 0.8), letterSpacing: 0.3 },
+    footerDivider: { width: 36, height: 1, backgroundColor: hexToRgba(ORANGE, 0.4), marginBottom: 5 },
+    footerBrandLine: { fontSize: 7.5, fontFamily: B, color: ORANGE, letterSpacing: 0.4, textAlign: 'center' },
+    footerLink: { fontSize: 7.5, fontFamily: B, color: ORANGE, letterSpacing: 0.4 },
     footerContact: { fontSize: 8, color: '#FFF', flexDirection: 'row', gap: 30, marginBottom: 3 },
     footerContactText: { fontSize: 8, color: '#FFF' },
     footerTagline: { fontSize: 6.5, color: '#FFF', opacity: 0.9, textAlign: 'center', marginTop: 3 },
-    footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.75, marginTop: 1.5, textAlign: 'center' },
+    footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.6, marginTop: 3, textAlign: 'center' },
     poweredByContainer: { alignItems: 'center', marginTop: 6 },
     poweredByLabel: { fontSize: 6, color: hexToRgba(ORANGE, 0.65), letterSpacing: 0.5 },
     poweredByValue: { fontSize: 9.5, fontFamily: M, color: ORANGE, letterSpacing: 0.5, marginTop: 1 },
@@ -180,11 +181,11 @@ export default function Template6({ invoice }) {
               </View>
               <View style={s.headerTextRow}>
                 <Text style={s.headerTextLabel}>Date of Issue</Text>
-                <Text style={s.headerTextValue}>{new Date(invoice.issueDate).toLocaleDateString()}</Text>
+                <Text style={s.headerTextValue}>{new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text>
               </View>
               <View style={s.headerTextRow}>
                 <Text style={s.headerTextLabel}>Due Date</Text>
-                <Text style={s.headerTextValue}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'Upon Receipt'}</Text>
+                <Text style={s.headerTextValue}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US') : 'Upon Receipt'}</Text>
               </View>
             </View>
           </View>
@@ -305,18 +306,19 @@ export default function Template6({ invoice }) {
               {biz?.email && <Text style={s.footerContactText}>Email: {biz.email}</Text>}
             </View>
           )}
+          <View style={s.footerDivider} />
           <Text style={s.footerBrandLine}>
             Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
             <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
-          </Text>
-          <Text style={s.footerTrustLine}>
-            Generated securely by Goodsynk Billing. This is a digitally signed document.
           </Text>
           <View style={s.poweredByContainer}>
             <Text style={s.poweredByLabel}>Powered By</Text>
             <Text style={s.poweredByValue}>GoodSynk</Text>
           </View>
           <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
+          <Text style={s.footerTrustLine}>
+            Generated securely by Goodsynk Billing. This is a digitally signed document.
+          </Text>
         </View>
 
         {/* Bottom Design Decor */}
