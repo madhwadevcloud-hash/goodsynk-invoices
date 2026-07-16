@@ -32,7 +32,7 @@ export default function Template4({ invoice }) {
   const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
-    page: { paddingTop: 40, paddingBottom: 120, paddingHorizontal: 40, fontFamily: 'Inter', color: NAVY },
+    page: { paddingTop: 30, paddingBottom: 75, paddingHorizontal: 40, fontFamily: 'Inter', color: NAVY },
 
     headerArea: { flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1.5, borderBottomColor: NAVY, borderBottomStyle: 'solid', paddingBottom: 15, marginBottom: 10 },
     bizInfoBox: { maxWidth: scaled.bizInfoMaxWidth },
@@ -42,13 +42,13 @@ export default function Template4({ invoice }) {
     titleBox: { alignItems: 'flex-end', paddingTop: 8 },
     invoiceTitle: { fontFamily: M, fontSize: 26, letterSpacing: 4, color: NAVY },
 
-    infoGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 40 },
+    infoGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
     infoCol: { width: '30%' },
     infoLabel: { fontSize: 8, fontFamily: B, color: GOLD, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 },
     infoText: { fontSize: 9.5, lineHeight: 1.4, color: NAVY },
     infoTextBold: { fontSize: 10, fontFamily: B, color: NAVY, marginBottom: 2 },
 
-    table: { width: '100%', marginBottom: 30 },
+    table: { width: '100%', marginBottom: 15 },
     tHeadRow: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: NAVY, borderTopStyle: 'solid', borderBottomWidth: 1, borderBottomColor: NAVY, borderBottomStyle: 'solid', paddingVertical: 8, marginBottom: 10 },
     th: { fontSize: 9, fontFamily: B, color: NAVY, textTransform: 'uppercase', letterSpacing: 1 },
     tRow: { flexDirection: 'row', paddingVertical: 8 },
@@ -148,24 +148,30 @@ export default function Template4({ invoice }) {
         {/* Info Grid */}
         <View style={s.infoGrid}>
           <View style={s.infoCol}>
-            <Text style={s.infoLabel}>From</Text>
-            {biz?.address?.street && <Text style={s.infoText}>{biz.address.street}</Text>}
-            {biz?.address?.city && (
-              <Text style={s.infoText}>
-                {biz.address.city}, {biz.address.state} {biz.address.pincode || ''}
-              </Text>
-            )}
-            {biz?.email && <Text style={s.infoText}>{biz.email}</Text>}
-            {biz?.phone && <Text style={s.infoText}>{biz.phone}</Text>}
-          </View>
-
-          <View style={s.infoCol}>
             <Text style={s.infoLabel}>To</Text>
             <Text style={s.infoTextBold}>{client?.name}</Text>
             {client?.address?.street && <Text style={s.infoText}>{client.address.street}</Text>}
             {client?.address?.city && <Text style={s.infoText}>{client.address.city}, {client.address.state}</Text>}
             {client?.email && <Text style={s.infoText}>{client.email}</Text>}
             {client?.phone && <Text style={s.infoText}>{client.phone}</Text>}
+          </View>
+
+          <View style={s.infoCol}>
+            {isQuotation && (
+              <>
+                <Text style={s.infoLabel}>Payment Info</Text>
+                {biz?.bankDetails?.accountNumber ? (
+                  <>
+                    <Text style={s.infoTextBold}>{biz.bankDetails.bankName}</Text>
+                    <Text style={s.infoText}>Account Name: {biz.bankDetails.accountName}</Text>
+                    <Text style={s.infoText}>Account No.: {biz.bankDetails.accountNumber}</Text>
+                    {biz.bankDetails.ifscCode && <Text style={s.infoText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
+                  </>
+                ) : invoice.paymentInfo ? (
+                  <Text style={s.infoText}>{invoice.paymentInfo}</Text>
+                ) : null}
+              </>
+            )}
           </View>
 
           <View style={s.infoCol}>
@@ -215,15 +221,7 @@ export default function Template4({ invoice }) {
         {/* Bottom */}
         <View style={s.bottomSection}>
           <View style={s.paymentBox}>
-            {(isQuotation && biz?.bankDetails?.accountNumber) && (
-              <View style={{ marginBottom: 20 }}>
-                <Text style={s.infoLabel}>Payment Info</Text>
-                <Text style={s.infoTextBold}>{biz.bankDetails.bankName}</Text>
-                <Text style={s.infoText}>Account Name: {biz.bankDetails.accountName}</Text>
-                <Text style={s.infoText}>Account No.: {biz.bankDetails.accountNumber}</Text>
-                {biz.bankDetails.ifscCode && <Text style={s.infoText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
-              </View>
-            )}
+
 
             {invoice.notes && (
               <View style={{ marginBottom: 15 }}>
@@ -251,7 +249,7 @@ export default function Template4({ invoice }) {
         </View>
 
         {/* Signature */}
-        <View style={{ marginTop: 20, alignItems: 'flex-end' }}>
+        <View style={{ marginTop: -10, alignItems: 'flex-end' }}>
           {biz?.businessSignature && (
             <Image src={biz.businessSignature} style={{ width: 160, height: 55, objectFit: 'contain', marginBottom: 4 }} />
           )}
