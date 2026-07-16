@@ -76,7 +76,7 @@ export default function Template2({ invoice }) {
     calcLabel: { fontFamily: B, fontSize: 9, textTransform: 'uppercase', marginRight: 20 },
     calcVal: { fontSize: 9.5, fontFamily: B, width: 60, textAlign: 'right' },
 
-    signatureArea: { marginTop: 10, alignItems: 'flex-end', paddingRight: 40 },
+    signatureArea: { marginTop: 10, alignItems: 'flex-end', marginRight: -20 },
     signatureLine: { width: 120, borderTopWidth: 0.5, borderTopColor: '#000', borderTopStyle: 'solid', paddingTop: 6, alignItems: 'center' },
     footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: PRIMARY, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
     footerText: { fontSize: 8.5, color: '#FFF' },
@@ -253,11 +253,13 @@ export default function Template2({ invoice }) {
 
         {/* Signature */}
         <View style={s.signatureArea}>
-          {biz?.businessSignature && (
-            <Image src={biz.businessSignature} style={{ width: 160, height: 55, objectFit: 'contain', marginBottom: 4 }} />
-          )}
-          <View style={s.signatureLine}>
-            <Text style={{ fontSize: 9, fontFamily: M }}>Authorised Signature</Text>
+          <View style={{ alignItems: 'center' }}>
+            {biz?.businessSignature && (
+              <Image src={biz.businessSignature} style={{ width: 160, height: 55, objectFit: 'contain', marginBottom: 4 }} />
+            )}
+            <View style={s.signatureLine}>
+              <Text style={{ fontSize: 9, fontFamily: M }}>Authorised Signature</Text>
+            </View>
           </View>
         </View>
 

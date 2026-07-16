@@ -31,7 +31,7 @@ export default function Template5({ invoice }) {
   const s = StyleSheet.create({
     page: { paddingTop: 32, paddingBottom: 75, paddingHorizontal: 40, fontFamily: 'Inter', color: '#000' },
 
-    headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
+    headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
     headerLeft: { width: '50%' },
     headerRight: { width: '50%', alignItems: 'flex-end' },
 
@@ -42,12 +42,12 @@ export default function Template5({ invoice }) {
     bizText: { fontSize: scaled.bizSubTextFontSize, color: '#444', textAlign: 'right', lineHeight: scaled.bizSubTextLineHeight },
     bizName: { fontSize: scaled.bizNameFontSize, fontFamily: B, color: '#000', marginBottom: 2, textAlign: 'right' },
 
-    metaSection: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, borderTop: `2pt solid ${BLUE}`, paddingTop: 12 },
+    metaSection: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, borderTop: `2pt solid ${BLUE}`, paddingTop: 8 },
     metaCol: { width: '45%' },
     metaLabel: { fontSize: 7.5, fontFamily: B, textTransform: 'uppercase', color: '#777', marginBottom: 4 },
     metaVal: { fontSize: 9, color: '#222', lineHeight: 1.3 },
 
-    table: { width: '100%', marginBottom: 16 },
+    table: { width: '100%', marginBottom: 10 },
     tHead: { flexDirection: 'row', backgroundColor: BLUE, color: '#FFF', paddingVertical: 6, paddingHorizontal: 10 },
     th: { fontSize: 8.5, fontFamily: B, textTransform: 'uppercase' },
     tRow: { flexDirection: 'row', paddingVertical: 6, paddingHorizontal: 10, borderBottom: '1pt solid #EEE' },
@@ -253,7 +253,7 @@ export default function Template5({ invoice }) {
         </View>
 
         {/* Signature */}
-        <View style={{ marginTop: 20, alignItems: 'flex-end' }}>
+        <View style={{ marginTop: -10, alignItems: 'flex-end' }}>
           {biz?.businessSignature && (
             <Image src={biz.businessSignature} style={{ width: 160, height: 55, objectFit: 'contain', marginBottom: 4 }} />
           )}

@@ -47,19 +47,27 @@ export default function Template6({ invoice }) {
     headerTextLabel: { fontSize: 8.5, color: '#B0C4DE', marginRight: 6 },
     headerTextValue: { fontSize: 8.5, color: '#FFF', fontFamily: M },
 
-    metaSection: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 40, marginTop: 25, marginBottom: 25 },
+    metaSection: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 40, marginTop: 20, marginBottom: 15 },
+    billToBlock: { width: '33%', marginRight: 10 },
     billToTitle: { fontSize: 10, textTransform: 'uppercase', marginBottom: 6, color: '#333', fontFamily: B },
     billToName: { fontSize: 13, fontFamily: B, color: '#000', marginBottom: 2 },
     billToRole: { fontSize: 9, color: '#666', marginBottom: 2 },
     billToText: { fontSize: 9, color: '#444', lineHeight: 1.4 },
 
-    paymentInfoBlock: { width: '50%', alignItems: 'flex-end' },
-    paymentTitle: { fontSize: 10, fontFamily: B, color: NAVY, marginBottom: 6, textAlign: 'right' },
-    payRow: { flexDirection: 'row', width: 220, marginBottom: 3 },
-    payLabel: { fontSize: 9, color: '#555', width: 80, textAlign: 'right' },
+    detailsBlock: { width: '33%', marginHorizontal: 10 },
+    detailsTitle: { fontSize: 10, textTransform: 'uppercase', marginBottom: 6, color: '#333', fontFamily: B },
+    detailsRow: { flexDirection: 'row', marginBottom: 3 },
+    detailsLabel: { fontSize: 9, color: '#555', width: 65 },
+    detailsColon: { fontSize: 9, color: '#555', width: 10, textAlign: 'center' },
+    detailsVal: { fontSize: 9, color: '#000', fontFamily: M },
+
+    paymentInfoBlock: { width: '33%' },
+    paymentTitle: { fontSize: 10, textTransform: 'uppercase', marginBottom: 6, color: '#333', fontFamily: B },
+    payRow: { flexDirection: 'row', marginBottom: 3 },
+    payLabel: { fontSize: 9, color: '#555', width: 65 },
     payColon: { fontSize: 9, color: '#555', width: 10, textAlign: 'center' },
-    payVal: { fontSize: 9, color: '#000', fontFamily: M, width: 130, textAlign: 'left' },
-    table: { width: '100%', paddingHorizontal: 40, marginBottom: 20 },
+    payVal: { fontSize: 9, color: '#000', fontFamily: M, flex: 1 },
+    table: { width: '100%', paddingHorizontal: 40, marginBottom: 15 },
 
     tHead: { flexDirection: 'row', backgroundColor: ORANGE, paddingVertical: 8 },
     th: { fontSize: 9, fontFamily: B, color: '#FFF', textTransform: 'uppercase', textAlign: 'center' },
@@ -175,25 +183,13 @@ export default function Template6({ invoice }) {
 
             <View style={s.headerRight}>
               <Text style={s.invoiceTitleHeader}>{isQuotation ? 'QUOTATION' : 'INVOICE'}</Text>
-              <View style={s.headerTextRow}>
-                <Text style={s.headerTextLabel}>{isQuotation ? 'Quotation No' : 'Invoice No'}</Text>
-                <Text style={s.headerTextValue}>{invoice.invoiceNumber || invoice.quotationNumber}</Text>
-              </View>
-              <View style={s.headerTextRow}>
-                <Text style={s.headerTextLabel}>Date of Issue</Text>
-                <Text style={s.headerTextValue}>{new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text>
-              </View>
-              <View style={s.headerTextRow}>
-                <Text style={s.headerTextLabel}>Due Date</Text>
-                <Text style={s.headerTextValue}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US') : 'Upon Receipt'}</Text>
-              </View>
             </View>
           </View>
         </View>
 
-        {/* Bill To & Payment Info */}
+        {/* Bill To, Details & Payment Info */}
         <View style={s.metaSection}>
-          <View>
+          <View style={s.billToBlock}>
             <Text style={s.billToTitle}>{isQuotation ? 'QUOTATION TO.' : 'INVOICE TO.'}</Text>
             <Text style={s.billToName}>{client?.name}</Text>
             {client?.email && <Text style={s.billToRole}>{client.email}</Text>}
@@ -202,7 +198,7 @@ export default function Template6({ invoice }) {
             {client?.address?.city && <Text style={s.billToText}>{client.address.city}, {client.address.state} {client.address.pincode}</Text>}
           </View>
 
-          <View style={s.paymentInfoBlock}>
+          <View style={s.detailsBlock}>
             {isQuotation ? (
               biz?.bankDetails?.accountNumber ? (
                 <>
@@ -219,6 +215,13 @@ export default function Template6({ invoice }) {
                 </>
               ) : null
             ) : null}
+          </View>
+
+          <View style={s.paymentInfoBlock}>
+            <Text style={s.detailsTitle}>Details :</Text>
+            <View style={s.detailsRow}><Text style={s.detailsLabel}>{isQuotation ? 'Quotation No' : 'Invoice No'}</Text><Text style={s.detailsColon}>:</Text><Text style={s.detailsVal}>{invoice.invoiceNumber || invoice.quotationNumber}</Text></View>
+            <View style={s.detailsRow}><Text style={s.detailsLabel}>Date of Issue</Text><Text style={s.detailsColon}>:</Text><Text style={s.detailsVal}>{new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text></View>
+            <View style={s.detailsRow}><Text style={s.detailsLabel}>Due Date</Text><Text style={s.detailsColon}>:</Text><Text style={s.detailsVal}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US') : 'Upon Receipt'}</Text></View>
           </View>
         </View>
 
@@ -260,17 +263,18 @@ export default function Template6({ invoice }) {
         {/* Lower Grid */}
         <View style={s.bottomGrid}>
           <View style={s.leftBottom}>
-            {invoice.termsAndConditions ? (
-              <View style={{ marginBottom: 20 }}>
-                <Text style={s.termsTitle}>Terms & Condition</Text>
-                <Text style={s.termsText}>{invoice.termsAndConditions}</Text>
-              </View>
-            ) : invoice.notes ? (
-              <View style={{ marginBottom: 20 }}>
+            {invoice.notes && (
+              <View style={{ marginBottom: 15 }}>
                 <Text style={s.termsTitle}>Notes</Text>
                 <Text style={s.termsText}>{invoice.notes}</Text>
               </View>
-            ) : null}
+            )}
+            {invoice.termsAndConditions && (
+              <View style={{ marginBottom: 20 }}>
+                <Text style={s.termsTitle}>Terms & Conditions</Text>
+                <Text style={s.termsText}>{invoice.termsAndConditions}</Text>
+              </View>
+            )}
           </View>
 
           <View style={s.rightBottom}>
@@ -285,14 +289,17 @@ export default function Template6({ invoice }) {
               <Text style={s.grandTotalLabel}>Grand Total</Text>
               <Text style={s.grandTotalVal}>{currency} {fmt(invoice.total)}</Text>
             </View>
+          </View>
+        </View>
 
-            <View style={s.signatureBlock}>
-              {biz?.businessSignature && (
-                <Image src={biz.businessSignature} style={{ width: 160, height: 55, objectFit: 'contain', marginBottom: 4 }} />
-              )}
-              <View style={s.sigLine} />
-              <Text style={s.sigText}>Authorised Signature</Text>
-            </View>
+        {/* Signature — bottom right */}
+        <View style={{ paddingHorizontal: 40, alignItems: 'flex-end', marginTop: 10 }}>
+          <View style={{ width: 160, alignItems: 'center' }}>
+            {biz?.businessSignature && (
+              <Image src={biz.businessSignature} style={{ width: 160, height: 55, objectFit: 'contain', marginBottom: 4 }} />
+            )}
+            <View style={[s.sigLine, { alignSelf: 'stretch' }]} />
+            <Text style={s.sigText}>Authorised Signature</Text>
           </View>
         </View>
 
