@@ -30,9 +30,9 @@ export default function Template1({ invoice }) {
   const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
-    page: { paddingTop: 40, paddingBottom: 130, fontFamily: 'Inter', color: '#000' },
+    page: { paddingTop: 30, paddingBottom: 75, fontFamily: 'Inter', color: '#000' },
     container: { paddingHorizontal: 40 },
-    topSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 40, marginBottom: 20 },
+    topSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 40, marginBottom: 10 },
     headerText: { fontFamily: B, fontSize: 32, letterSpacing: 2, textTransform: 'uppercase', color: PRIMARY, marginTop: 10 },
 
     bizInfoTop: { alignItems: 'flex-end', maxWidth: scaled.bizInfoMaxWidth },
@@ -40,13 +40,13 @@ export default function Template1({ invoice }) {
     bizNameTop: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
     bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight, textAlign: 'right' },
 
-    blueBar: { backgroundColor: PRIMARY, height: 12, width: '100%', marginBottom: 15 },
+    blueBar: { backgroundColor: PRIMARY, height: 12, width: '100%', marginBottom: 10 },
     detailsRow: { flexDirection: 'row', paddingHorizontal: 40, marginBottom: 25, gap: 40 },
     detailsCol: {},
     detailsLabel: { fontSize: 7.5, fontFamily: B, color: '#666', textTransform: 'uppercase', marginBottom: 3 },
     detailsValue: { fontSize: 9.5, fontFamily: M, color: '#000' },
 
-    table: { width: '100%', marginTop: 10 },
+    table: { width: '100%', marginTop: 5 },
     tHeadRow: { flexDirection: 'row', borderBottom: `1pt solid ${PRIMARY}`, paddingBottom: 8, marginBottom: 8 },
     tRow: { flexDirection: 'row', borderBottom: `0.5pt solid ${PRIMARY}`, paddingVertical: 10 },
     th: { fontSize: 9.5, fontFamily: B, color: '#000' },
@@ -71,8 +71,8 @@ export default function Template1({ invoice }) {
     grandTotalLabel: { fontSize: 11, fontFamily: B, width: 80, textAlign: 'right', paddingRight: 8, color: '#000', marginTop: 4 },
     grandTotalVal: { fontSize: 11, fontFamily: B, width: 80, textAlign: 'right', color: PRIMARY, marginTop: 4 },
 
-    infoBlock: { flexDirection: 'row', marginTop: 30, justifyContent: 'space-between' },
-    infoCol: { width: '45%' },
+    infoBlock: { flexDirection: 'row', marginTop: 10, justifyContent: 'space-between' },
+    infoCol: { width: '30%' },
     infoTitle: { fontFamily: B, fontSize: 10, textTransform: 'uppercase', marginBottom: 6, paddingBottom: 4, borderBottom: `1pt solid ${PRIMARY}` },
     infoText: { fontSize: 9, color: '#333', marginBottom: 3, lineHeight: 1.4 },
 
@@ -150,20 +150,7 @@ export default function Template1({ invoice }) {
 
         <View style={s.blueBar} />
 
-        <View style={s.detailsRow}>
-          <View style={s.detailsCol}>
-            <Text style={s.detailsLabel}>{isQuotation ? 'Quotation No' : 'Invoice No'}</Text>
-            <Text style={s.detailsValue}>{invoice.invoiceNumber || invoice.quotationNumber}</Text>
-          </View>
-          <View style={s.detailsCol}>
-            <Text style={s.detailsLabel}>Date of Issue</Text>
-            <Text style={s.detailsValue}>{new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text>
-          </View>
-          <View style={s.detailsCol}>
-            <Text style={s.detailsLabel}>Due Date</Text>
-            <Text style={s.detailsValue}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US') : 'Upon Receipt'}</Text>
-          </View>
-        </View>
+
 
         <View style={s.container}>
 
@@ -177,23 +164,27 @@ export default function Template1({ invoice }) {
               {client?.phone && <Text style={s.infoText}>{client.phone}</Text>}
             </View>
             <View style={s.infoCol}>
-              {isQuotation && (
-                <>
-                  <Text style={s.infoTitle}>Payment Details</Text>
-                  {biz?.bankDetails?.accountNumber ? (
-                    <>
-                      {biz.bankDetails.bankName && <Text style={s.infoText}>Bank: {biz.bankDetails.bankName}</Text>}
-                      <Text style={s.infoText}>Account: {biz.bankDetails.accountNumber}</Text>
-                      {biz.bankDetails.ifscCode && <Text style={s.infoText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
-                    </>
-                  ) : (
-                    <>
-                      {invoice.paymentInfo && <Text style={s.infoText}>{invoice.paymentInfo}</Text>}
-                    </>
-                  )}
-                </>
-              )}
+              <Text style={s.infoTitle}>Details</Text>
+              <Text style={s.infoText}>{isQuotation ? 'Quotation No' : 'Invoice No'}: <Text style={{ fontFamily: B }}>{invoice.invoiceNumber || invoice.quotationNumber}</Text></Text>
+              <Text style={s.infoText}>Date of Issue: <Text style={{ fontFamily: B }}>{new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text></Text>
+              <Text style={s.infoText}>Due Date: <Text style={{ fontFamily: B }}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US') : 'Upon Receipt'}</Text></Text>
             </View>
+            {isQuotation && (
+              <View style={s.infoCol}>
+                <Text style={s.infoTitle}>Payment Details</Text>
+                {biz?.bankDetails?.accountNumber ? (
+                  <>
+                    {biz.bankDetails.bankName && <Text style={s.infoText}>Bank: {biz.bankDetails.bankName}</Text>}
+                    <Text style={s.infoText}>Account: {biz.bankDetails.accountNumber}</Text>
+                    {biz.bankDetails.ifscCode && <Text style={s.infoText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
+                  </>
+                ) : (
+                  <>
+                    {invoice.paymentInfo && <Text style={s.infoText}>{invoice.paymentInfo}</Text>}
+                  </>
+                )}
+              </View>
+            )}
           </View>
 
           {/* Table */}
