@@ -30,7 +30,7 @@ export default function Template2({ invoice }) {
   const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
-    page: { paddingTop: 50, paddingBottom: 100, paddingHorizontal: 40, fontFamily: 'Inter', color: '#000' },
+    page: { paddingTop: 50, paddingBottom: 115, paddingHorizontal: 40, fontFamily: 'Inter', color: '#000' },
 
     topHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 },
     bizBox: { maxWidth: scaled.bizInfoMaxWidth },
@@ -80,8 +80,9 @@ export default function Template2({ invoice }) {
     signatureLine: { width: 120, borderTopWidth: 0.5, borderTopColor: '#000', borderTopStyle: 'solid', paddingTop: 6, alignItems: 'center' },
     footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: PRIMARY, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
     footerText: { fontSize: 8.5, color: '#FFF' },
-    footerBrandLine: { fontSize: 7, fontFamily: M, color: '#FFF', letterSpacing: 0.3, textAlign: 'center' },
-    footerLink: { fontSize: 7, fontFamily: M, color: '#FFF', letterSpacing: 0.3 },
+    footerBrandLine: { fontSize: 7, fontFamily: M, color: hexToRgba('#FFF', 0.75), letterSpacing: 0.3, textAlign: 'center' },
+    footerLink: { fontSize: 7, fontFamily: M, color: hexToRgba('#FFF', 0.75), letterSpacing: 0.3 },
+    footerTagline: { fontSize: 6.5, color: '#FFF', opacity: 0.9, textAlign: 'center', marginTop: 3 },
     footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.75, marginTop: 1.5, textAlign: 'center' },
     watermarkContainer: {
       position: 'absolute',
@@ -101,6 +102,9 @@ export default function Template2({ invoice }) {
       transform: 'rotate(-45deg)',
       letterSpacing: 5,
     },
+    poweredByContainer: { alignItems: 'center', marginTop: 6 },
+    poweredByLabel: { fontSize: 6, color: hexToRgba('#FFF', 0.65), letterSpacing: 0.5 },
+    poweredByValue: { fontSize: 9.5, fontFamily: B, color: '#FFF', letterSpacing: 0.5, marginTop: 1 },
   });
   const currency = invoice._currency || invoice.currency || 'INR';
   const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency, currencyDisplay: 'code' }).format(n || 0).replace(currency, '').trim();
@@ -267,10 +271,14 @@ export default function Template2({ invoice }) {
           </View>
         </View>
 
-
-
-        {/* Footer: branding */}
+        {/* Footer: contact details & branding */}
         <View style={s.footerBox} fixed>
+          {(biz?.phone || biz?.email) && (
+            <View style={{ flexDirection: 'row', gap: 30, marginBottom: 3 }}>
+              {biz?.phone && <Text style={s.footerText}>Phone: {biz.phone}</Text>}
+              {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
+            </View>
+          )}
           <Text style={s.footerBrandLine}>
             Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
             <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
@@ -278,6 +286,11 @@ export default function Template2({ invoice }) {
           <Text style={s.footerTrustLine}>
             Generated securely by Goodsynk Billing. This is a digitally signed document.
           </Text>
+          <View style={s.poweredByContainer}>
+            <Text style={s.poweredByLabel}>Powered By</Text>
+            <Text style={s.poweredByValue}>GoodSynk</Text>
+          </View>
+          <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
         </View>
       </Page>
     </Document>

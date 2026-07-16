@@ -96,9 +96,13 @@ export default function Template1({ invoice }) {
       letterSpacing: 5,
     },
     footerText: { fontSize: 8.5, color: '#FFF' },
-    footerBrandLine: { fontSize: 7, fontFamily: M, color: '#FFF', letterSpacing: 0.3, textAlign: 'center' },
-    footerLink: { fontSize: 7, fontFamily: M, color: '#FFF', letterSpacing: 0.3 },
+    footerBrandLine: { fontSize: 7, fontFamily: M, color: hexToRgba('#FFF', 0.75), letterSpacing: 0.3, textAlign: 'center' },
+    footerLink: { fontSize: 7, fontFamily: M, color: hexToRgba('#FFF', 0.75), letterSpacing: 0.3 },
     footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.75, marginTop: 1.5, textAlign: 'center' },
+    footerTagline: { fontSize: 6.5, color: '#FFF', opacity: 0.9, textAlign: 'center', marginTop: 3 },
+    poweredByContainer: { alignItems: 'center', marginTop: 6 },
+    poweredByLabel: { fontSize: 6, color: hexToRgba('#FFF', 0.65), letterSpacing: 0.5 },
+    poweredByValue: { fontSize: 9.5, fontFamily: B, color: '#FFF', letterSpacing: 0.5, marginTop: 1 },
   });
 
   const currency = invoice._currency || invoice.currency || 'INR';
@@ -287,6 +291,11 @@ export default function Template1({ invoice }) {
           <Text style={s.footerTrustLine}>
             Generated securely by Goodsynk Billing. This is a digitally signed document.
           </Text>
+          <View style={s.poweredByContainer}>
+            <Text style={s.poweredByLabel}>Powered By</Text>
+            <Text style={s.poweredByValue}>GoodSynk</Text>
+          </View>
+          <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
         </View>
       </Page>
     </Document>

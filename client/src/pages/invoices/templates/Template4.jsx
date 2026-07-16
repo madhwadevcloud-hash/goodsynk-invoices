@@ -32,7 +32,7 @@ export default function Template4({ invoice }) {
   const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
-    page: { paddingTop: 40, paddingBottom: 70, paddingHorizontal: 40, fontFamily: 'Inter', color: NAVY },
+    page: { paddingTop: 40, paddingBottom: 120, paddingHorizontal: 40, fontFamily: 'Inter', color: NAVY },
 
     headerArea: { flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1.5, borderBottomColor: NAVY, borderBottomStyle: 'solid', paddingBottom: 15, marginBottom: 10 },
     bizInfoBox: { maxWidth: scaled.bizInfoMaxWidth },
@@ -40,7 +40,7 @@ export default function Template4({ invoice }) {
     bizNameText: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: NAVY, textTransform: 'uppercase', marginBottom: 2 },
     bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight },
     titleBox: { alignItems: 'flex-end', paddingTop: 8 },
-    invoiceTitle: { fontFamily: 'Inter', fontWeight: 300, fontSize: 26, letterSpacing: 4, color: NAVY, paddingLeft: 10 },
+    invoiceTitle: { fontFamily: 'Inter', fontWeight: 300, fontSize: 26, letterSpacing: 4, color: NAVY },
 
     infoGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 40 },
     infoCol: { width: '30%' },
@@ -76,8 +76,9 @@ export default function Template4({ invoice }) {
 
     footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: NAVY, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
     footerText: { fontSize: 8.5, color: '#FFF' },
-    footerBrandLine: { fontSize: 7, fontFamily: M, color: GOLD, letterSpacing: 0.3, textAlign: 'center' },
-    footerLink: { fontSize: 7, fontFamily: M, color: GOLD, letterSpacing: 0.3 },
+    footerBrandLine: { fontSize: 7, fontFamily: M, color: hexToRgba(GOLD, 0.75), letterSpacing: 0.3, textAlign: 'center' },
+    footerLink: { fontSize: 7, fontFamily: M, color: hexToRgba(GOLD, 0.75), letterSpacing: 0.3 },
+    footerTagline: { fontSize: 6.5, color: '#FFF', opacity: 0.9, textAlign: 'center', marginTop: 3 },
     footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.75, marginTop: 1.5, textAlign: 'center' },
 
     watermarkContainer: {
@@ -98,6 +99,9 @@ export default function Template4({ invoice }) {
       transform: 'rotate(-45deg)',
       letterSpacing: 5,
     },
+    poweredByContainer: { alignItems: 'center', marginTop: 6 },
+    poweredByLabel: { fontSize: 6, color: hexToRgba(GOLD, 0.65), letterSpacing: 0.5 },
+    poweredByValue: { fontSize: 9.5, fontFamily: B, color: GOLD, letterSpacing: 0.5, marginTop: 1 },
   });
   const currency = invoice._currency || invoice.currency || 'INR';
   const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency, currencyDisplay: 'code' }).format(n || 0).replace(currency, '').trim();
@@ -136,7 +140,7 @@ export default function Template4({ invoice }) {
             {biz?.gstin && <Text style={[s.bizSubText, { color: GOLD, fontFamily: B }]}>GSTIN: {biz.gstin}</Text>}
           </View>
           <View style={s.titleBox}>
-            <Text style={s.invoiceTitle}>{isQuotation ? '  QUOTATION' : '  INVOICE'}</Text>
+            <Text style={s.invoiceTitle}>{isQuotation ? 'QUOTATION' : 'INVOICE'}</Text>
           </View>
         </View>
 
@@ -165,9 +169,9 @@ export default function Template4({ invoice }) {
 
           <View style={s.infoCol}>
             <Text style={s.infoLabel}>Details</Text>
-            <Text style={s.infoText}>No: {invoice.invoiceNumber || invoice.quotationNumber}</Text>
-            <Text style={s.infoText}>Date: {new Date(invoice.issueDate).toLocaleDateString()}</Text>
-            {invoice.dueDate && <Text style={s.infoText}>Due: {new Date(invoice.dueDate).toLocaleDateString()}</Text>}
+            <Text style={s.infoText}>{isQuotation ? 'Quotation No' : 'Invoice No'}: {invoice.invoiceNumber || invoice.quotationNumber}</Text>
+            <Text style={s.infoText}>Date of Issue: {new Date(invoice.issueDate).toLocaleDateString()}</Text>
+            <Text style={s.infoText}>Due Date: {invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'Upon Receipt'}</Text>
             <Text style={[s.infoText, { marginTop: 10, fontFamily: B }]}>Amount Due: {currency} {fmt(invoice.total)}</Text>
           </View>
         </View>
@@ -255,8 +259,14 @@ export default function Template4({ invoice }) {
           </View>
         </View>
 
-        {/* Footer: branding */}
+        {/* Footer: contact details & branding */}
         <View style={s.footerBox} fixed>
+          {(biz?.phone || biz?.email) && (
+            <View style={{ flexDirection: 'row', gap: 30, marginBottom: 3 }}>
+              {biz?.phone && <Text style={s.footerText}>Phone: {biz.phone}</Text>}
+              {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
+            </View>
+          )}
           <Text style={s.footerBrandLine}>
             Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
             <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
@@ -264,6 +274,11 @@ export default function Template4({ invoice }) {
           <Text style={s.footerTrustLine}>
             Generated securely by Goodsynk Billing. This is a digitally signed document.
           </Text>
+          <View style={s.poweredByContainer}>
+            <Text style={s.poweredByLabel}>Powered By</Text>
+            <Text style={s.poweredByValue}>GoodSynk</Text>
+          </View>
+          <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
         </View>
       </Page>
     </Document>

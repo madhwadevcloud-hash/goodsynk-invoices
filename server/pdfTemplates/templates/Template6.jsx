@@ -96,9 +96,17 @@ export default function Template6({ invoice }) {
     sigText: { fontSize: 9, fontFamily: M, color: '#444' },
 
     thankYou: { fontSize: 9, marginTop: 20, textAlign: 'center' },
-    footerBrandLine: { fontSize: 7, fontFamily: M, color: NAVY, letterSpacing: 0.3, textAlign: 'center' },
-    footerLink: { fontSize: 7, fontFamily: M, color: NAVY, letterSpacing: 0.3 },
-    footerTrustLine: { fontSize: 6, color: '#666', opacity: 0.85, marginTop: 1.5, textAlign: 'center' },
+    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: NAVY, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
+    footerText: { fontSize: 8.5, color: '#FFF' },
+    footerBrandLine: { fontSize: 7, fontFamily: M, color: hexToRgba(ORANGE, 0.8), letterSpacing: 0.3, textAlign: 'center' },
+    footerLink: { fontSize: 7, fontFamily: M, color: hexToRgba(ORANGE, 0.8), letterSpacing: 0.3 },
+    footerContact: { fontSize: 8, color: '#FFF', flexDirection: 'row', gap: 30, marginBottom: 3 },
+    footerContactText: { fontSize: 8, color: '#FFF' },
+    footerTagline: { fontSize: 6.5, color: '#FFF', opacity: 0.9, textAlign: 'center', marginTop: 3 },
+    footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.75, marginTop: 1.5, textAlign: 'center' },
+    poweredByContainer: { alignItems: 'center', marginTop: 6 },
+    poweredByLabel: { fontSize: 6, color: hexToRgba(ORANGE, 0.65), letterSpacing: 0.5 },
+    poweredByValue: { fontSize: 9.5, fontFamily: M, color: ORANGE, letterSpacing: 0.5, marginTop: 1 },
 
     watermarkContainer: {
       position: 'absolute',
@@ -167,19 +175,17 @@ export default function Template6({ invoice }) {
             <View style={s.headerRight}>
               <Text style={s.invoiceTitleHeader}>{isQuotation ? 'QUOTATION' : 'INVOICE'}</Text>
               <View style={s.headerTextRow}>
-                <Text style={s.headerTextLabel}>{isQuotation ? 'No' : 'Invoice No'}</Text>
+                <Text style={s.headerTextLabel}>{isQuotation ? 'Quotation No' : 'Invoice No'}</Text>
                 <Text style={s.headerTextValue}>{invoice.invoiceNumber || invoice.quotationNumber}</Text>
               </View>
               <View style={s.headerTextRow}>
-                <Text style={s.headerTextLabel}>Date</Text>
+                <Text style={s.headerTextLabel}>Date of Issue</Text>
                 <Text style={s.headerTextValue}>{new Date(invoice.issueDate).toLocaleDateString()}</Text>
               </View>
-              {invoice.dueDate && (
-                <View style={s.headerTextRow}>
-                  <Text style={s.headerTextLabel}>Due Date</Text>
-                  <Text style={s.headerTextValue}>{new Date(invoice.dueDate).toLocaleDateString()}</Text>
-                </View>
-              )}
+              <View style={s.headerTextRow}>
+                <Text style={s.headerTextLabel}>Due Date</Text>
+                <Text style={s.headerTextValue}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'Upon Receipt'}</Text>
+              </View>
             </View>
           </View>
         </View>
@@ -253,18 +259,17 @@ export default function Template6({ invoice }) {
         {/* Lower Grid */}
         <View style={s.bottomGrid}>
           <View style={s.leftBottom}>
-            {invoice.notes && (
-              <View style={{ marginBottom: 15 }}>
-                <Text style={s.termsTitle}>Notes</Text>
-                <Text style={s.termsText}>{invoice.notes}</Text>
-              </View>
-            )}
-            {invoice.termsAndConditions && (
-              <View style={{ marginBottom: 15 }}>
+            {invoice.termsAndConditions ? (
+              <View style={{ marginBottom: 20 }}>
                 <Text style={s.termsTitle}>Terms & Condition</Text>
                 <Text style={s.termsText}>{invoice.termsAndConditions}</Text>
               </View>
-            )}
+            ) : invoice.notes ? (
+              <View style={{ marginBottom: 20 }}>
+                <Text style={s.termsTitle}>Notes</Text>
+                <Text style={s.termsText}>{invoice.notes}</Text>
+              </View>
+            ) : null}
           </View>
 
           <View style={s.rightBottom}>
@@ -293,14 +298,25 @@ export default function Template6({ invoice }) {
         <Text style={s.thankYou}>Thank you for your business</Text>
 
         {/* Fixed Footer Branding */}
-        <View style={{ position: 'absolute', bottom: 46, left: 0, right: 0, flexDirection: 'column', alignItems: 'center', paddingHorizontal: 40 }} fixed>
+        <View style={s.footerBox} fixed>
+          {(biz?.phone || biz?.email) && (
+            <View style={s.footerContact}>
+              {biz?.phone && <Text style={s.footerContactText}>Phone: {biz.phone}</Text>}
+              {biz?.email && <Text style={s.footerContactText}>Email: {biz.email}</Text>}
+            </View>
+          )}
           <Text style={s.footerBrandLine}>
-            Goodsynk Billing  |  Simple Invoising, Billing & Quotations  |  Visit{' '}
+            Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
             <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
           </Text>
           <Text style={s.footerTrustLine}>
             Generated securely by Goodsynk Billing. This is a digitally signed document.
           </Text>
+          <View style={s.poweredByContainer}>
+            <Text style={s.poweredByLabel}>Powered By</Text>
+            <Text style={s.poweredByValue}>GoodSynk</Text>
+          </View>
+          <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
         </View>
 
         {/* Bottom Design Decor */}

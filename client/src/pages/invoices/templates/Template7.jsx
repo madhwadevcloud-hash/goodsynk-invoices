@@ -146,9 +146,13 @@ export default function Template7({ invoice }) {
     // Footer
     footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: PRIMARY, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
     footerText: { fontSize: 8.5, color: '#FFF' },
-    footerBrandLine: { fontSize: 7, fontFamily: B, color: '#FFF', letterSpacing: 0.3, textAlign: 'center' },
-    footerLink: { fontSize: 7, fontFamily: B, color: '#FFF', letterSpacing: 0.3 },
+    footerBrandLine: { fontSize: 7, fontFamily: M, color: hexToRgba('#FFF', 0.75), letterSpacing: 0.3, textAlign: 'center' },
+    footerLink: { fontSize: 7, fontFamily: M, color: hexToRgba('#FFF', 0.75), letterSpacing: 0.3 },
+    footerTagline: { fontSize: 6.5, color: '#FFF', opacity: 0.9, textAlign: 'center', marginTop: 3 },
     footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.75, marginTop: 1.5, textAlign: 'center' },
+    poweredByContainer: { alignItems: 'center', marginTop: 6 },
+    poweredByLabel: { fontSize: 6, color: hexToRgba('#FFF', 0.65), letterSpacing: 0.5 },
+    poweredByValue: { fontSize: 9.5, fontFamily: B, color: '#FFF', letterSpacing: 0.5, marginTop: 1 },
   });
 
   const currency = invoice._currency || invoice.currency || 'INR';
@@ -283,41 +287,24 @@ export default function Template7({ invoice }) {
           <Text style={s.wordsText}>Total amount (in words): INR {totalInWords} Rupees Only.</Text>
         </View>
 
-        {/* Bank Details */}
-        {(isQuotation && biz?.bankDetails?.accountNumber) && (
-          <View style={{ paddingHorizontal: 40, marginBottom: 15 }}>
-            <Text style={s.bankLabel}>Bank Details:</Text>
-            {biz.bankDetails.bankName && (
-              <View style={s.bankRow}><Text style={s.bankKey}>Bank:</Text><Text style={s.bankVal}>{biz.bankDetails.bankName}</Text></View>
-            )}
-            <View style={s.bankRow}><Text style={s.bankKey}>Account #:</Text><Text style={s.bankVal}>{biz.bankDetails.accountNumber}</Text></View>
-            {biz.bankDetails.ifscCode && (
-              <View style={s.bankRow}><Text style={s.bankKey}>IFSC Code:</Text><Text style={s.bankVal}>{biz.bankDetails.ifscCode}</Text></View>
-            )}
-            {biz.bankDetails.branch && (
-              <View style={s.bankRow}><Text style={s.bankKey}>Branch:</Text><Text style={s.bankVal}>{biz.bankDetails.branch}</Text></View>
-            )}
-          </View>
-        )}
-
-        {/* Notes */}
-        {invoice.notes && (
-          <View style={{ paddingHorizontal: 40, marginBottom: 10 }}>
-            <Text style={{ fontSize: 7.5, fontFamily: B, color: '#000', marginBottom: 2 }}>Notes:</Text>
-            <Text style={{ fontSize: 7, color: '#444' }}>{invoice.notes}</Text>
-          </View>
-        )}
-
-        {/* Terms & Conditions */}
-        {invoice.termsAndConditions && (
-          <View style={{ paddingHorizontal: 40, marginBottom: 15 }}>
-            <Text style={{ fontSize: 7.5, fontFamily: B, color: '#000', marginBottom: 2 }}>Terms & Conditions:</Text>
-            <Text style={{ fontSize: 7, color: '#444' }}>{invoice.termsAndConditions}</Text>
-          </View>
-        )}
-
         <View style={s.bottomRow}>
-          <View style={s.bankCol}></View>
+          <View style={s.bankCol}>
+            {(isQuotation && biz?.bankDetails?.accountNumber) && (
+              <>
+                <Text style={s.bankLabel}>Bank Details:</Text>
+                {biz.bankDetails.bankName && (
+                  <View style={s.bankRow}><Text style={s.bankKey}>Bank:</Text><Text style={s.bankVal}>{biz.bankDetails.bankName}</Text></View>
+                )}
+                <View style={s.bankRow}><Text style={s.bankKey}>Account #:</Text><Text style={s.bankVal}>{biz.bankDetails.accountNumber}</Text></View>
+                {biz.bankDetails.ifscCode && (
+                  <View style={s.bankRow}><Text style={s.bankKey}>IFSC Code:</Text><Text style={s.bankVal}>{biz.bankDetails.ifscCode}</Text></View>
+                )}
+                {biz.bankDetails.branch && (
+                  <View style={s.bankRow}><Text style={s.bankKey}>Branch:</Text><Text style={s.bankVal}>{biz.bankDetails.branch}</Text></View>
+                )}
+              </>
+            )}
+          </View>
           <View style={s.sigCol}>
             <Text style={s.sigText}>For {bizName}</Text>
             {biz?.businessSignature && (
@@ -328,6 +315,12 @@ export default function Template7({ invoice }) {
         </View>
 
         <View style={s.footerBox} fixed>
+          {(biz?.phone || biz?.email) && (
+            <View style={{ flexDirection: 'row', gap: 30, marginBottom: 3 }}>
+              {biz?.phone && <Text style={s.footerText}>Phone: {biz.phone}</Text>}
+              {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
+            </View>
+          )}
           <Text style={s.footerBrandLine}>
             Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
             <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
@@ -335,6 +328,11 @@ export default function Template7({ invoice }) {
           <Text style={s.footerTrustLine}>
             Generated securely by Goodsynk Billing. This is a digitally signed document.
           </Text>
+          <View style={s.poweredByContainer}>
+            <Text style={s.poweredByLabel}>Powered By</Text>
+            <Text style={s.poweredByValue}>GoodSynk</Text>
+          </View>
+          <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
         </View>
 
       </Page>

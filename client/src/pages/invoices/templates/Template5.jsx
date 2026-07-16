@@ -29,7 +29,7 @@ export default function Template5({ invoice }) {
   const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
-    page: { paddingTop: 32, paddingBottom: 70, paddingHorizontal: 40, fontFamily: 'Inter', color: '#000' },
+    page: { paddingTop: 32, paddingBottom: 120, paddingHorizontal: 40, fontFamily: 'Inter', color: '#000' },
 
     headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
     headerLeft: { width: '50%' },
@@ -75,8 +75,9 @@ export default function Template5({ invoice }) {
 
     footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: BLUE, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
     footerText: { fontSize: 8.5, color: '#FFF' },
-    footerBrandLine: { fontSize: 7, fontFamily: M, color: '#FFF', letterSpacing: 0.3, textAlign: 'center' },
-    footerLink: { fontSize: 7, fontFamily: M, color: '#FFF', letterSpacing: 0.3 },
+    footerBrandLine: { fontSize: 7, fontFamily: M, color: hexToRgba('#FFF', 0.75), letterSpacing: 0.3, textAlign: 'center' },
+    footerLink: { fontSize: 7, fontFamily: M, color: hexToRgba('#FFF', 0.75), letterSpacing: 0.3 },
+    footerTagline: { fontSize: 6.5, color: '#FFF', opacity: 0.9, textAlign: 'center', marginTop: 3 },
     footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.75, marginTop: 1.5, textAlign: 'center' },
     watermarkContainer: {
       position: 'absolute',
@@ -96,6 +97,9 @@ export default function Template5({ invoice }) {
       transform: 'rotate(-45deg)',
       letterSpacing: 5,
     },
+    poweredByContainer: { alignItems: 'center', marginTop: 6 },
+    poweredByLabel: { fontSize: 6, color: hexToRgba('#FFF', 0.65), letterSpacing: 0.5 },
+    poweredByValue: { fontSize: 9.5, fontFamily: B, color: '#FFF', letterSpacing: 0.5, marginTop: 1 },
   });
   const currency = invoice._currency || invoice.currency || 'INR';
   const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency, currencyDisplay: 'code' }).format(n || 0).replace(currency, '').trim();
@@ -125,18 +129,14 @@ export default function Template5({ invoice }) {
           <View style={s.headerLeft}>
             <Text style={s.invoiceTitle}>{isQuotation ? 'QUOTATION' : 'INVOICE'}</Text>
             <View style={{ marginTop: 20 }}>
-              <Text style={s.metaLabel}>Invoice No.</Text>
+              <Text style={s.metaLabel}>{isQuotation ? 'Quotation No' : 'Invoice No'}</Text>
               <Text style={[s.metaVal, { fontFamily: B, marginBottom: 10 }]}>{invoice.invoiceNumber || invoice.quotationNumber}</Text>
 
-              <Text style={s.metaLabel}>Date</Text>
+              <Text style={s.metaLabel}>Date of Issue</Text>
               <Text style={[s.metaVal, { marginBottom: 10 }]}>{new Date(invoice.issueDate).toLocaleDateString()}</Text>
 
-              {invoice.dueDate && (
-                <>
-                  <Text style={s.metaLabel}>Due Date</Text>
-                  <Text style={s.metaVal}>{new Date(invoice.dueDate).toLocaleDateString()}</Text>
-                </>
-              )}
+              <Text style={s.metaLabel}>Due Date</Text>
+              <Text style={s.metaVal}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'Upon Receipt'}</Text>
             </View>
           </View>
 
@@ -205,7 +205,7 @@ export default function Template5({ invoice }) {
           ))}
         </View>
 
-        {/* Footer */}
+        {/* Bottom Section */}
         <View style={s.bottomSection}>
           <View style={s.leftBottom}>
             {(isQuotation && biz?.bankDetails?.accountNumber) && (
@@ -255,8 +255,14 @@ export default function Template5({ invoice }) {
           </View>
         </View>
 
-        {/* Footer: branding */}
+        {/* Footer: contact details & branding */}
         <View style={s.footerBox} fixed>
+          {(biz?.phone || biz?.email) && (
+            <View style={{ flexDirection: 'row', gap: 30, marginBottom: 3 }}>
+              {biz?.phone && <Text style={s.footerText}>Phone: {biz.phone}</Text>}
+              {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
+            </View>
+          )}
           <Text style={s.footerBrandLine}>
             Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
             <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
@@ -264,6 +270,11 @@ export default function Template5({ invoice }) {
           <Text style={s.footerTrustLine}>
             Generated securely by Goodsynk Billing. This is a digitally signed document.
           </Text>
+          <View style={s.poweredByContainer}>
+            <Text style={s.poweredByLabel}>Powered By</Text>
+            <Text style={s.poweredByValue}>GoodSynk</Text>
+          </View>
+          <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
         </View>
       </Page>
     </Document>
