@@ -234,8 +234,8 @@ export default function InvoiceForm() {
     dueDate: '',
     isInterstate: false,
     taxType: 'gst_india',
-    notes: '',
-    termsAndConditions: '',
+    notes: [],
+    termsAndConditions: [],
     currency: currentUser?.currency || 'INR',
     roundOff: false,
     selectedBankIndex: 0,
@@ -287,8 +287,8 @@ export default function InvoiceForm() {
           dueDate: inv.dueDate ? new Date(inv.dueDate).toISOString().split('T')[0] : '',
           isInterstate: inv.isInterstate || false,
           taxType: inv.taxType || 'gst_india',
-          notes: inv.notes || '',
-          termsAndConditions: inv.termsAndConditions || '',
+          notes: inv.notes ? inv.notes.split('\n') : [],
+          termsAndConditions: inv.termsAndConditions ? inv.termsAndConditions.split('\n') : [],
           currency: inv.currency || currentUser?.currency || 'INR',
           roundOff: inv.roundOff || false,
           selectedBankIndex: inv.selectedBankIndex || 0,
@@ -523,7 +523,8 @@ export default function InvoiceForm() {
 
     const body = {
       ...form,
-      notes: serializeNotes(parseNotes(form.notes)),
+      notes: serializeNotes(form.notes.map((n) => n.trim()).filter(Boolean)),
+      termsAndConditions: serializeNotes(form.termsAndConditions.map((t) => t.trim()).filter(Boolean)),
       selectedBankIndex: Number(form.selectedBankIndex || 0),
       items: form.items,
     };
@@ -587,8 +588,8 @@ export default function InvoiceForm() {
     : products;
 
   const displayedProducts = filteredLineProducts.slice(0, 8);
-  const notePoints = form.notes ? form.notes.split('\n') : [];
-  const termsPoints = form.termsAndConditions ? form.termsAndConditions.split('\n') : [];
+  const notePoints = form.notes || [];
+  const termsPoints = form.termsAndConditions || [];
 
   if (loading || checkingLimit) return <div className="flex-center" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
 
@@ -1281,19 +1282,19 @@ export default function InvoiceForm() {
                     onChange={(e) => {
                       const next = [...notePoints];
                       next[noteIdx] = e.target.value;
-                      setField('notes', serializeNotes(next));
+                      setField('notes', next);
                     }}
                     placeholder={`Point ${noteIdx + 1}`}
-                    maxLength={80}
+                    maxLength={60}
                   />
                   <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', minWidth: 40, textAlign: 'right' }}>
-                    {point.length}/80
+                    {point.length}/60
                   </span>
-                  <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setField('notes', serializeNotes(notePoints.filter((_, i) => i !== noteIdx)))}><X size={14} /></button>
+                  <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setField('notes', notePoints.filter((_, i) => i !== noteIdx))}><X size={14} /></button>
                 </div>
               ))}
               {notePoints.length < 5 && (
-                <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('notes', serializeNotes([...notePoints, '']))}><Plus size={14} /> Add point</button>
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('notes', [...notePoints, ''])}><Plus size={14} /> Add point</button>
               )}
             </div>
           </div>
@@ -1310,19 +1311,19 @@ export default function InvoiceForm() {
                     onChange={(e) => {
                       const next = [...termsPoints];
                       next[termIdx] = e.target.value;
-                      setField('termsAndConditions', serializeNotes(next));
+                      setField('termsAndConditions', next);
                     }}
                     placeholder={`Term ${termIdx + 1}`}
-                    maxLength={80}
+                    maxLength={60}
                   />
                   <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', minWidth: 40, textAlign: 'right' }}>
-                    {point.length}/80
+                    {point.length}/60
                   </span>
-                  <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setField('termsAndConditions', serializeNotes(termsPoints.filter((_, i) => i !== termIdx)))}><X size={14} /></button>
+                  <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setField('termsAndConditions', termsPoints.filter((_, i) => i !== termIdx))}><X size={14} /></button>
                 </div>
               ))}
               {termsPoints.length < 5 && (
-                <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('termsAndConditions', serializeNotes([...termsPoints, '']))}><Plus size={14} /> Add point</button>
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('termsAndConditions', [...termsPoints, ''])}><Plus size={14} /> Add point</button>
               )}
             </div>
           </div>
