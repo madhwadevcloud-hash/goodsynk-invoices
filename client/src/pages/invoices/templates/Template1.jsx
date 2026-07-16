@@ -30,7 +30,7 @@ export default function Template1({ invoice }) {
   const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
-    page: { paddingTop: 40, paddingBottom: 130, fontFamily: 'Inter', color: '#000' },
+    page: { paddingTop: 30, paddingBottom: 75, fontFamily: 'Inter', color: '#000' },
     container: { paddingHorizontal: 40 },
     topSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 40, marginBottom: 20 },
     headerText: { fontFamily: B, fontSize: 32, letterSpacing: 2, textTransform: 'uppercase', color: PRIMARY, marginTop: 10 },
