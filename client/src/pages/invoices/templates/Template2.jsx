@@ -1,5 +1,5 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font, Image, Link } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
 
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
@@ -78,13 +78,20 @@ export default function Template2({ invoice }) {
 
     signatureArea: { marginTop: 10, alignItems: 'flex-end', marginRight: -20 },
     signatureLine: { width: 120, borderTopWidth: 0.5, borderTopColor: '#000', borderTopStyle: 'solid', paddingTop: 6, alignItems: 'center' },
-    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: PRIMARY, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
-    footerText: { fontSize: 8.5, color: '#FFF' },
-    footerDivider: { width: 36, height: 1, backgroundColor: hexToRgba('#FFF', 0.3), marginBottom: 5 },
-    footerBrandLine: { fontSize: 7.5, fontFamily: B, color: '#F2C94C', letterSpacing: 0.4, textAlign: 'center' },
-    footerLink: { fontSize: 7.5, fontFamily: B, color: '#F2C94C', letterSpacing: 0.4 },
-    footerTagline: { fontSize: 6.5, color: '#FFF', opacity: 0.9, textAlign: 'center', marginTop: 3 },
-    footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.6, marginTop: 3, textAlign: 'center' },
+    footerBox: { position: 'absolute', bottom: 15, left: 40, right: 40, borderTopWidth: 1, borderTopColor: '#E0E0E0', borderTopStyle: 'solid', flexDirection: 'row', paddingTop: 8, alignItems: 'stretch' },
+    footerAccent: { width: 3, backgroundColor: PRIMARY, marginRight: 8 },
+    footerLeft: { flex: 1.3, justifyContent: 'center' },
+    footerRight: { flex: 1, justifyContent: 'center', alignItems: 'flex-end' },
+    footerText: { fontSize: 7.5, color: '#444', marginBottom: 2 },
+    footerContactLabel: { fontSize: 6.5, fontFamily: B, color: PRIMARY, letterSpacing: 0.5, marginBottom: 2, textTransform: 'uppercase' },
+    footerBrandName: { fontSize: 9.5, fontFamily: B, color: PRIMARY, letterSpacing: 0.3 },
+    footerBrandLine: { fontSize: 7, color: '#444', marginTop: 2 },
+    footerLink: { fontSize: 7, fontFamily: B, color: PRIMARY, textDecoration: 'underline' },
+    footerTagline: { fontSize: 6.5, color: '#666', marginTop: 2 },
+    footerTrustLine: { fontSize: 5.5, color: '#888', marginTop: 2, textAlign: 'left' },
+    poweredByContainer: { alignItems: 'flex-end', marginTop: 4 },
+    poweredByLabel: { fontSize: 5.5, color: '#888', letterSpacing: 0.5 },
+    poweredByValue: { fontSize: 8.5, fontFamily: B, color: '#000', letterSpacing: 0.5, marginTop: 1 },
     watermarkContainer: {
       position: 'absolute',
       top: 0,
@@ -263,27 +270,27 @@ export default function Template2({ invoice }) {
           </View>
         </View>
 
-        {/* Footer: contact details & branding */}
+        {/* Footer: split two-panel — brand left | contact right */}
         <View style={s.footerBox} fixed>
-          {(biz?.phone || biz?.email) && (
-            <View style={{ flexDirection: 'row', gap: 30, marginBottom: 3 }}>
-              {biz?.phone && <Text style={s.footerText}>Phone: {biz.phone}</Text>}
-              {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
-            </View>
-          )}
-          <View style={s.footerDivider} />
-          <Text style={s.footerBrandLine}>
-            Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
-            <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
-          </Text>
-          <View style={s.poweredByContainer}>
-            <Text style={s.poweredByLabel}>Powered By</Text>
-            <Text style={s.poweredByValue}>GoodSynk</Text>
+          <View style={s.footerAccent} />
+          {/* Left panel — Brand */}
+          <View style={s.footerLeft}>
+            <Text style={s.footerBrandName}>GoodSynk</Text>
+            <Text style={s.footerBrandLine}>Goodsynk Billing  •  Simple Invoicing & Quotations</Text>
+            <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
+            <Text style={s.footerTrustLine}>Generated securely • Digitally signed document</Text>
           </View>
-          <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
-          <Text style={s.footerTrustLine}>
-            Generated securely by Goodsynk Billing. This is a digitally signed document.
-          </Text>
+          {/* Right panel — Contact & Powered By */}
+          <View style={s.footerRight}>
+            <Text style={s.footerContactLabel}>Contact Us</Text>
+            {biz?.phone && <Text style={s.footerText}>Phone:  {biz.phone}</Text>}
+            {biz?.email && <Text style={s.footerText}>Email:  {biz.email}</Text>}
+            <View style={s.poweredByContainer}>
+              <Text style={s.poweredByLabel}>Powered By</Text>
+              <Text style={s.poweredByValue}>GoodSynk</Text>
+            </View>
+            <Link style={[s.footerLink, { marginTop: 2, textAlign: 'right' }]} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
+          </View>
         </View>
       </Page>
     </Document>

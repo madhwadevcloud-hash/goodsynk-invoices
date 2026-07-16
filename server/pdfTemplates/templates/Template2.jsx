@@ -1,5 +1,5 @@
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font, Image, Link } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
 
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
@@ -30,9 +30,9 @@ export default function Template2({ invoice }) {
   const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
-    page: { paddingTop: 50, paddingBottom: 115, paddingHorizontal: 40, fontFamily: 'Inter', color: '#000' },
+    page: { paddingTop: 30, paddingBottom: 75, paddingHorizontal: 40, fontFamily: 'Inter', color: '#000' },
 
-    topHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 },
+    topHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
     bizBox: { maxWidth: scaled.bizInfoMaxWidth },
     logoImg: { height: scaled.logoHeight, maxWidth: 140, objectFit: 'contain', marginBottom: 6 },
     bizName: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
@@ -47,13 +47,13 @@ export default function Template2({ invoice }) {
     detailsLabel: { fontSize: 7.5, fontFamily: B, textTransform: 'uppercase', color: '#666', marginBottom: 2 },
     detailsValue: { fontSize: 9.5, color: '#000' },
 
-    metaGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 25 },
-    metaColumn: { width: '45%' },
+    metaGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
+    metaColumn: { width: '30%' },
     metaTitle: { fontFamily: B, fontSize: 8.5, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6, color: '#333' },
     metaText: { fontSize: 8.5, color: '#444', marginBottom: 3, lineHeight: 1.4 },
     clientName: { fontSize: 11, fontFamily: B, color: '#000', marginBottom: 2 },
 
-    table: { width: '100%', marginBottom: 20 },
+    table: { width: '100%', marginBottom: 10 },
     tHeadRow: { flexDirection: 'row', borderBottom: `1pt solid ${PRIMARY}`, paddingBottom: 8, marginBottom: 12 },
     tRow: { flexDirection: 'row', marginBottom: 10 },
     th: { fontSize: 9, fontFamily: B, letterSpacing: 1, textTransform: 'uppercase' },
@@ -68,7 +68,7 @@ export default function Template2({ invoice }) {
     colTax: { flex: 0.7, textAlign: 'center' },
     colTotal: { flex: 1, textAlign: 'right' },
 
-    totalsArea: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, borderTop: `1pt solid ${PRIMARY}`, paddingTop: 12 },
+    totalsArea: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 5, borderTop: `1pt solid ${PRIMARY}`, paddingTop: 8 },
     notesArea: { width: '50%' },
     calcArea: { width: '40%' },
 
@@ -76,15 +76,22 @@ export default function Template2({ invoice }) {
     calcLabel: { fontFamily: B, fontSize: 9, textTransform: 'uppercase', marginRight: 20 },
     calcVal: { fontSize: 9.5, fontFamily: B, width: 100, textAlign: 'right' },
 
-    signatureArea: { marginTop: 40, alignItems: 'flex-end', paddingRight: 40 },
+    signatureArea: { marginTop: 10, alignItems: 'flex-end', paddingRight: 40 },
     signatureLine: { width: 120, borderTopWidth: 0.5, borderTopColor: '#000', borderTopStyle: 'solid', paddingTop: 6, alignItems: 'center' },
-    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: PRIMARY, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
-    footerText: { fontSize: 8.5, color: '#FFF' },
-    footerDivider: { width: 36, height: 1, backgroundColor: hexToRgba('#FFF', 0.3), marginBottom: 5 },
-    footerBrandLine: { fontSize: 7.5, fontFamily: B, color: '#F2C94C', letterSpacing: 0.4, textAlign: 'center' },
-    footerLink: { fontSize: 7.5, fontFamily: B, color: '#F2C94C', letterSpacing: 0.4 },
-    footerTagline: { fontSize: 6.5, color: '#FFF', opacity: 0.9, textAlign: 'center', marginTop: 3 },
-    footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.6, marginTop: 3, textAlign: 'center' },
+    footerBox: { position: 'absolute', bottom: 15, left: 40, right: 40, borderTopWidth: 1, borderTopColor: '#E0E0E0', borderTopStyle: 'solid', flexDirection: 'row', paddingTop: 8, alignItems: 'stretch' },
+    footerAccent: { width: 3, backgroundColor: PRIMARY, marginRight: 8 },
+    footerLeft: { flex: 1.3, justifyContent: 'center' },
+    footerRight: { flex: 1, justifyContent: 'center', alignItems: 'flex-end' },
+    footerText: { fontSize: 7.5, color: '#444', marginBottom: 2 },
+    footerContactLabel: { fontSize: 6.5, fontFamily: B, color: PRIMARY, letterSpacing: 0.5, marginBottom: 2, textTransform: 'uppercase' },
+    footerBrandName: { fontSize: 9.5, fontFamily: B, color: PRIMARY, letterSpacing: 0.3 },
+    footerBrandLine: { fontSize: 7, color: '#444', marginTop: 2 },
+    footerLink: { fontSize: 7, fontFamily: B, color: PRIMARY, textDecoration: 'underline' },
+    footerTagline: { fontSize: 6.5, color: '#666', marginTop: 2 },
+    footerTrustLine: { fontSize: 5.5, color: '#888', marginTop: 2, textAlign: 'left' },
+    poweredByContainer: { alignItems: 'flex-end', marginTop: 4 },
+    poweredByLabel: { fontSize: 5.5, color: '#888', letterSpacing: 0.5 },
+    poweredByValue: { fontSize: 8.5, fontFamily: B, color: '#000', letterSpacing: 0.5, marginTop: 1 },
     watermarkContainer: {
       position: 'absolute',
       top: 0,
@@ -153,22 +160,6 @@ export default function Template2({ invoice }) {
         {/* Separator Line */}
         <View style={s.headerLine} />
 
-        {/* Invoice Details Row */}
-        <View style={s.detailsRow}>
-          <View style={s.detailsItem}>
-            <Text style={s.detailsLabel}>{isQuotation ? 'Quotation No' : 'Invoice No'}</Text>
-            <Text style={s.detailsValue} wrap={false}>{invoice.invoiceNumber || invoice.quotationNumber}</Text>
-          </View>
-          <View style={s.detailsItem}>
-            <Text style={s.detailsLabel}>Date of Issue</Text>
-            <Text style={s.detailsValue} wrap={false}>{new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text>
-          </View>
-          <View style={s.detailsItem}>
-            <Text style={s.detailsLabel}>Due Date</Text>
-            <Text style={s.detailsValue} wrap={false}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US') : 'Upon Receipt'}</Text>
-          </View>
-        </View>
-
         {/* Meta Grid: Client & Payment */}
         <View style={s.metaGrid}>
           <View style={s.metaColumn}>
@@ -184,22 +175,27 @@ export default function Template2({ invoice }) {
           </View>
 
           <View style={s.metaColumn}>
-            {isQuotation && (
-              <>
-                <Text style={s.metaTitle}>Payment Details:</Text>
-                {biz?.bankDetails?.accountNumber ? (
-                  <>
-                    {biz.bankDetails.bankName && <Text style={s.metaText}>Bank: {biz.bankDetails.bankName}</Text>}
-                    <Text style={s.metaText}>A/C Name: {biz.bankDetails.accountName}</Text>
-                    <Text style={s.metaText}>A/C No: {biz.bankDetails.accountNumber}</Text>
-                    {biz.bankDetails.ifscCode && <Text style={s.metaText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
-                  </>
-                ) : (
-                  <Text style={s.metaText}>{invoice.paymentInfo || '—'}</Text>
-                )}
-              </>
-            )}
+            <Text style={s.metaTitle}>Details:</Text>
+            <Text style={s.metaText}>{isQuotation ? 'Quotation No' : 'Invoice No'}: <Text style={{ fontFamily: B }}>{invoice.invoiceNumber || invoice.quotationNumber}</Text></Text>
+            <Text style={s.metaText}>Date of Issue: <Text style={{ fontFamily: B }}>{new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text></Text>
+            <Text style={s.metaText}>Due Date: <Text style={{ fontFamily: B }}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US') : 'Upon Receipt'}</Text></Text>
           </View>
+
+          {isQuotation && (
+            <View style={s.metaColumn}>
+              <Text style={s.metaTitle}>Payment Details:</Text>
+              {biz?.bankDetails?.accountNumber ? (
+                <>
+                  {biz.bankDetails.bankName && <Text style={s.metaText}>Bank: {biz.bankDetails.bankName}</Text>}
+                  <Text style={s.metaText}>A/C Name: {biz.bankDetails.accountName}</Text>
+                  <Text style={s.metaText}>A/C No: {biz.bankDetails.accountNumber}</Text>
+                  {biz.bankDetails.ifscCode && <Text style={s.metaText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
+                </>
+              ) : (
+                <Text style={s.metaText}>{invoice.paymentInfo || '—'}</Text>
+              )}
+            </View>
+          )}
         </View>
 
         {/* Table */}
@@ -272,27 +268,27 @@ export default function Template2({ invoice }) {
           </View>
         </View>
 
-        {/* Footer: contact details & branding */}
+        {/* Footer: split two-panel — brand left | contact right */}
         <View style={s.footerBox} fixed>
-          {(biz?.phone || biz?.email) && (
-            <View style={{ flexDirection: 'row', gap: 30, marginBottom: 3 }}>
-              {biz?.phone && <Text style={s.footerText}>Phone: {biz.phone}</Text>}
-              {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
-            </View>
-          )}
-          <View style={s.footerDivider} />
-          <Text style={s.footerBrandLine}>
-            Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
-            <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
-          </Text>
-          <View style={s.poweredByContainer}>
-            <Text style={s.poweredByLabel}>Powered By</Text>
-            <Text style={s.poweredByValue}>GoodSynk</Text>
+          <View style={s.footerAccent} />
+          {/* Left panel — Brand */}
+          <View style={s.footerLeft}>
+            <Text style={s.footerBrandName}>GoodSynk</Text>
+            <Text style={s.footerBrandLine}>Goodsynk Billing  •  Simple Invoicing & Quotations</Text>
+            <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
+            <Text style={s.footerTrustLine}>Generated securely • Digitally signed document</Text>
           </View>
-          <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
-          <Text style={s.footerTrustLine}>
-            Generated securely by Goodsynk Billing. This is a digitally signed document.
-          </Text>
+          {/* Right panel — Contact & Powered By */}
+          <View style={s.footerRight}>
+            <Text style={s.footerContactLabel}>Contact Us</Text>
+            {biz?.phone && <Text style={s.footerText}>Phone:  {biz.phone}</Text>}
+            {biz?.email && <Text style={s.footerText}>Email:  {biz.email}</Text>}
+            <View style={s.poweredByContainer}>
+              <Text style={s.poweredByLabel}>Powered By</Text>
+              <Text style={s.poweredByValue}>GoodSynk</Text>
+            </View>
+            <Link style={[s.footerLink, { marginTop: 2, textAlign: 'right' }]} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
+          </View>
         </View>
       </Page>
     </Document>

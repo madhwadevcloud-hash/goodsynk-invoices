@@ -73,13 +73,21 @@ export default function Template5({ invoice }) {
     grandTotalLabel: { fontSize: 10, fontFamily: B, color: BLUE },
     grandTotalVal: { fontSize: 10, fontFamily: B, color: BLUE },
 
-    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: BLUE, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingVertical: 8 },
-    footerText: { fontSize: 8.5, color: '#FFF' },
-    footerDivider: { width: 36, height: 1, backgroundColor: hexToRgba('#FFF', 0.3), marginBottom: 5 },
-    footerBrandLine: { fontSize: 7.5, fontFamily: B, color: '#F2C94C', letterSpacing: 0.4, textAlign: 'center' },
-    footerLink: { fontSize: 7.5, fontFamily: B, color: '#F2C94C', letterSpacing: 0.4 },
-    footerTagline: { fontSize: 6.5, color: '#FFF', opacity: 0.9, textAlign: 'center', marginTop: 3 },
-    footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.6, marginTop: 3, textAlign: 'center' },
+    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: BLUE, flexDirection: 'row', alignItems: 'center', minHeight: 50, paddingHorizontal: 0 },
+    footerSegmentA: { flex: 1.2, paddingHorizontal: 14, paddingVertical: 8, justifyContent: 'center' },
+    footerVRule: { width: 1, backgroundColor: hexToRgba('#FFF', 0.2), alignSelf: 'stretch', marginVertical: 8 },
+    footerSegmentB: { flex: 2, paddingHorizontal: 16, paddingVertical: 8, justifyContent: 'center', alignItems: 'center' },
+    footerSegmentC: { flex: 1.2, paddingHorizontal: 14, paddingVertical: 8, justifyContent: 'center', alignItems: 'flex-end' },
+    footerSectionTitle: { fontSize: 5.5, fontFamily: B, color: hexToRgba('#FFF', 0.5), letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 3 },
+    footerText: { fontSize: 7.5, color: '#FFF', marginBottom: 2 },
+    footerBrandName: { fontSize: 11, fontFamily: B, color: '#F2C94C', letterSpacing: 1 },
+    footerBrandLine: { fontSize: 6.5, color: hexToRgba('#FFF', 0.75), marginTop: 2, textAlign: 'center' },
+    footerTagline: { fontSize: 6.5, fontFamily: B, color: hexToRgba('#FFF', 0.85), marginTop: 3, textAlign: 'center' },
+    footerLink: { fontSize: 6.5, fontFamily: B, color: '#F2C94C', textAlign: 'right', marginTop: 2 },
+    footerTrustLine: { fontSize: 5.5, color: hexToRgba('#FFF', 0.5), textAlign: 'right', lineHeight: 1.5 },
+    poweredByContainer: { alignItems: 'center', marginTop: 3 },
+    poweredByLabel: { fontSize: 5.5, color: hexToRgba('#FFF', 0.5), letterSpacing: 0.5 },
+    poweredByValue: { fontSize: 8, fontFamily: B, color: '#FFF', letterSpacing: 0.5, marginTop: 1 },
     watermarkContainer: {
       position: 'absolute',
       top: 0,
@@ -262,27 +270,34 @@ export default function Template5({ invoice }) {
           </View>
         </View>
 
-        {/* Footer: contact details & branding */}
+        {/* Footer: 3-segment edge-to-edge strip */}
         <View style={s.footerBox} fixed>
-          {(biz?.phone || biz?.email) && (
-            <View style={{ flexDirection: 'row', gap: 30, marginBottom: 3 }}>
-              {biz?.phone && <Text style={s.footerText}>Phone: {biz.phone}</Text>}
-              {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
-            </View>
-          )}
-          <View style={s.footerDivider} />
-          <Text style={s.footerBrandLine}>
-            Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
-            <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
-          </Text>
-          <View style={s.poweredByContainer}>
-            <Text style={s.poweredByLabel}>Powered By</Text>
-            <Text style={s.poweredByValue}>GoodSynk</Text>
+          {/* Segment A — Contact */}
+          <View style={s.footerSegmentA}>
+            <Text style={s.footerSectionTitle}>Contact</Text>
+            {biz?.phone && <Text style={s.footerText}>{biz.phone}</Text>}
+            {biz?.email && <Text style={s.footerText}>{biz.email}</Text>}
           </View>
-          <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
-          <Text style={s.footerTrustLine}>
-            Generated securely by Goodsynk Billing. This is a digitally signed document.
-          </Text>
+          <View style={s.footerVRule} />
+          {/* Segment B — Brand */}
+          <View style={s.footerSegmentB}>
+            <Text style={s.footerBrandName}>GoodSynk</Text>
+            <Text style={s.footerBrandLine}>Goodsynk Billing • Simple Invoicing & Quotations</Text>
+            <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
+            <View style={s.poweredByContainer}>
+              <Text style={s.poweredByLabel}>Powered By</Text>
+              <Text style={s.poweredByValue}>GoodSynk</Text>
+            </View>
+          </View>
+          <View style={s.footerVRule} />
+          {/* Segment C — Trust */}
+          <View style={s.footerSegmentC}>
+            <Text style={s.footerSectionTitle}>Verified</Text>
+            <Text style={s.footerTrustLine}>Generated securely by</Text>
+            <Text style={s.footerTrustLine}>Goodsynk Billing.</Text>
+            <Text style={s.footerTrustLine}>Digitally signed document.</Text>
+            <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
+          </View>
         </View>
       </Page>
     </Document>
