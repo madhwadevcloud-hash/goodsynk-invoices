@@ -86,3 +86,9 @@ export const productAPI = {
   update: (id, data) => api.put(`/products/${id}`, data),
   delete: (id) => api.delete(`/products/${id}`),
 };
+
+// ─── Payment ──────────────────────────────────────────────────────────────────
+export const paymentAPI = {
+  createOrder: (planId) => api.post('/payment/create-order', { planId }),
+  verifyPayment: (data) => api.post('/payment/verify-payment', data),
+};

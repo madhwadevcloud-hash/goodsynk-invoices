@@ -1285,10 +1285,10 @@ export default function InvoiceForm() {
                       setField('notes', next);
                     }}
                     placeholder={`Point ${noteIdx + 1}`}
-                    maxLength={60}
+                    maxLength={55}
                   />
                   <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', minWidth: 40, textAlign: 'right' }}>
-                    {point.length}/60
+                    {point.length}/55
                   </span>
                   <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setField('notes', notePoints.filter((_, i) => i !== noteIdx))}><X size={14} /></button>
                 </div>
@@ -1314,10 +1314,10 @@ export default function InvoiceForm() {
                       setField('termsAndConditions', next);
                     }}
                     placeholder={`Term ${termIdx + 1}`}
-                    maxLength={60}
+                    maxLength={55}
                   />
                   <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', minWidth: 40, textAlign: 'right' }}>
-                    {point.length}/60
+                    {point.length}/55
                   </span>
                   <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setField('termsAndConditions', termsPoints.filter((_, i) => i !== termIdx))}><X size={14} /></button>
                 </div>
