@@ -281,13 +281,12 @@ export default function Template5({ invoice }) {
           <View style={s.footerVRule} />
           {/* Segment B — Brand */}
           <View style={s.footerSegmentB}>
-            <Text style={s.footerBrandName}>GoodSynk</Text>
-            <Text style={s.footerBrandLine}>Goodsynk Billing • Simple Invoicing & Quotations</Text>
-            <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
             <View style={s.poweredByContainer}>
               <Text style={s.poweredByLabel}>Powered By</Text>
               <Text style={s.poweredByValue}>GoodSynk</Text>
             </View>
+            <Text style={s.footerBrandLine}>Goodsynk Billing • Simple Invoicing & Quotations</Text>
+            <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
           </View>
           <View style={s.footerVRule} />
           {/* Segment C — Trust */}

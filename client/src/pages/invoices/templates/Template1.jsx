@@ -281,12 +281,11 @@ export default function Template1({ invoice }) {
           </View>
           {/* Center — Brand */}
           <View style={s.footerCenter}>
-            <Text style={s.footerBrandLine}>Goodsynk Billing</Text>
-            <Text style={s.footerTagline}>Simple Invoicing, Billing & Quotations</Text>
             <View style={s.poweredByContainer}>
               <Text style={s.poweredByLabel}>Powered By</Text>
               <Text style={s.poweredByValue}>GoodSynk</Text>
             </View>
+            <Text style={s.footerTagline}>Simple Invoicing, Billing & Quotations</Text>
             <Text style={[s.footerTagline, { marginTop: 3 }]}>Invoice Banega, Payment Badega.</Text>
           </View>
           {/* Right — Trust */}
