@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Check, Minus, ArrowRight, Feather, Sparkles, Crown, Users, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { authAPI, clientAPI, invoiceAPI } from '../../api/services';
+import { authAPI, clientAPI, invoiceAPI, paymentAPI } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
 
 const PLANS = [
@@ -127,6 +127,16 @@ const COMPARISON_ROWS = [
     ['Multiple bank accounts', { free: true, growth: true, growth_yearly: true, enterprise: true, enterprise_yearly: true }],
 ];
 
+const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.body.appendChild(script);
+    });
+};
+
 export default function UpgradePage() {
     const { user, updateUser } = useAuth();
     const currentPlan = user?.plan || 'free';
@@ -164,13 +174,73 @@ export default function UpgradePage() {
     const handleSelect = async (plan) => {
         if (plan.id === currentPlan) return;
         setUpgradingId(plan.id);
+
         try {
-            const { data } = await authAPI.upgradePlan(plan.id);
-            updateUser(data.user);
-            toast.success(`Upgraded to ${plan.name}`);
+            // Free plan does not need payment flow
+            if (plan.id === 'free' || plan.price === 0) {
+                const { data } = await authAPI.upgradePlan(plan.id);
+                updateUser(data.user);
+                toast.success(`Upgraded to ${plan.name}`);
+                setUpgradingId(null);
+                return;
+            }
+
+            // Load Razorpay Script
+            const scriptLoaded = await loadRazorpayScript();
+            if (!scriptLoaded) {
+                toast.error('Failed to load Razorpay SDK. Please check your internet connection.');
+                setUpgradingId(null);
+                return;
+            }
+
+            // Create Order on backend
+            const orderRes = await paymentAPI.createOrder(plan.id);
+            const order = orderRes.data;
+
+            // Razorpay Options
+            const options = {
+                key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_Ry9JJCHZpNjli0',
+                amount: order.amount,
+                currency: order.currency,
+                name: 'Goodsynk Invoices',
+                description: `Upgrade to ${plan.name}`,
+                order_id: order.orderId,
+                prefill: {
+                    name: user?.name || '',
+                    email: user?.email || '',
+                    contact: user?.phone || '',
+                },
+                theme: {
+                    color: '#6366f1',
+                },
+                handler: async (response) => {
+                    setUpgradingId(plan.id);
+                    try {
+                        const verifyRes = await paymentAPI.verifyPayment({
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_signature: response.razorpay_signature,
+                            planId: plan.id,
+                        });
+                        updateUser(verifyRes.data.user);
+                        toast.success(`Payment verified! Upgraded to ${plan.name}`);
+                    } catch (err) {
+                        toast.error(err.response?.data?.message || 'Payment verification failed');
+                    } finally {
+                        setUpgradingId(null);
+                    }
+                },
+                modal: {
+                    ondismiss: () => {
+                        setUpgradingId(null);
+                    }
+                }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.open();
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to upgrade plan');
-        } finally {
+            toast.error(err.response?.data?.message || 'Failed to initialize payment');
             setUpgradingId(null);
         }
     };

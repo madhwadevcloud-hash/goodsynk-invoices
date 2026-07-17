@@ -46,6 +46,7 @@ app.use('/api/quotations', require('./routes/quotationRoutes'));
 app.use('/api/clients', require('./routes/clientRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/public', require('./routes/publicRoutes'));
+app.use('/api/payment', require('./routes/paymentRoutes'));
 
 // Health check
 app.get('/api/health', (_req, res) => res.json({ status: 'OK', timestamp: new Date() }));
@@ -72,3 +73,4 @@ app.listen(PORT, () => {
     `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`.yellow.bold
   );
 });
+// Trigger restart to load new environment variables - v2.
