@@ -7,7 +7,6 @@ import {
   Users,
   Package,
   LogOut,
-  Receipt,
   UserCircle2,
   ClipboardList,
   Palette,
@@ -17,6 +16,7 @@ import {
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { isProfileComplete } from '../../utils/profileValidation';
+import BrandLogo from '../BrandLogo';
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -85,10 +85,7 @@ export default function AppLayout() {
       {/* Sidebar */}
       <aside className={`sidebar${isSidebarOpen ? ' open' : ''}`}>
         <Link to="/" className="sidebar-logo" style={{ textDecoration: 'none', color: 'inherit' }} onClick={() => setIsSidebarOpen(false)}>
-          <div className="sidebar-logo-icon">
-            <Receipt size={18} />
-          </div>
-          <span className="sidebar-logo-text">Goodsynk Invoices</span>
+          <BrandLogo />
         </Link>
 
         <nav className="sidebar-nav">

@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../api/services';
 import toast from 'react-hot-toast';
-import { Receipt, Building2, Phone, FileText, MapPin, ChevronRight, Landmark } from 'lucide-react';
+import { Building2, Phone, FileText, MapPin, ChevronRight, Landmark } from 'lucide-react';
+import BrandLogo from '../../components/BrandLogo';
 
 const INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat',
@@ -102,21 +103,7 @@ export default function ProfileSetup() {
         margin: '0 auto',
       }}>
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
-          <div style={{
-            width: 40, height: 40,
-            background: 'linear-gradient(135deg, var(--primary), #818cf8)',
-            borderRadius: 10, display: 'flex', alignItems: 'center',
-            justifyContent: 'center', color: '#fff',
-          }}>
-            <Receipt size={18} />
-          </div>
-          <span style={{
-            fontSize: '1.1rem', fontWeight: 700,
-            background: 'linear-gradient(135deg, var(--primary-light), #fff)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          }}>Goodsynk Invoices</span>
-        </div>
+        <BrandLogo style={{ marginBottom: 28 }} />
 
         <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: 6 }}>Complete your profile</h1>
         <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: 28 }}>

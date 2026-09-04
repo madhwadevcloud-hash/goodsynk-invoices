@@ -1,6 +1,7 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { Receipt, FileText, Users, Package, Zap, ShieldCheck, TrendingUp, ArrowRight } from 'lucide-react';
+import { FileText, Users, Package, Zap, ShieldCheck, TrendingUp, ArrowRight, Receipt } from 'lucide-react';
 import ThemeToggle from '../../components/layout/ThemeToggle';
+import BrandLogo from '../../components/BrandLogo';
 
 const features = [
   {
@@ -57,10 +58,7 @@ export default function Home() {
       <nav className="landing-nav">
         {/* Logo */}
         <Link to="/" className="sidebar-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <div className="sidebar-logo-icon">
-            <Receipt size={18} />
-          </div>
-          <span className="sidebar-logo-text">Goodsynk Invoices</span>
+          <BrandLogo />
         </Link>
 
         {/* Nav actions */}
