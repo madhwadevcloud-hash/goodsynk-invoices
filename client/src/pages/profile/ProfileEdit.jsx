@@ -123,6 +123,9 @@ const normalizeBankAccounts = (user) => {
 };
 
 function BankCard({ bank, index, editing, onEdit, onDelete, onPrimary }) {
+  const [showDetails, setShowDetails] = useState(false);
+  const masked = (value) => value ? '********' : '—';
+  const display = (value) => showDetails ? (value || '—') : masked(value);
   return (
     <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, background: 'var(--bg-card)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
@@ -133,19 +136,24 @@ function BankCard({ bank, index, editing, onEdit, onDelete, onPrimary }) {
           </div>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{bank.bankName || 'Bank name not set'}</p>
         </div>
-        {editing && (
-          <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowDetails((shown) => !shown)} title={showDetails ? 'Hide bank details' : 'Show bank details'} aria-label={showDetails ? 'Hide bank details' : 'Show bank details'}>
+            {showDetails ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
+          {editing && (
+            <div style={{ display: 'flex', gap: 6 }}>
             {!bank.isPrimary && <button type="button" className="btn btn-ghost btn-sm" onClick={() => onPrimary(index)}>Make Primary</button>}
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => onEdit(index)}><Pencil size={13} /></button>
             <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => onDelete(index)}><Trash2 size={13} /></button>
-          </div>
+            </div>
         )}
+        </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px 18px', fontSize: '0.8rem' }}>
-        <div><p style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>Account Name</p><p style={{ fontWeight: 600 }}>{bank.accountName || '—'}</p></div>
-        <div><p style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>Account Number</p><p style={{ fontWeight: 600, fontFamily: 'monospace' }}>{bank.accountNumber || '—'}</p></div>
-        <div><p style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>IFSC</p><p style={{ fontWeight: 600 }}>{bank.ifscCode || '—'}</p></div>
-        <div><p style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>Branch</p><p style={{ fontWeight: 600 }}>{bank.branch || '—'}</p></div>
+        <div><p style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>Account Name</p><p style={{ fontWeight: 600 }}>{display(bank.accountName)}</p></div>
+        <div><p style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>Account Number</p><p style={{ fontWeight: 600, fontFamily: 'monospace' }}>{display(bank.accountNumber)}</p></div>
+        <div><p style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>IFSC</p><p style={{ fontWeight: 600 }}>{display(bank.ifscCode)}</p></div>
+        <div><p style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>Branch</p><p style={{ fontWeight: 600 }}>{display(bank.branch)}</p></div>
       </div>
     </div>
   );

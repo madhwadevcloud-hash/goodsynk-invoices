@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
-import { UserPlus, Receipt, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, Eye, EyeOff } from 'lucide-react';
+import BrandLogo from '../../components/BrandLogo';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../../config/firebase';
 
@@ -55,10 +56,7 @@ export default function Register() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <div className="auth-logo">
-          <div className="auth-logo-icon"><Receipt size={24} /></div>
-          <span className="auth-logo-text">Goodsynk Invoices</span>
-        </div>
+        <BrandLogo className="auth-logo" />
 
         <h1 className="auth-heading">Create account</h1>
         <p className="auth-subtext">Start managing your invoices today</p>

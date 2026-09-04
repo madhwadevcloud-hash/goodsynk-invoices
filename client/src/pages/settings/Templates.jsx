@@ -12,6 +12,10 @@ const TEMPLATES = [
   { id: 'template5', name: 'Corporate Bright', desc: 'High contrast blue table headers and minimalist layout.', img: '/templates/t5.png' },
   { id: 'template6', name: 'Angular Orange', desc: 'Striking orange and navy blue angular design.', img: '/templates/t6.png' },
   { id: 'template7', name: 'Standard Layout', desc: 'Traditional invoice layout with side-by-side details.', img: '/templates/t7.png' },
+  { id: 'template8', name: 'Monochrome Casual Corporate', desc: 'Stark borders and oversized typography with no background blocks.', img: '/templates/t8.svg' },
+  { id: 'template9', name: 'Split Sidebar Modern', desc: 'An asymmetrical 35% sidebar that changes the reading flow.', img: '/templates/t9.svg' },
+  { id: 'template10', name: 'Soft Corporate Cards', desc: 'A headerless layout with rounded business and client cards.', img: '/templates/t10.svg' },
+  { id: 'template11', name: 'Ultra-Minimalist Editorial', desc: 'Borderless tables and generous spacing inspired by boutique letterhead.', img: '/templates/t11.svg' },
 ];
 const DEFAULT_COLORS = {
   template1: { primary: '#4A72D4' },
@@ -21,6 +25,10 @@ const DEFAULT_COLORS = {
   template5: { primary: '#0A66C2' },
   template6: { primary: '#E8662B', secondary: '#1C2541' },
   template7: { primary: '#B565D8' },
+  template8: { primary: '#2F855A' },
+  template9: { primary: '#C2410C' },
+  template10: { primary: '#334155', secondary: '#CBD5E1' },
+  template11: { primary: '#0F766E', secondary: '#F59E0B' },
 };
 const FREE_TEMPLATES = ['template1', 'template2'];
 export default function Templates() {
@@ -118,15 +126,7 @@ export default function Templates() {
                 overflow: 'hidden',
                 border: '1px solid var(--border)'
               }}>
-                <img
-                  src={tmpl.img}
-                  alt={tmpl.name}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover'
-                  }}
-                />
+                <img src={tmpl.img} alt={tmpl.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 {isLocked && (
                   <div
                     style={{
@@ -192,7 +192,9 @@ export default function Templates() {
               </button>
             </div>
             <div style={{ flex: 1, overflow: 'auto', padding: '24px', backgroundColor: 'var(--bg-elevated)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-              <img src={previewTemplate.img} alt={previewTemplate.name} style={{ height: 'auto', width: '100%', maxWidth: '500px', objectFit: 'contain', boxShadow: 'var(--shadow-lg)', borderRadius: '8px' }} />
+              <div style={{ position: 'relative', width: '100%', maxWidth: '500px' }}>
+                <img src={previewTemplate.img} alt={previewTemplate.name} style={{ height: 'auto', width: '100%', objectFit: 'contain', boxShadow: 'var(--shadow-lg)', borderRadius: '8px', display: 'block' }} />
+              </div>
               {/* Color Customization UI */}
               <div style={{
                 width: '100%', maxWidth: '500px', padding: '20px',

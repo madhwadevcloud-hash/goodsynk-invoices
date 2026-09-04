@@ -1038,3 +1038,32 @@ input::-ms-clear {
     justify-content: flex-start !important;
   }
 }
+
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-logo-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--logo-gradient);
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.brand-logo-text {
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: var(--logo-text-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+

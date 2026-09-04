@@ -56,6 +56,10 @@ export const DEFAULT_COLORS = {
   template5: { primary: '#0A66C2' }, // LinkedIn blue
   template6: { primary: '#E8662B', secondary: '#1C2541' }, // Orange, Navy
   template7: { primary: '#B565D8' }, // Quotation purple
+  template8: { primary: '#2F855A' },
+  template9: { primary: '#C2410C' },
+  template10: { primary: '#334155', secondary: '#CBD5E1' },
+  template11: { primary: '#0F766E', secondary: '#F59E0B' },
 };
 
 
@@ -516,7 +520,7 @@ export default function InvoiceForm() {
   const handleSubmit = async (e, shouldDownload = false) => {
     e.preventDefault();
     if (!form.client) return toast.error('Please select a client');
-    if (!form.dueDate) return toast.error('Please select a validity date');
+    if (!form.dueDate) return toast.error(`Please select a ${isQuotation ? 'validity' : 'due'} date`);
 
     setSaving(true);
     if (shouldDownload) setDownloading(true);
@@ -636,7 +640,7 @@ export default function InvoiceForm() {
             <input type="date" className="form-control" value={form.issueDate} onChange={(e) => setField('issueDate', e.target.value)} />
           </div>
           <div className="form-group">
-            <label className="form-label">Validity *</label>
+            <label className="form-label">{isQuotation ? 'Validity' : 'Due Date'} *</label>
             <input type="date" className="form-control" required value={form.dueDate} onChange={(e) => setField('dueDate', e.target.value)} />
           </div>
         </div>
@@ -1352,6 +1356,13 @@ export default function InvoiceForm() {
               { id: 'template5', name: 'Corporate Bright', img: '/templates/t5.png' },
               { id: 'template6', name: 'Angular Orange', img: '/templates/t6.png' },
               { id: 'template7', name: 'Standard Layout', img: '/templates/t7.png' },
+              ...(isQuotation ? [
+                { id: 'template8', name: 'Monochrome Casual', img: '/templates/t8.svg' },
+                { id: 'template9', name: 'Split Sidebar Modern', img: '/templates/t9.svg' },
+              ] : [
+                { id: 'template10', name: 'Soft Corporate Cards', img: '/templates/t10.svg' },
+                { id: 'template11', name: 'Ultra-Minimalist Editorial', img: '/templates/t11.svg' },
+              ]),
             ];
             return (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginTop: 8 }}>
@@ -1388,12 +1399,7 @@ export default function InvoiceForm() {
                       }}
                     >
                       <div style={{ position: 'relative' }}>
-                        <img
-                          src={t.img}
-                          alt={t.name}
-                          style={{ width: '100%', aspectRatio: '3/4', objectFit: 'contain', display: 'block', background: '#fff' }}
-                          onError={(e) => { e.target.style.display = 'none'; }}
-                        />
+                        <img src={t.img} alt={t.name} style={{ width: '100%', aspectRatio: '3/4', objectFit: 'contain', display: 'block', background: '#fff' }} onError={(e) => { e.target.style.display = 'none'; }} />
                         {t.id === '' && (
                           <span style={{
                             position: 'absolute', top: 4, left: 4,
