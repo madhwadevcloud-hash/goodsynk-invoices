@@ -16,6 +16,14 @@ const TEMPLATES = [
   { id: 'template9', name: 'Split Sidebar Modern', desc: 'An asymmetrical 35% sidebar that changes the reading flow.', img: '/templates/t9.svg' },
   { id: 'template10', name: 'Soft Corporate Cards', desc: 'A headerless layout with rounded business and client cards.', img: '/templates/t10.svg' },
   { id: 'template11', name: 'Ultra-Minimalist Editorial', desc: 'Borderless tables and generous spacing inspired by boutique letterhead.', img: '/templates/t11.svg' },
+  { id: 'invoice12', type: 'invoice', name: 'Ledger Gold', desc: 'A structured finance layout with a strong ledger header and gold totals.', img: '/templates/invoice12.svg' },
+  { id: 'invoice13', type: 'invoice', name: 'Coral Band', desc: 'A bold horizontal business header with clear payment details.', img: '/templates/invoice13.svg' },
+  { id: 'invoice14', type: 'invoice', name: 'Green Columns', desc: 'A calm two-column invoice for service businesses and consultants.', img: '/templates/invoice14.svg' },
+  { id: 'invoice15', type: 'invoice', name: 'Receipt Grid', desc: 'A compact, high-contrast layout designed for quick scanning.', img: '/templates/invoice15.svg' },
+  { id: 'quotation12', type: 'quotation', name: 'Golden Proposal', desc: 'A warm proposal format with an opening project statement.', img: '/templates/quotation12.svg' },
+  { id: 'quotation13', type: 'quotation', name: 'Blue Roadmap', desc: 'A confident quotation layout that frames scope before pricing.', img: '/templates/quotation13.svg' },
+  { id: 'quotation14', type: 'quotation', name: 'Studio Portfolio', desc: 'A refined, editorial quotation for creative and professional work.', img: '/templates/quotation14.svg' },
+  { id: 'quotation15', type: 'quotation', name: 'Green Contract', desc: 'A formal quotation layout with a clear acceptance-ready finish.', img: '/templates/quotation15.svg' },
 ];
 const DEFAULT_COLORS = {
   template1: { primary: '#4A72D4' },
@@ -29,25 +37,41 @@ const DEFAULT_COLORS = {
   template9: { primary: '#C2410C' },
   template10: { primary: '#334155', secondary: '#CBD5E1' },
   template11: { primary: '#0F766E', secondary: '#F59E0B' },
+  invoice12: { primary: '#123B5D', secondary: '#D9A441' }, invoice13: { primary: '#243B53', secondary: '#E07A5F' },
+  invoice14: { primary: '#174A3A', secondary: '#B7D7C5' }, invoice15: { primary: '#202124', secondary: '#F4B942' },
+  quotation12: { primary: '#6B2D5C', secondary: '#F2C14E' }, quotation13: { primary: '#1D3557', secondary: '#A8DADC' },
+  quotation14: { primary: '#7F5539', secondary: '#EDE0D4' }, quotation15: { primary: '#3D405B', secondary: '#81B29A' },
 };
-const FREE_TEMPLATES = ['template1', 'template2'];
+const FREE_TEMPLATES = ['template1', 'template2', 'template3'];
+const QUOTATION_PREVIEWS = {
+  template1: '/templates/quotation1.svg', template2: '/templates/quotation2.svg',
+  template3: '/templates/quotation3.svg', template4: '/templates/quotation4.svg',
+  template5: '/templates/quotation5.svg', template6: '/templates/quotation6.svg',
+  template7: '/templates/quotation7.svg', template8: '/templates/quotation8.svg',
+  template9: '/templates/quotation9.svg', template10: '/templates/quotation10.svg',
+  template11: '/templates/quotation11.svg',
+};
+
 export default function Templates() {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
+  const [documentType, setDocumentType] = useState('invoice');
   const [activeTemplate, setActiveTemplate] = useState(user?.invoiceTemplate || 'template1');
   const [templateColors, setTemplateColors] = useState(user?.invoiceTemplateColors || null);
   const [saving, setSaving] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState(null);
   const handleOpenPreview = (tmpl) => {
     setPreviewTemplate(tmpl);
-    if (user?.invoiceTemplate === tmpl.id && user?.invoiceTemplateColors) {
-      setTemplateColors(user.invoiceTemplateColors);
+    const selectedTemplate = documentType === 'quotation' ? user?.quotationTemplate : user?.invoiceTemplate;
+    const selectedColors = documentType === 'quotation' ? user?.quotationTemplateColors : user?.invoiceTemplateColors;
+    if (selectedTemplate === tmpl.id && selectedColors) {
+      setTemplateColors(selectedColors);
     } else {
       setTemplateColors(DEFAULT_COLORS[tmpl.id]);
     }
   };
   const selectTemplate = async (templateId) => {
-    if (!FREE_TEMPLATES.includes(templateId) && (!user?.plan || user.plan === 'free')) {
+    if (!FREE_TEMPLATES.includes(templateId)) {
       toast('Upgrade your plan to unlock this template', {
         icon: '🔒',
       });
@@ -58,15 +82,15 @@ export default function Templates() {
     setSaving(true);
     try {
       const { data } = await authAPI.updateMe({
-        invoiceTemplate: templateId,
-        invoiceTemplateColors: templateColors
+        [documentType === 'quotation' ? 'quotationTemplate' : 'invoiceTemplate']: templateId,
+        [documentType === 'quotation' ? 'quotationTemplateColors' : 'invoiceTemplateColors']: templateColors
       });
       updateUser(data.user);
       toast.success('Default template and colors updated');
       setPreviewTemplate(null);
     } catch {
       toast.error('Failed to change template');
-      setActiveTemplate(user?.invoiceTemplate || 'template1');
+      setActiveTemplate(documentType === 'quotation' ? (user?.quotationTemplate || 'template1') : (user?.invoiceTemplate || 'template1'));
     } finally {
       setSaving(false);
     }
@@ -75,18 +99,22 @@ export default function Templates() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Invoice Templates</h1>
-          <p className="page-subtitle">Choose the default design for all your new invoices and quotations.</p>
+          <h1 className="page-title">Document Templates</h1>
+          <p className="page-subtitle">Choose independent designs for invoices and quotations.</p>
         </div>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+        {['invoice', 'quotation'].map((type) => <button key={type} className={`btn ${documentType === type ? 'btn-primary' : 'btn-ghost'}`} onClick={() => { setDocumentType(type); setActiveTemplate(type === 'quotation' ? (user?.quotationTemplate || 'template1') : (user?.invoiceTemplate || 'template1')); setTemplateColors(type === 'quotation' ? user?.quotationTemplateColors : user?.invoiceTemplateColors); }}>{type === 'invoice' ? 'Invoice designs' : 'Quotation designs'}</button>)}
       </div>
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-        gap: '32px'
+        gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+        gap: '24px'
       }}>
-        {TEMPLATES.map((tmpl) => {
+        {TEMPLATES.filter((tmpl) => !tmpl.type || tmpl.type === documentType).map((tmpl) => {
           const isActive = activeTemplate === tmpl.id;
-          const isLocked = !FREE_TEMPLATES.includes(tmpl.id) && (!user?.plan || user.plan === 'free');
+          const isLocked = !FREE_TEMPLATES.includes(tmpl.id);
+          const previewSrc = documentType === 'quotation' ? (QUOTATION_PREVIEWS[tmpl.id] || tmpl.img) : tmpl.img;
           return (
             <div
               key={tmpl.id}
@@ -105,6 +133,9 @@ export default function Templates() {
                 border: isActive ? '2px solid var(--primary)' : '1px solid var(--border)',
                 borderRadius: '16px',
                 padding: '20px',
+                minWidth: 0,
+                display: 'flex',
+                flexDirection: 'column',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 transform: isActive ? 'translateY(-2px)' : 'none',
@@ -114,7 +145,8 @@ export default function Templates() {
             >
               <div style={{
                 width: '100%',
-                aspectRatio: '1 / 1.4', // Standard A4 ratio
+                aspectRatio: '5 / 7',
+                flex: '0 0 auto',
                 position: 'relative',
                 background: 'var(--bg-elevated)',
                 borderRadius: '8px',
@@ -124,9 +156,10 @@ export default function Templates() {
                 justifyContent: 'center',
                 color: 'var(--text-muted)',
                 overflow: 'hidden',
-                border: '1px solid var(--border)'
+                border: 'none'
               }}>
-                <img src={tmpl.img} alt={tmpl.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={previewSrc} alt={tmpl.name} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', background: '#fff' }} />
+                <img src="/templates/goodsynk-logo.png" alt="Goodsynk logo" style={{ position: 'absolute', top: '5%', right: '7%', width: '11%', height: '7%', objectFit: 'contain', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.12))' }} />
                 {isLocked && (
                   <div
                     style={{
@@ -158,14 +191,14 @@ export default function Templates() {
                 )}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>{tmpl.name}</h3>
+                <h3 style={{ minWidth: 0, margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', overflowWrap: 'anywhere' }}>{tmpl.name}</h3>
                 {isActive && (
                   <div style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center' }}>
                     <CheckCircle2 size={20} fill="var(--primary-bg)" />
                   </div>
                 )}
               </div>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              <p style={{ minWidth: 0, margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, overflowWrap: 'anywhere' }}>
                 {tmpl.desc}
               </p>
             </div>
@@ -193,7 +226,10 @@ export default function Templates() {
             </div>
             <div style={{ flex: 1, overflow: 'auto', padding: '24px', backgroundColor: 'var(--bg-elevated)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
               <div style={{ position: 'relative', width: '100%', maxWidth: '500px' }}>
-                <img src={previewTemplate.img} alt={previewTemplate.name} style={{ height: 'auto', width: '100%', objectFit: 'contain', boxShadow: 'var(--shadow-lg)', borderRadius: '8px', display: 'block' }} />
+                <div style={{ position: 'relative' }}>
+                  <img src={documentType === 'quotation' ? (QUOTATION_PREVIEWS[previewTemplate.id] || previewTemplate.img) : previewTemplate.img} alt={previewTemplate.name} style={{ height: 'auto', width: '100%', objectFit: 'contain', boxShadow: 'var(--shadow-lg)', borderRadius: '8px', display: 'block' }} />
+                  <img src="/templates/goodsynk-logo.png" alt="Goodsynk logo" style={{ position: 'absolute', top: '5%', right: '7%', width: '11%', height: '7%', objectFit: 'contain', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.12))' }} />
+                </div>
               </div>
               {/* Color Customization UI */}
               <div style={{

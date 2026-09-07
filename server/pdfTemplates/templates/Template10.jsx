@@ -90,10 +90,11 @@ export default function Template10({ invoice }) {
     sigLine: { width: 140, height: 1, backgroundColor: '#D1D5DB', marginBottom: 4 },
     sigText: { fontSize: 8, color: '#6B7280' },
 
-    // Footer
-    footer: { position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#E5E7EB', paddingTop: 12 },
-    footerText: { fontSize: 7, color: '#9CA3AF' },
-    footerLink: { fontSize: 7, color: PRIMARY, textDecoration: 'underline' }
+    // Footer: Floating Pill
+    footerBox: { position: 'absolute', bottom: 20, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center' },
+    footerPill: { backgroundColor: PRIMARY, borderRadius: 20, paddingVertical: 10, paddingHorizontal: 30, flexDirection: 'row', alignItems: 'center', gap: 16 },
+    footerText: { fontSize: 7.5, color: '#FFFFFF', letterSpacing: 0.5 },
+    footerLink: { fontSize: 7.5, fontFamily: B, color: '#FFFFFF', textDecoration: 'none' }
   });
 
   const currency = invoice._currency || invoice.currency || 'INR';
@@ -253,10 +254,14 @@ export default function Template10({ invoice }) {
           </View>
         </View>
 
-        <View style={s.footer} fixed>
-          <Text style={s.footerText}>
-            {bizName} | Powered by <Link style={s.footerLink} src="https://invoice.goodsynk.com">GoodSynk</Link>
-          </Text>
+        <View style={s.footerBox} fixed>
+          <View style={s.footerPill}>
+            {biz?.phone && <Text style={s.footerText}>P: {biz.phone}</Text>}
+            {biz?.email && <Text style={s.footerText}>E: {biz.email}</Text>}
+            <Text style={s.footerText}>
+              Powered by <Link style={s.footerLink} src="https://invoice.goodsynk.com">GoodSynk</Link>
+            </Text>
+          </View>
         </View>
       </Page>
     </Document>

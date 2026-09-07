@@ -73,21 +73,16 @@ export default function Template5({ invoice }) {
     grandTotalLabel: { fontSize: 10, fontFamily: B, color: BLUE },
     grandTotalVal: { fontSize: 10, fontFamily: B, color: BLUE },
 
-    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: BLUE, flexDirection: 'row', alignItems: 'center', minHeight: 50, paddingHorizontal: 0 },
-    footerSegmentA: { flex: 1.2, paddingHorizontal: 14, paddingVertical: 8, justifyContent: 'center' },
-    footerVRule: { width: 1, backgroundColor: hexToRgba('#FFF', 0.2), alignSelf: 'stretch', marginVertical: 8 },
-    footerSegmentB: { flex: 2, paddingHorizontal: 16, paddingVertical: 8, justifyContent: 'center', alignItems: 'center' },
-    footerSegmentC: { flex: 1.2, paddingHorizontal: 14, paddingVertical: 8, justifyContent: 'center', alignItems: 'flex-end' },
-    footerSectionTitle: { fontSize: 5.5, fontFamily: B, color: hexToRgba('#FFF', 0.5), letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 3 },
-    footerText: { fontSize: 7.5, color: '#FFF', marginBottom: 2 },
-    footerBrandName: { fontSize: 11, fontFamily: B, color: '#F2C94C', letterSpacing: 1 },
-    footerBrandLine: { fontSize: 6.5, color: hexToRgba('#FFF', 0.75), marginTop: 2, textAlign: 'center' },
-    footerTagline: { fontSize: 6.5, fontFamily: B, color: hexToRgba('#FFF', 0.85), marginTop: 3, textAlign: 'center' },
-    footerLink: { fontSize: 6.5, fontFamily: B, color: '#F2C94C', textAlign: 'right', marginTop: 2 },
-    footerTrustLine: { fontSize: 5.5, color: hexToRgba('#FFF', 0.5), textAlign: 'right', lineHeight: 1.5 },
-    poweredByContainer: { alignItems: 'center', marginTop: 3 },
-    poweredByLabel: { fontSize: 5.5, color: hexToRgba('#FFF', 0.5), letterSpacing: 0.5 },
-    poweredByValue: { fontSize: 8, fontFamily: B, color: '#FFF', letterSpacing: 0.5, marginTop: 1 },
+    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'column' },
+    footerTopBand: { backgroundColor: '#F3F4F6', paddingVertical: 12, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', borderTop: '2pt solid #E5E7EB' },
+    footerBottomBand: { backgroundColor: BLUE, paddingVertical: 8, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    footerColTitle: { fontSize: 8, fontFamily: B, color: '#374151', textTransform: 'uppercase', marginBottom: 4, letterSpacing: 0.5 },
+    footerText: { fontSize: 8, color: '#6B7280', marginBottom: 2 },
+    footerBottomText: { fontSize: 7, color: '#FFFFFF', opacity: 0.8 },
+    footerLink: { fontSize: 7, fontFamily: B, color: '#FFFFFF', textDecoration: 'none' },
+    poweredByContainer: { flexDirection: 'row', alignItems: 'center' },
+    poweredByLabel: { fontSize: 6, color: hexToRgba('#FFF', 0.7), letterSpacing: 0.5, marginRight: 4 },
+    poweredByValue: { fontSize: 8, fontFamily: B, color: '#FFF', letterSpacing: 0.5 },
     watermarkContainer: {
       position: 'absolute',
       top: 0,
@@ -270,32 +265,35 @@ export default function Template5({ invoice }) {
           </View>
         </View>
 
-        {/* Footer: 3-segment edge-to-edge strip */}
+        {/* Footer: Corporate Two-Tone Bands */}
         <View style={s.footerBox} fixed>
-          {/* Segment A — Contact */}
-          <View style={s.footerSegmentA}>
-            <Text style={s.footerSectionTitle}>Contact</Text>
-            {biz?.phone && <Text style={s.footerText}>{biz.phone}</Text>}
-            {biz?.email && <Text style={s.footerText}>{biz.email}</Text>}
-          </View>
-          <View style={s.footerVRule} />
-          {/* Segment B — Brand */}
-          <View style={s.footerSegmentB}>
-            <View style={s.poweredByContainer}>
-              <Text style={s.poweredByLabel}>Powered By</Text>
-              <Text style={s.poweredByValue}>GoodSynk</Text>
+          <View style={s.footerTopBand}>
+            <View style={{ width: '40%' }}>
+              <Text style={s.footerColTitle}>Contact Details</Text>
+              {biz?.phone && <Text style={s.footerText}>Phone: {biz.phone}</Text>}
+              {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
+              {biz?.address?.street && <Text style={s.footerText}>{biz.address.street}</Text>}
             </View>
-            <Text style={s.footerBrandLine}>Goodsynk Billing • Simple Invoicing & Quotations</Text>
-            <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
+            <View style={{ width: '30%' }}>
+              <Text style={s.footerColTitle}>Document Type</Text>
+              <Text style={s.footerText}>{isQuotation ? 'Quotation Document' : 'Invoice Document'}</Text>
+              <Text style={s.footerText}>Digitally Signed</Text>
+              <Text style={s.footerText}>Securely Generated</Text>
+            </View>
+            <View style={{ width: '30%', alignItems: 'flex-end' }}>
+              <Text style={s.footerColTitle}>System</Text>
+              <Text style={s.footerText}>Goodsynk Billing</Text>
+              <Text style={s.footerText}>Simple Invoicing & Quotations</Text>
+            </View>
           </View>
-          <View style={s.footerVRule} />
-          {/* Segment C — Trust */}
-          <View style={s.footerSegmentC}>
-            <Text style={s.footerSectionTitle}>Verified</Text>
-            <Text style={s.footerTrustLine}>Generated securely by</Text>
-            <Text style={s.footerTrustLine}>Goodsynk Billing.</Text>
-            <Text style={s.footerTrustLine}>Digitally signed document.</Text>
-            <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
+          
+          <View style={s.footerBottomBand}>
+            <View style={s.poweredByContainer}>
+              <Text style={s.poweredByLabel}>POWERED BY</Text>
+              <Text style={s.poweredByValue}>GOODSYNK</Text>
+            </View>
+            <Text style={s.footerBottomText}>Invoice Banega, Payment Badega.</Text>
+            <Link style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
           </View>
         </View>
       </Page>

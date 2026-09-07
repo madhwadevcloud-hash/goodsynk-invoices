@@ -96,15 +96,12 @@ export default function Template6({ invoice }) {
     sigText: { fontSize: 9, fontFamily: M, color: '#444' },
 
     thankYou: { fontSize: 9, marginTop: 8, textAlign: 'center' },
-    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, minHeight: 54, backgroundColor: NAVY, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', paddingTop: 10, paddingBottom: 46 },
-    footerText: { fontSize: 8.5, color: '#FFF' },
-    footerDivider: { width: 36, height: 1, backgroundColor: hexToRgba(ORANGE, 0.4), marginBottom: 5 },
-    footerBrandLine: { fontSize: 7.5, fontFamily: B, color: ORANGE, letterSpacing: 0.4, textAlign: 'center' },
-    footerLink: { fontSize: 7.5, fontFamily: B, color: ORANGE, letterSpacing: 0.4 },
-    footerContact: { fontSize: 8, color: '#FFF', flexDirection: 'row', gap: 30, marginBottom: 3 },
-    footerContactText: { fontSize: 8, color: '#FFF' },
-    footerTrustLine: { fontSize: 6, color: '#FFF', opacity: 0.6, marginTop: 5, textAlign: 'center' },
-    poweredByOnOrange: { position: 'absolute', bottom: 6, right: 24, width: 150, alignItems: 'center' },
+    footerSidebar: { position: 'absolute', bottom: 40, left: 40, width: 200, backgroundColor: NAVY, padding: 15, borderRadius: 6, flexDirection: 'column', zIndex: 10 },
+    footerSidebarTitle: { fontSize: 8, fontFamily: B, color: ORANGE, textTransform: 'uppercase', marginBottom: 6, letterSpacing: 1 },
+    footerSidebarText: { fontSize: 8, color: '#FFF', marginBottom: 4 },
+    footerSidebarLink: { fontSize: 8, fontFamily: B, color: ORANGE, textDecoration: 'none', marginTop: 4 },
+    footerSidebarTrust: { fontSize: 6, color: hexToRgba('#FFF', 0.6), marginTop: 8 },
+    poweredByOnOrange: { position: 'absolute', bottom: 10, right: 30, width: 150, alignItems: 'center', zIndex: 10 },
     poweredByLabelOnOrange: { fontSize: 5.5, color: hexToRgba('#1C2541', 0.7), letterSpacing: 0.5 },
     poweredByValueOnOrange: { fontSize: 9, fontFamily: B, color: '#1C2541', letterSpacing: 0.5, marginTop: 1 },
     footerTaglineOnOrange: { fontSize: 6, fontFamily: M, color: '#1C2541', opacity: 0.85, textAlign: 'center', marginTop: 2 },
@@ -298,22 +295,15 @@ export default function Template6({ invoice }) {
 
         <Text style={s.thankYou}>Thank you for your business</Text>
 
-        {/* Fixed Footer Branding */}
-        <View style={s.footerBox} fixed>
-          {(biz?.phone || biz?.email) && (
-            <View style={s.footerContact}>
-              {biz?.phone && <Text style={s.footerContactText}>Phone: {biz.phone}</Text>}
-              {biz?.email && <Text style={s.footerContactText}>Email: {biz.email}</Text>}
-            </View>
-          )}
-          <View style={s.footerDivider} />
-          <Text style={s.footerBrandLine}>
-            Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
-            <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
-          </Text>
-          <Text style={s.footerTrustLine}>
-            Generated securely by Goodsynk Billing. This is a digitally signed document.
-          </Text>
+        {/* Fixed Footer Branding - Vertical Sidebar */}
+        <View style={s.footerSidebar} fixed>
+          <Text style={s.footerSidebarTitle}>Contact Us</Text>
+          {biz?.phone && <Text style={s.footerSidebarText}>P: {biz.phone}</Text>}
+          {biz?.email && <Text style={s.footerSidebarText}>E: {biz.email}</Text>}
+          
+          <Link style={s.footerSidebarLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
+          <Text style={s.footerSidebarTrust}>Generated securely by Goodsynk.</Text>
+          <Text style={s.footerSidebarTrust}>Digitally signed document.</Text>
         </View>
 
         {/* Bottom Design Decor */}

@@ -71,11 +71,13 @@ export default function Template8({ invoice }) {
     sigLine: { width: '100%', height: 1, backgroundColor: '#000', marginBottom: 6 },
     sigText: { fontSize: 8, fontFamily: B, color: '#000', textTransform: 'uppercase', letterSpacing: 1 },
 
-    // Footer: Minimalist
-    footer: { position: 'absolute', bottom: 25, left: 50, right: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    footerBrand: { fontSize: 7, fontFamily: B, color: '#000', letterSpacing: 1, textTransform: 'uppercase' },
-    footerPowered: { fontSize: 7, color: '#666' },
-    footerLink: { fontSize: 7, fontFamily: B, color: '#000', textDecoration: 'underline' }
+    // Footer: Split with Thick Divider
+    footerBox: { position: 'absolute', bottom: 25, left: 50, right: 50, borderTopWidth: 3, borderTopColor: '#000', paddingTop: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+    footerColLeft: { width: '50%' },
+    footerColRight: { width: '50%', alignItems: 'flex-end' },
+    footerTextBold: { fontSize: 8, fontFamily: B, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
+    footerText: { fontSize: 7.5, color: '#444' },
+    footerLink: { fontSize: 7.5, fontFamily: B, color: '#000', textDecoration: 'none' }
   });
 
   const currency = invoice._currency || invoice.currency || 'INR';
@@ -227,11 +229,16 @@ export default function Template8({ invoice }) {
           </View>
         </View>
 
-        <View style={s.footer} fixed>
-          <Text style={s.footerBrand}>{bizName}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={s.footerPowered}>POWERED BY </Text>
-            <Link style={s.footerLink} src="https://invoice.goodsynk.com">GOODSYNK</Link>
+        <View style={s.footerBox} fixed>
+          <View style={s.footerColLeft}>
+            <Text style={s.footerTextBold}>Contact</Text>
+            {biz?.phone && <Text style={s.footerText}>P: {biz.phone}</Text>}
+            {biz?.email && <Text style={s.footerText}>E: {biz.email}</Text>}
+          </View>
+          <View style={s.footerColRight}>
+            <Text style={s.footerTextBold}>Powered By GoodSynk</Text>
+            <Text style={s.footerText}>Digitally signed document.</Text>
+            <Link style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
           </View>
         </View>
       </Page>

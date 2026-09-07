@@ -125,7 +125,7 @@ export default function QuotationList() {
     // Use the template stored on the quotation; fall back to the quotation owner's
     // account default (inv.user.invoiceTemplate), NOT the currently logged-in
     // user's preference — so the selected template is always honoured.
-    const resolvedTpt = (inv.template || inv.user?.invoiceTemplate || currentUser?.invoiceTemplate || 'template1').toLowerCase();
+    const resolvedTpt = (inv.template || inv.user?.quotationTemplate || currentUser?.quotationTemplate || 'template1').toLowerCase();
     const bankForPdf = normalizeBankAccounts(currentUser)[inv.selectedBankIndex || 0] || currentUser?.bankDetails;
     let userForPdf = { ...currentUser, bankDetails: bankForPdf };
     if (currentUser?.businessLogo) {

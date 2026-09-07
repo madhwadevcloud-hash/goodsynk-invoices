@@ -95,7 +95,7 @@ const getInvoice = async (req, res) => {
   try {
     const invoice = await Invoice.findOne({ _id: req.params.id, user: req.user._id, isDeleted: { $ne: true } })
       .populate('client')
-      .populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors');
+      .populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors');
     if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
 
     // Ensure shareToken exists
