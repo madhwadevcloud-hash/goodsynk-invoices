@@ -39,7 +39,6 @@ export default function Template6({ invoice }) {
     headerLeft: { width: '30%', paddingTop: 0 },
     bizNameHeader: { fontSize: scaled.bizNameFontSize + 2, fontFamily: B, color: '#FFF', textTransform: 'uppercase', marginBottom: 2 },
     bizSubTextHeader: { fontSize: scaled.bizSubTextFontSize, color: '#ffffffff', lineHeight: scaled.bizSubTextLineHeight },
-    logoImgHeader: { height: Math.min(scaled.logoHeight, 40), maxWidth: 120, objectFit: 'contain', marginBottom: 6 },
 
     headerRight: { width: '70%', alignItems: 'flex-end', paddingTop: 25 },
     invoiceTitleHeader: { fontSize: 28, fontFamily: B, color: '#FFF', letterSpacing: 2, marginBottom: 12 },
@@ -172,7 +171,6 @@ export default function Template6({ invoice }) {
 
           <View style={s.headerContent}>
             <View style={s.headerLeft}>
-              {biz?.businessLogo && <Image src={biz.businessLogo} style={s.logoImgHeader} />}
               <Text style={s.bizNameHeader}>{bizName}</Text>
               <Text style={s.bizSubTextHeader}>
                 {biz?.address?.street && `${biz.address.street}\n`}

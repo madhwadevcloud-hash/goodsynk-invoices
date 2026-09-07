@@ -36,7 +36,6 @@ export default function Template1({ invoice }) {
     headerText: { fontFamily: B, fontSize: 32, letterSpacing: 2, textTransform: 'uppercase', color: PRIMARY, marginTop: 10 },
 
     bizInfoTop: { alignItems: 'flex-end', maxWidth: scaled.bizInfoMaxWidth },
-    topLogo: { height: scaled.logoHeight, maxWidth: 140, objectFit: 'contain', marginBottom: 6 },
     bizNameTop: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
     bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight, textAlign: 'right' },
 
@@ -139,7 +138,6 @@ export default function Template1({ invoice }) {
             <Text style={s.headerText}>{docTitle}</Text>
           </View>
           <View style={s.bizInfoTop}>
-            {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
             <Text style={s.bizNameTop}>{bizName}</Text>
             {biz?.address?.street && <Text style={s.bizSubText}>{biz.address.street}</Text>}
             {biz?.address?.city && (
