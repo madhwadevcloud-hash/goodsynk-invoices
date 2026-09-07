@@ -10,6 +10,7 @@ import Template8 from './Template8';
 import Template9 from './Template9';
 import Template10 from './Template10';
 import Template11 from './Template11';
+import DocumentTemplate from './DocumentTemplate';
 
 // Central registry — every selectable template must be listed here.
 const TEMPLATE_MAP = {
@@ -24,6 +25,14 @@ const TEMPLATE_MAP = {
     template9: Template9,
     template10: Template10,
     template11: Template11,
+    invoice12: (props) => <DocumentTemplate {...props} variant="invoice12" />,
+    invoice13: (props) => <DocumentTemplate {...props} variant="invoice13" />,
+    invoice14: (props) => <DocumentTemplate {...props} variant="invoice14" />,
+    invoice15: (props) => <DocumentTemplate {...props} variant="invoice15" />,
+    quotation12: (props) => <DocumentTemplate {...props} variant="quotation12" />,
+    quotation13: (props) => <DocumentTemplate {...props} variant="quotation13" />,
+    quotation14: (props) => <DocumentTemplate {...props} variant="quotation14" />,
+    quotation15: (props) => <DocumentTemplate {...props} variant="quotation15" />,
 };
 
 export default function TemplateResolver({ invoice }) {

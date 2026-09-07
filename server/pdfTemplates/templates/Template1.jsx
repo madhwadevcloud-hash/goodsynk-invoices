@@ -76,37 +76,16 @@ export default function Template1({ invoice }) {
     infoTitle: { fontFamily: B, fontSize: 10, textTransform: 'uppercase', marginBottom: 6, paddingBottom: 4, borderBottom: `1pt solid ${PRIMARY}` },
     infoText: { fontSize: 9, color: '#333', marginBottom: 3, lineHeight: 1.4 },
 
-    footerBox: { position: 'absolute', bottom: 15, left: 40, right: 40, borderTopWidth: 1, borderTopColor: PRIMARY, borderTopStyle: 'solid', flexDirection: 'row', alignItems: 'stretch', paddingVertical: 8 },
-    footerLeft: { flex: 1.2, justifyContent: 'center' },
-    footerCenter: { flex: 2, justifyContent: 'center', alignItems: 'center', borderLeftWidth: 0.5, borderLeftColor: '#E0E0E0', borderLeftStyle: 'solid', borderRightWidth: 0.5, borderRightColor: '#E0E0E0', borderRightStyle: 'solid', paddingHorizontal: 10 },
-    footerRight: { flex: 1.2, justifyContent: 'center', alignItems: 'flex-end' },
-    watermarkContainer: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: -100,
-    },
-    watermarkText: {
-      fontSize: 60,
-      fontFamily: B,
-      color: hexToRgba(PRIMARY, 0.08),
-      transform: 'rotate(-45deg)',
-      letterSpacing: 5,
-    },
-    footerText: { fontSize: 7.5, color: '#444', marginBottom: 2 },
-    footerContactLabel: { fontSize: 6.5, fontFamily: B, color: PRIMARY, letterSpacing: 0.5, marginBottom: 2, textTransform: 'uppercase' },
-    footerBrandLine: { fontSize: 7.5, fontFamily: B, color: PRIMARY, letterSpacing: 0.3, textAlign: 'center' },
-    footerLink: { fontSize: 7.5, fontFamily: B, color: PRIMARY, letterSpacing: 0.3, textDecoration: 'underline' },
-    footerTrustLine: { fontSize: 6, color: '#666', textAlign: 'right', lineHeight: 1.5 },
-    footerTagline: { fontSize: 6.5, color: '#444', textAlign: 'center', marginTop: 2 },
-    poweredByContainer: { alignItems: 'center', marginTop: 4 },
-    poweredByLabel: { fontSize: 5.5, color: '#888', letterSpacing: 0.5 },
-    poweredByValue: { fontSize: 8.5, fontFamily: B, color: '#000', letterSpacing: 0.5, marginTop: 1 },
+    footerBox: { position: 'absolute', bottom: 20, left: 40, right: 40, borderTopWidth: 2, borderTopColor: PRIMARY, flexDirection: 'row', justifyContent: 'space-between', paddingTop: 12 },
+    footerColLeft: { width: '30%' },
+    footerColCenter: { width: '35%', alignItems: 'center' },
+    footerColRight: { width: '30%', alignItems: 'flex-end' },
+    footerTitle: { fontSize: 8, fontFamily: B, color: PRIMARY, textTransform: 'uppercase', marginBottom: 6 },
+    footerText: { fontSize: 8, color: '#333', marginBottom: 2 },
+    footerLink: { fontSize: 8, fontFamily: B, color: PRIMARY, textDecoration: 'none' },
+    poweredByContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
+    poweredByLabel: { fontSize: 7, color: '#888', marginRight: 4 },
+    poweredByValue: { fontSize: 8, fontFamily: B, color: '#000' },
   });
 
   const currency = invoice._currency || invoice.currency || 'INR';
@@ -271,30 +250,25 @@ export default function Template1({ invoice }) {
 
 
 
-        {/* Footer: 3-column layout — contact | brand | trust */}
+        {/* Footer: Classic 3-Column */}
         <View style={s.footerBox} fixed>
-          {/* Left — Contact */}
-          <View style={s.footerLeft}>
-            <Text style={s.footerContactLabel}>CONTACT</Text>
-            {biz?.phone && <Text style={s.footerText}>Phone: {biz.phone}</Text>}
-            {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
+          <View style={s.footerColLeft}>
+            <Text style={s.footerTitle}>Contact</Text>
+            {biz?.phone && <Text style={s.footerText}>P: {biz.phone}</Text>}
+            {biz?.email && <Text style={s.footerText}>E: {biz.email}</Text>}
           </View>
-          {/* Center — Brand */}
-          <View style={s.footerCenter}>
+          <View style={s.footerColCenter}>
+            <Text style={s.footerTitle}>GoodSynk</Text>
+            <Text style={s.footerText}>Simple Invoicing & Quotations</Text>
+            <Text style={s.footerText}>Invoice Banega, Payment Badega.</Text>
+          </View>
+          <View style={s.footerColRight}>
             <View style={s.poweredByContainer}>
               <Text style={s.poweredByLabel}>Powered By</Text>
               <Text style={s.poweredByValue}>GoodSynk</Text>
             </View>
-            <Text style={s.footerTagline}>Simple Invoicing, Billing & Quotations</Text>
-            <Text style={[s.footerTagline, { marginTop: 3 }]}>Invoice Banega, Payment Badega.</Text>
-          </View>
-          {/* Right — Trust */}
-          <View style={s.footerRight}>
-            <Text style={s.footerTrustLine}>Generated securely by</Text>
-            <Text style={s.footerTrustLine}>Goodsynk Billing.</Text>
-            <Text style={[s.footerTrustLine, { marginTop: 3 }]}>
-              <Link style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
-            </Text>
+            <Text style={s.footerText}>Digitally signed document</Text>
+            <Link style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
           </View>
         </View>
       </Page>

@@ -60,6 +60,14 @@ export const DEFAULT_COLORS = {
   template9: { primary: '#C2410C' },
   template10: { primary: '#334155', secondary: '#CBD5E1' },
   template11: { primary: '#0F766E', secondary: '#F59E0B' },
+  invoice12: { primary: '#123B5D', secondary: '#D9A441' },
+  invoice13: { primary: '#243B53', secondary: '#E07A5F' },
+  invoice14: { primary: '#174A3A', secondary: '#B7D7C5' },
+  invoice15: { primary: '#202124', secondary: '#F4B942' },
+  quotation12: { primary: '#6B2D5C', secondary: '#F2C14E' },
+  quotation13: { primary: '#1D3557', secondary: '#A8DADC' },
+  quotation14: { primary: '#7F5539', secondary: '#EDE0D4' },
+  quotation15: { primary: '#3D405B', secondary: '#81B29A' },
 };
 
 
@@ -76,7 +84,7 @@ export function resolveTemplateColors(templateKey, storedColors) {
 
 
 // Templates available on the free plan — everything else shows an "Upgrade" lock
-const FREE_TEMPLATES = ['template1', 'template2'];
+const FREE_TEMPLATES = ['template1', 'template2', 'template3'];
 
 export default function InvoiceForm() {
   const { id } = useParams();
@@ -282,7 +290,7 @@ export default function InvoiceForm() {
     if (isEdit) {
       docAPI.getById(id).then((r) => {
         const inv = r.data.invoice;
-        const loadedTpt = (inv.template || currentUser?.invoiceTemplate || 'template1').toLowerCase();
+        const loadedTpt = (inv.template || (isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) || 'template1').toLowerCase();
         setForm({
           client: inv.client?._id || '',
           invoiceType: inv.invoiceType || docType,
@@ -305,11 +313,14 @@ export default function InvoiceForm() {
       }).catch(() => toast.error('Failed to load invoice'))
         .finally(() => setLoading(false));
     } else if (currentUser) {
-      const tptKey = (currentUser.invoiceTemplate || 'template1').toLowerCase();
+      const tptKey = ((isQuotation ? currentUser.quotationTemplate : currentUser.invoiceTemplate) || 'template1').toLowerCase();
       setForm(f => ({
         ...f,
-        template: currentUser.invoiceTemplate || 'template1',
-        templateColors: resolveTemplateColors(tptKey, currentUser.invoiceTemplateColors),
+        template: (isQuotation ? currentUser.quotationTemplate : currentUser.invoiceTemplate) || 'template1',
+        templateColors: resolveTemplateColors(
+          tptKey,
+          isQuotation ? currentUser.quotationTemplateColors : currentUser.invoiceTemplateColors
+        ),
         currency: currentUser.currency || 'INR',
       }));
       setLoading(false);
@@ -464,7 +475,7 @@ export default function InvoiceForm() {
   const generateAndDownloadPDF = async (invoiceData) => {
     try {
       const docTpt = (invoiceData.template || form.template || '').toLowerCase();
-      const resolvedTpt = (docTpt || currentUser?.invoiceTemplate || 'template1').toLowerCase();
+      const resolvedTpt = (docTpt || (isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) || 'template1').toLowerCase();
 
       let invoiceForPDF = {
         ...invoiceData,
@@ -1337,38 +1348,54 @@ export default function InvoiceForm() {
           <label className="form-label">Template <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 400 }}>(uses account default if none selected)</span></label>
           {(() => {
             const TEMPLATE_IMGS = {
-              template1: '/templates/t1.png',
-              template2: '/templates/t2.png',
-              template3: '/templates/t3.png',
-              template4: '/templates/t4.png',
-              template5: '/templates/t5.png',
-              template6: '/templates/t6.png',
-              template7: '/templates/t7.png',
+              template1: isQuotation ? '/templates/quotation1.svg' : '/templates/t1.png',
+              template2: isQuotation ? '/templates/quotation2.svg' : '/templates/t2.png',
+              template3: isQuotation ? '/templates/quotation3.svg' : '/templates/t3.png',
+              template4: isQuotation ? '/templates/quotation4.svg' : '/templates/t4.png',
+              template5: isQuotation ? '/templates/quotation5.svg' : '/templates/t5.png',
+              template6: isQuotation ? '/templates/quotation6.svg' : '/templates/t6.png',
+              template7: isQuotation ? '/templates/quotation7.svg' : '/templates/t7.png',
+              template8: isQuotation ? '/templates/quotation8.svg' : '/templates/t8.svg',
+              template9: isQuotation ? '/templates/quotation9.svg' : '/templates/t9.svg',
+              template10: isQuotation ? '/templates/quotation10.svg' : '/templates/t10.svg',
+              template11: isQuotation ? '/templates/quotation11.svg' : '/templates/t11.svg',
+              invoice12: '/templates/invoice12.svg', invoice13: '/templates/invoice13.svg',
+              invoice14: '/templates/invoice14.svg', invoice15: '/templates/invoice15.svg',
+              quotation12: '/templates/quotation12.svg', quotation13: '/templates/quotation13.svg',
+              quotation14: '/templates/quotation14.svg', quotation15: '/templates/quotation15.svg',
             };
-            const defaultKey = (currentUser?.invoiceTemplate || 'template1').toLowerCase();
+            const defaultKey = ((isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) || 'template1').toLowerCase();
             const defaultImg = TEMPLATE_IMGS[defaultKey] || '/templates/t1.png';
             const TEMPLATES = [
               { id: '', name: 'Account Default', img: defaultImg },
-              { id: 'template1', name: 'Classic Blue', img: '/templates/t1.png' },
-              { id: 'template2', name: 'Minimalist', img: '/templates/t2.png' },
-              { id: 'template3', name: 'Modern Wave', img: '/templates/t3.png' },
-              { id: 'template4', name: 'Elegant Navy', img: '/templates/t4.png' },
-              { id: 'template5', name: 'Corporate Bright', img: '/templates/t5.png' },
-              { id: 'template6', name: 'Angular Orange', img: '/templates/t6.png' },
-              { id: 'template7', name: 'Standard Layout', img: '/templates/t7.png' },
+              { id: 'template1', name: 'Classic Blue', img: TEMPLATE_IMGS.template1 },
+              { id: 'template2', name: 'Minimalist', img: TEMPLATE_IMGS.template2 },
+              { id: 'template3', name: 'Modern Wave', img: TEMPLATE_IMGS.template3 },
+              { id: 'template4', name: 'Elegant Navy', img: TEMPLATE_IMGS.template4 },
+              { id: 'template5', name: 'Corporate Bright', img: TEMPLATE_IMGS.template5 },
+              { id: 'template6', name: 'Angular Orange', img: TEMPLATE_IMGS.template6 },
+              { id: 'template7', name: 'Standard Layout', img: TEMPLATE_IMGS.template7 },
+              { id: 'template8', name: 'Monochrome Casual', img: TEMPLATE_IMGS.template8 },
+              { id: 'template9', name: 'Split Sidebar Modern', img: TEMPLATE_IMGS.template9 },
+              { id: 'template10', name: 'Soft Corporate Cards', img: TEMPLATE_IMGS.template10 },
+              { id: 'template11', name: 'Ultra-Minimalist Editorial', img: TEMPLATE_IMGS.template11 },
               ...(isQuotation ? [
-                { id: 'template8', name: 'Monochrome Casual', img: '/templates/t8.svg' },
-                { id: 'template9', name: 'Split Sidebar Modern', img: '/templates/t9.svg' },
+                { id: 'quotation12', name: 'Golden Proposal', img: '/templates/quotation12.svg' },
+                { id: 'quotation13', name: 'Blue Roadmap', img: '/templates/quotation13.svg' },
+                { id: 'quotation14', name: 'Studio Portfolio', img: '/templates/quotation14.svg' },
+                { id: 'quotation15', name: 'Green Contract', img: '/templates/quotation15.svg' },
               ] : [
-                { id: 'template10', name: 'Soft Corporate Cards', img: '/templates/t10.svg' },
-                { id: 'template11', name: 'Ultra-Minimalist Editorial', img: '/templates/t11.svg' },
+                { id: 'invoice12', name: 'Ledger Gold', img: '/templates/invoice12.svg' },
+                { id: 'invoice13', name: 'Coral Band', img: '/templates/invoice13.svg' },
+                { id: 'invoice14', name: 'Green Columns', img: '/templates/invoice14.svg' },
+                { id: 'invoice15', name: 'Receipt Grid', img: '/templates/invoice15.svg' },
               ]),
             ];
             return (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginTop: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '10px', marginTop: 8 }}>
                 {TEMPLATES.map((t) => {
                   const isSelected = (form.template || '') === t.id;
-                  const isLocked = t.id && !FREE_TEMPLATES.includes(t.id) && (!currentUser?.plan || currentUser.plan === 'free');
+                  const isLocked = Boolean(t.id) && !FREE_TEMPLATES.includes(t.id);
                   return (
                     <button
                       key={t.id}
@@ -1387,26 +1414,28 @@ export default function InvoiceForm() {
                         }
                       }}
                       style={{
-                        border: isSelected ? '2px solid var(--primary)' : '2px solid var(--border)',
+                        border: '0',
                         borderRadius: 8,
                         padding: 0,
                         background: '#fff',
                         cursor: 'pointer',
                         overflow: 'hidden',
-                        boxShadow: isSelected ? '0 0 0 3px rgba(var(--primary-rgb, 59,130,246),0.18)' : 'none',
+                        minWidth: 0,
+                        boxShadow: isSelected ? '0 0 0 3px var(--primary)' : 'none',
                         transition: 'border 0.15s, box-shadow 0.15s',
                         opacity: isLocked ? 0.85 : 1,
                       }}
                     >
                       <div style={{ position: 'relative' }}>
-                        <img src={t.img} alt={t.name} style={{ width: '100%', aspectRatio: '3/4', objectFit: 'contain', display: 'block', background: '#fff' }} onError={(e) => { e.target.style.display = 'none'; }} />
+                        <img src={t.img} alt={t.name} style={{ width: '100%', aspectRatio: '5/7', objectFit: 'contain', display: 'block', background: '#fff' }} onError={(e) => { e.target.style.display = 'none'; }} />
+                        <img src="/templates/goodsynk-logo.png" alt="Goodsynk logo" style={{ position: 'absolute', top: '5%', right: '7%', width: '11%', height: '7%', objectFit: 'contain', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.12))' }} />
                         {t.id === '' && (
                           <span style={{
                             position: 'absolute', top: 4, left: 4,
                             background: 'var(--primary)', color: '#fff',
                             fontSize: '0.6rem', fontWeight: 700,
                             padding: '2px 5px', borderRadius: 4,
-                          }}>DEFAULT</span>
+                            }}>DEFAULT</span>
                         )}
                         {isLocked && (
                           <div style={{
@@ -1430,9 +1459,12 @@ export default function InvoiceForm() {
                         fontWeight: isSelected ? 700 : 500,
                         color: isSelected ? 'var(--primary)' : 'var(--text-primary)',
                         textAlign: 'center',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
+                        minHeight: 38,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflowWrap: 'anywhere',
+                        wordBreak: 'normal',
                         background: 'var(--bg-card)',
                       }}>
                         {t.name}
@@ -1446,7 +1478,7 @@ export default function InvoiceForm() {
 
           {/* Color Customization */}
           {(() => {
-            const effectiveTemplate = (form.template || currentUser?.invoiceTemplate || 'template1').toLowerCase();
+            const effectiveTemplate = (form.template || (isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) || 'template1').toLowerCase();
             return (
               <div style={{ marginTop: 24, padding: 16, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--bg-elevated)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>

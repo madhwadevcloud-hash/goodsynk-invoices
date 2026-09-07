@@ -78,20 +78,15 @@ export default function Template2({ invoice }) {
 
     signatureArea: { marginTop: 10, alignItems: 'flex-end', paddingRight: 40 },
     signatureLine: { width: 120, borderTopWidth: 0.5, borderTopColor: '#000', borderTopStyle: 'solid', paddingTop: 6, alignItems: 'center' },
-    footerBox: { position: 'absolute', bottom: 15, left: 40, right: 40, borderTopWidth: 1, borderTopColor: '#E0E0E0', borderTopStyle: 'solid', flexDirection: 'row', paddingTop: 8, alignItems: 'stretch' },
-    footerAccent: { width: 3, backgroundColor: PRIMARY, marginRight: 8 },
-    footerLeft: { flex: 1.3, justifyContent: 'center' },
-    footerRight: { flex: 1, justifyContent: 'center', alignItems: 'flex-end' },
-    footerText: { fontSize: 7.5, color: '#444', marginBottom: 2 },
-    footerContactLabel: { fontSize: 6.5, fontFamily: B, color: PRIMARY, letterSpacing: 0.5, marginBottom: 2, textTransform: 'uppercase' },
-    footerBrandName: { fontSize: 9.5, fontFamily: B, color: PRIMARY, letterSpacing: 0.3 },
-    footerBrandLine: { fontSize: 7, color: '#444', marginTop: 2 },
-    footerLink: { fontSize: 7, fontFamily: B, color: PRIMARY, textDecoration: 'underline' },
-    footerTagline: { fontSize: 6.5, color: '#666', marginTop: 2 },
-    footerTrustLine: { fontSize: 5.5, color: '#888', marginTop: 2, textAlign: 'left' },
-    poweredByContainer: { alignItems: 'flex-end', marginTop: 4 },
-    poweredByLabel: { fontSize: 5.5, color: '#888', letterSpacing: 0.5 },
-    poweredByValue: { fontSize: 8.5, fontFamily: B, color: '#000', letterSpacing: 0.5, marginTop: 1 },
+    footerBox: { position: 'absolute', bottom: 30, left: 40, right: 40, borderLeftWidth: 4, borderLeftColor: PRIMARY, paddingLeft: 16, flexDirection: 'row', justifyContent: 'space-between' },
+    footerLeft: { width: '60%' },
+    footerRight: { width: '35%', alignItems: 'flex-end' },
+    footerTitle: { fontSize: 10, fontFamily: B, color: PRIMARY, textTransform: 'uppercase', marginBottom: 4 },
+    footerText: { fontSize: 8, color: '#444', marginBottom: 2 },
+    footerLink: { fontSize: 8, color: PRIMARY, textDecoration: 'none', fontFamily: B },
+    poweredByContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+    poweredByLabel: { fontSize: 7, color: '#888', marginRight: 4 },
+    poweredByValue: { fontSize: 8, fontFamily: B, color: '#000' },
     watermarkContainer: {
       position: 'absolute',
       top: 0,
@@ -268,26 +263,22 @@ export default function Template2({ invoice }) {
           </View>
         </View>
 
-        {/* Footer: split two-panel — brand left | contact right */}
+        {/* Footer: Split Asymmetric */}
         <View style={s.footerBox} fixed>
-          <View style={s.footerAccent} />
-          {/* Left panel — Brand */}
           <View style={s.footerLeft}>
-            <Text style={s.footerBrandName}>GoodSynk</Text>
-            <Text style={s.footerBrandLine}>Goodsynk Billing  •  Simple Invoicing & Quotations</Text>
-            <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
-            <Text style={s.footerTrustLine}>Generated securely • Digitally signed document</Text>
+            <Text style={s.footerTitle}>GoodSynk Billing</Text>
+            <Text style={s.footerText}>Simple Invoicing & Quotations</Text>
+            <Text style={s.footerText}>Generated securely • Digitally signed document</Text>
+            <Link style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
           </View>
-          {/* Right panel — Contact & Powered By */}
           <View style={s.footerRight}>
-            <Text style={s.footerContactLabel}>Contact Us</Text>
-            {biz?.phone && <Text style={s.footerText}>Phone:  {biz.phone}</Text>}
-            {biz?.email && <Text style={s.footerText}>Email:  {biz.email}</Text>}
+            <Text style={[s.footerTitle, { fontSize: 8 }]}>Contact</Text>
+            {biz?.phone && <Text style={s.footerText}>P: {biz.phone}</Text>}
+            {biz?.email && <Text style={s.footerText}>E: {biz.email}</Text>}
             <View style={s.poweredByContainer}>
               <Text style={s.poweredByLabel}>Powered By</Text>
               <Text style={s.poweredByValue}>GoodSynk</Text>
             </View>
-            <Link style={[s.footerLink, { marginTop: 2, textAlign: 'right' }]} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
           </View>
         </View>
       </Page>

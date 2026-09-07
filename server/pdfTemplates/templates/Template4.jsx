@@ -74,21 +74,19 @@ export default function Template4({ invoice }) {
     grandLabel: { fontSize: 11, fontFamily: B, color: NAVY },
     grandVal: { fontSize: 11, fontFamily: B, color: NAVY },
 
-    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: NAVY, flexDirection: 'column', paddingHorizontal: 24, paddingBottom: 8, paddingTop: 0, borderTopWidth: 3, borderTopColor: GOLD, borderTopStyle: 'solid' },
-    footerContactRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24, paddingVertical: 5, borderBottomWidth: 0.5, borderBottomColor: hexToRgba(GOLD, 0.3), borderBottomStyle: 'solid', marginBottom: 4 },
-    footerContactItem: { flexDirection: 'row', alignItems: 'center' },
-    footerContactLabel: { fontSize: 6, fontFamily: B, color: GOLD, letterSpacing: 0.5, marginRight: 4, textTransform: 'uppercase' },
-    footerText: { fontSize: 8, color: '#FFF' },
-    footerBrandRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    footerBrandLeft: { flexDirection: 'column' },
-    footerBrandLine: { fontSize: 8.5, fontFamily: B, color: GOLD, letterSpacing: 0.3 },
-    footerTagline: { fontSize: 6.5, color: hexToRgba('#FFF', 0.8), marginTop: 2 },
-    footerBrandRight: { flexDirection: 'column', alignItems: 'flex-end' },
-    footerTrustLine: { fontSize: 5.5, color: hexToRgba('#FFF', 0.5), textAlign: 'right', marginBottom: 2 },
-    footerLink: { fontSize: 6.5, fontFamily: B, color: GOLD, textAlign: 'right' },
-    poweredByContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 2 },
-    poweredByLabel: { fontSize: 5.5, color: hexToRgba('#FFF', 0.5), letterSpacing: 0.5, marginRight: 4 },
-    poweredByValue: { fontSize: 8, fontFamily: B, color: '#FFF', letterSpacing: 0.5 },
+    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'column' },
+    footerGoldBand: { backgroundColor: GOLD, paddingVertical: 8, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'center' },
+    footerNavyBand: { backgroundColor: NAVY, paddingVertical: 12, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    footerContactLine: { fontSize: 8.5, fontFamily: B, color: NAVY, textTransform: 'uppercase', letterSpacing: 1 },
+    footerBrandCol: { flexDirection: 'column' },
+    footerBrandName: { fontSize: 10, fontFamily: B, color: '#FFF' },
+    footerBrandSub: { fontSize: 6.5, color: hexToRgba('#FFF', 0.8), marginTop: 2 },
+    footerPoweredCol: { flexDirection: 'column', alignItems: 'center' },
+    footerPoweredLabel: { fontSize: 5, color: hexToRgba('#FFF', 0.6), letterSpacing: 1 },
+    footerPoweredValue: { fontSize: 7, fontFamily: B, color: GOLD, marginTop: 1 },
+    footerTrustCol: { flexDirection: 'column', alignItems: 'flex-end' },
+    footerTrustLine: { fontSize: 6.5, color: hexToRgba('#FFF', 0.7) },
+    footerLink: { fontSize: 7, fontFamily: B, color: GOLD, textDecoration: 'none', marginTop: 2 },
 
     watermarkContainer: {
       position: 'absolute',
@@ -265,41 +263,27 @@ export default function Template4({ invoice }) {
             <Text style={{ fontSize: 8, color: '#1B365D', textAlign: 'center' }}>Authorised Signature</Text>
           </View>
         </View>
-
-        {/* Footer: two-row stacked with gold accent top rule */}
+        {/* Footer: Gold Contact Band + Navy Detail Band */}
         <View style={s.footerBox} fixed>
-          {/* Row 1: Contact */}
-          {(biz?.phone || biz?.email) && (
-            <View style={s.footerContactRow}>
-              {biz?.phone && (
-                <View style={s.footerContactItem}>
-                  <Text style={s.footerContactLabel}>Phone:</Text>
-                  <Text style={s.footerText}>{biz.phone}</Text>
-                </View>
-              )}
-              {biz?.email && (
-                <View style={s.footerContactItem}>
-                  <Text style={s.footerContactLabel}>Email:</Text>
-                  <Text style={s.footerText}>{biz.email}</Text>
-                </View>
-              )}
+          <View style={s.footerGoldBand}>
+            <Text style={s.footerContactLine}>
+              {biz?.phone && `PHONE: ${biz.phone}    |    `}
+              {biz?.email && `EMAIL: ${biz.email}`}
+              {!biz?.phone && !biz?.email && `THANK YOU FOR YOUR BUSINESS`}
+            </Text>
+          </View>
+          <View style={s.footerNavyBand}>
+            <View style={s.footerBrandCol}>
+              <Text style={s.footerBrandName}>GoodSynk</Text>
+              <Text style={s.footerBrandSub}>Simple Invoicing & Quotations</Text>
             </View>
-          )}
-          {/* Row 2: Brand left + Trust right */}
-          <View style={s.footerBrandRow}>
-            <View style={s.footerBrandLeft}>
-              <Text style={s.footerBrandLine}>Goodsynk Billing</Text>
-              <Text style={s.footerTagline}>Simple Invoicing, Billing & Quotations</Text>
-              <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
+            <View style={s.footerPoweredCol}>
+              <Text style={s.footerPoweredLabel}>POWERED BY</Text>
+              <Text style={s.footerPoweredValue}>GOODSYNK</Text>
             </View>
-            <View style={s.poweredByContainer}>
-              <Text style={s.poweredByLabel}>Powered By</Text>
-              <Text style={s.poweredByValue}>GoodSynk</Text>
-            </View>
-            <View style={s.footerBrandRight}>
-              <Text style={s.footerTrustLine}>Generated securely by Goodsynk Billing.</Text>
-              <Text style={s.footerTrustLine}>This is a digitally signed document.</Text>
-              <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
+            <View style={s.footerTrustCol}>
+              <Text style={s.footerTrustLine}>Digitally signed document</Text>
+              <Link style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
             </View>
           </View>
         </View>

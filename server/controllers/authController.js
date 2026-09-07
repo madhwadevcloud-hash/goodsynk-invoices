@@ -134,6 +134,8 @@ const updateMe = async (req, res) => {
       'currency',
       'invoiceTemplate',
       'invoiceTemplateColors',
+      'quotationTemplate',
+      'quotationTemplateColors',
     ];
 
     simpleFields.forEach((field) => {

@@ -90,6 +90,14 @@ const userSchema = new mongoose.Schema(
       type: Object,
       default: null,
     },
+    quotationTemplate: {
+      type: String,
+      default: 'template1',
+    },
+    quotationTemplateColors: {
+      type: Object,
+      default: null,
+    },
     plan: {
       type: String,
       enum: ['free', 'growth', 'growth_yearly', 'enterprise', 'enterprise_yearly'],

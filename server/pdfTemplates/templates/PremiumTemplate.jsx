@@ -3,7 +3,7 @@ import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/render
 
 const themes = {
   quotationGreen: { accent: '#1F7A5A', soft: '#E8F4EE', ink: '#17352B', title: 'QUOTATION' },
-  quotationOrange: { accent: '#C65D2E', soft: '#FFF1E9', ink: '#3D2117', title: 'PROPOSAL' },
+  quotationOrange: { accent: '#C65D2E', soft: '#FFF1E9', ink: '#3D2117', title: 'QUOTATION' },
   invoiceSlate: { accent: '#334155', soft: '#E2E8F0', ink: '#172033', title: 'INVOICE' },
   invoiceTeal: { accent: '#0F766E', soft: '#CCFBF1', ink: '#123C3A', title: 'INVOICE' },
 };

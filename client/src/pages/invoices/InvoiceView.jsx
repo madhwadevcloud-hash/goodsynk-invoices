@@ -90,9 +90,9 @@ export default function InvoiceView() {
   if (!invoice) return null;
 
   const currency = invoice.currency || 'INR';
-  const effectiveTemplate = invoice.template || invoice.user?.invoiceTemplate || 'template1';
+  const effectiveTemplate = invoice.template || (isQuotation ? invoice.user?.quotationTemplate : invoice.user?.invoiceTemplate) || 'template1';
   const colors = invoice.templateColors ||
-    (invoice.template ? (DEFAULT_COLORS[invoice.template.toLowerCase()] || null) : invoice.user?.invoiceTemplateColors) ||
+    (invoice.template ? (DEFAULT_COLORS[invoice.template.toLowerCase()] || null) : (isQuotation ? invoice.user?.quotationTemplateColors : invoice.user?.invoiceTemplateColors)) ||
     DEFAULT_COLORS[(effectiveTemplate || 'template1').toLowerCase()];
 
   const invoiceForPDF = {

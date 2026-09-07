@@ -151,16 +151,12 @@ export default function Template7({ invoice }) {
     sigText: { fontSize: 7, color: '#444', marginBottom: 25 },
     sigLine: { fontSize: 7, color: '#444', paddingTop: 4, width: 100, textAlign: 'center' },
 
-    // Footer - slim, plain background, split left (brand/legal) vs right (powered by)
-    footerBox: { position: 'absolute', bottom: 18, left: 0, right: 0, paddingHorizontal: 40, paddingTop: 8, borderTop: '0.5pt solid #E0E0E0', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-    footerLeft: { flexDirection: 'column' },
-    footerBrandLine: { fontSize: 7, fontFamily: B, color: PRIMARY, letterSpacing: 0.2, marginBottom: 3 },
-    footerLink: { fontFamily: B, color: PRIMARY, textDecoration: 'underline' },
-    footerTrustLine: { fontSize: 6, color: '#888' },
-    poweredByContainer: { alignItems: 'flex-end' },
-    poweredByLabel: { fontSize: 6, color: '#888', letterSpacing: 0.3 },
-    poweredByValue: { fontSize: 9.5, fontFamily: B, color: '#000', letterSpacing: 0.3, marginTop: 1 },
-    footerTagline: { fontSize: 6, color: PRIMARY, marginTop: 2 },
+    // Footer - Minimalist Single Line
+    footerBox: { position: 'absolute', bottom: 15, left: 40, right: 40, paddingTop: 10, borderTop: '0.5pt solid #E0E0E0', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+    footerSingleLine: { fontSize: 7, color: '#666', textAlign: 'center' },
+    footerDot: { fontSize: 7, color: '#CCC', marginHorizontal: 6 },
+    footerBold: { fontFamily: B, color: PRIMARY },
+    footerLink: { fontFamily: B, color: PRIMARY, textDecoration: 'none' },
   });
 
   const currency = invoice._currency || invoice.currency || 'INR';
@@ -322,24 +318,21 @@ export default function Template7({ invoice }) {
           </View>
         </View>
 
+        {/* Minimalist Single Line Footer */}
         <View style={s.footerBox} fixed>
-          <View style={s.footerLeft}>
-            <Text style={s.footerBrandLine}>
-              Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
-              <Link src="https://invoice.goodsynk.com" style={s.footerLink}>invoice.goodsynk.com</Link>
-            </Text>
-            <Text
-              style={s.footerTrustLine}
-              render={({ pageNumber, totalPages }) =>
-                `Page ${pageNumber} / ${totalPages}  •  This is a digitally signed document.`
-              }
-            />
-          </View>
-          <View style={s.poweredByContainer}>
-            <Text style={s.poweredByLabel}>Powered By</Text>
-            <Text style={s.poweredByValue}>GoodSynk</Text>
-            <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
-          </View>
+          <Text style={s.footerSingleLine}>
+            {biz?.phone && <Text>P: {biz.phone}</Text>}
+            {biz?.phone && biz?.email && <Text style={s.footerDot}> • </Text>}
+            {biz?.email && <Text>E: {biz.email}</Text>}
+            {(biz?.phone || biz?.email) && <Text style={s.footerDot}> • </Text>}
+            
+            Powered By <Text style={s.footerBold}>GoodSynk</Text>
+            <Text style={s.footerDot}> • </Text>
+            <Link src="https://invoice.goodsynk.com" style={s.footerLink}>invoice.goodsynk.com</Link>
+            
+            <Text style={s.footerDot}> • </Text>
+            <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
+          </Text>
         </View>
 
       </Page>

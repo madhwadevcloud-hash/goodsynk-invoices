@@ -1043,6 +1043,8 @@ input::-ms-clear {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .brand-logo-icon {
@@ -1058,12 +1060,16 @@ input::-ms-clear {
 }
 
 .brand-logo-text {
-  font-size: 1.1rem;
+  font-size: 1.08rem;
   font-weight: 700;
   background: var(--logo-text-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.sidebar .brand-logo-text {
+  font-size: 0.92rem;
 }
 
 

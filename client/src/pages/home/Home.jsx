@@ -1,5 +1,5 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { FileText, Users, Package, Zap, ShieldCheck, TrendingUp, ArrowRight, Receipt } from 'lucide-react';
+import { FileText, Users, Package, Zap, ShieldCheck, TrendingUp, ArrowRight } from 'lucide-react';
 import ThemeToggle from '../../components/layout/ThemeToggle';
 import BrandLogo from '../../components/BrandLogo';
 
@@ -209,16 +209,7 @@ export default function Home() {
 
       {/* ── Footer ── */}
       <footer className="landing-footer">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            width: 28, height: 28,
-            background: 'linear-gradient(135deg, var(--primary), #818cf8)',
-            borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-          }}>
-            <Receipt size={14} />
-          </div>
-          <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Goodsynk Invoices</span>
-        </div>
+        <BrandLogo style={{ transform: 'scale(0.82)', transformOrigin: 'left center' }} />
         <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
           © {new Date().getFullYear()} Goodsynk Invoices. Built for Indian businesses.
         </p>

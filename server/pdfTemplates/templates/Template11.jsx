@@ -70,11 +70,14 @@ export default function Template11({ invoice }) {
     sigLine: { width: 160, height: 1, backgroundColor: '#DDD', marginBottom: 6 },
     sigText: { fontSize: 8, color: '#777', textTransform: 'uppercase', letterSpacing: 1 },
 
-    // Footer
-    footer: { position: 'absolute', bottom: 30, left: 60, right: 60, alignItems: 'center' },
-    footerDivider: { width: '100%', height: 1, backgroundColor: '#EEE', marginBottom: 15 },
+    // Footer: Asymmetric Split Border
+    footerBox: { position: 'absolute', bottom: 30, left: 60, right: 60 },
+    footerBorderRow: { flexDirection: 'row', width: '100%', marginBottom: 15 },
+    footerBorderLeft: { height: 2, width: '30%', backgroundColor: PRIMARY },
+    footerBorderRight: { height: 1, width: '70%', backgroundColor: '#DDD' },
+    footerContentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     footerText: { fontSize: 7, color: '#999', letterSpacing: 1, textTransform: 'uppercase' },
-    footerLink: { color: '#555', textDecoration: 'none' }
+    footerLink: { color: PRIMARY, fontFamily: B, textDecoration: 'none' }
   });
 
   const currency = invoice._currency || invoice.currency || 'INR';
@@ -228,11 +231,20 @@ export default function Template11({ invoice }) {
           </View>
         </View>
 
-        <View style={s.footer} fixed>
-          <View style={s.footerDivider} />
-          <Text style={s.footerText}>
-            Generated securely by <Link style={s.footerLink} src="https://invoice.goodsynk.com">GoodSynk</Link>
-          </Text>
+        <View style={s.footerBox} fixed>
+          <View style={s.footerBorderRow}>
+            <View style={s.footerBorderLeft} />
+            <View style={s.footerBorderRight} />
+          </View>
+          <View style={s.footerContentRow}>
+            <Text style={s.footerText}>
+              {biz?.phone && `P: ${biz.phone}  |  `}
+              {biz?.email && `E: ${biz.email}`}
+            </Text>
+            <Text style={s.footerText}>
+              Generated securely by <Link style={s.footerLink} src="https://invoice.goodsynk.com">GoodSynk</Link>
+            </Text>
+          </View>
         </View>
       </Page>
     </Document>

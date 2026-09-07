@@ -23,7 +23,7 @@ const PLANS = [
             { label: '3 clients', included: true },
             { label: '10 invoices & quotations / month', included: true },
             { label: 'Classic Blue & Minimalist templates', included: true },
-            { label: 'All 6 templates + custom colors', included: false },
+            { label: 'All invoice and quotation templates + custom colors', included: false },
             { label: 'Multiple bank accounts', included: true },
         ],
         cta: 'Stay on Free Trial',
@@ -46,7 +46,7 @@ const PLANS = [
         features: [
             { label: '15 clients', included: true },
             { label: '50 invoices & quotations / month', included: true },
-            { label: 'All 6 templates + custom colors', included: true },
+            { label: 'All invoice and quotation templates + custom colors', included: true },
             { label: 'Multiple bank accounts', included: true },
         ],
         cta: 'Upgrade to Growth',
@@ -69,7 +69,7 @@ const PLANS = [
         features: [
             { label: '15 clients', included: true },
             { label: '50 invoices & quotations / month', included: true },
-            { label: 'All 6 templates + custom colors', included: true },
+            { label: 'All invoice and quotation templates + custom colors', included: true },
             { label: 'Multiple bank accounts', included: true },
         ],
         cta: 'Upgrade to Growth (Yearly)',
@@ -91,7 +91,7 @@ const PLANS = [
         features: [
             { label: 'Unlimited clients', included: true },
             { label: 'Unlimited invoices & quotations', included: true },
-            { label: 'All 6 templates + custom colors', included: true },
+            { label: 'All invoice and quotation templates + custom colors', included: true },
             { label: 'Multiple bank accounts', included: true },
         ],
         cta: 'Go Enterprise',
@@ -113,7 +113,7 @@ const PLANS = [
         features: [
             { label: 'Unlimited clients', included: true },
             { label: 'Unlimited invoices & quotations', included: true },
-            { label: 'All 6 templates + custom colors', included: true },
+            { label: 'All invoice and quotation templates + custom colors', included: true },
             { label: 'Multiple bank accounts', included: true },
         ],
         cta: 'Upgrade to Enterprise (Yearly)',
