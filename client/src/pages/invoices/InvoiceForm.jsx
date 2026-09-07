@@ -113,6 +113,7 @@ export default function InvoiceForm() {
   const [newItemDraft, setNewItemDraft] = useState(defaultItem());
   const [newItemDiscMode, setNewItemDiscMode] = useState('percent');
   const [newItemDiscValue, setNewItemDiscValue] = useState('');
+  const [previewTemplate, setPreviewTemplate] = useState(null);
 
   const updateNewItemDiscount = (val, mode, price, quantity) => {
     const rawVal = val === '' ? 0 : parseFloat(val) || 0;
@@ -1401,17 +1402,7 @@ export default function InvoiceForm() {
                       key={t.id}
                       type="button"
                       onClick={() => {
-                        if (isLocked) {
-                          toast('Upgrade your plan to unlock this template', { icon: '🔒' });
-                          navigate('/upgrade');
-                          return;
-                        }
-                        setField('template', t.id);
-                        if (!t.id) {
-                          setField('templateColors', null);
-                        } else {
-                          setField('templateColors', DEFAULT_COLORS[t.id.toLowerCase()]);
-                        }
+                        setPreviewTemplate(t);
                       }}
                       style={{
                         border: '0',
@@ -1428,7 +1419,6 @@ export default function InvoiceForm() {
                     >
                       <div style={{ position: 'relative' }}>
                         <img src={t.img} alt={t.name} style={{ width: '100%', aspectRatio: '5/7', objectFit: 'contain', display: 'block', background: '#fff' }} onError={(e) => { e.target.style.display = 'none'; }} />
-                        <img src="/templates/goodsynk-logo.png" alt="Goodsynk logo" style={{ position: 'absolute', top: '5%', right: '7%', width: '11%', height: '7%', objectFit: 'contain', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.12))' }} />
                         {t.id === '' && (
                           <span style={{
                             position: 'absolute', top: 4, left: 4,
@@ -1475,6 +1465,71 @@ export default function InvoiceForm() {
               </div>
             );
           })()}
+
+          {previewTemplate && (
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={`${previewTemplate.name} template preview`}
+              onClick={() => setPreviewTemplate(null)}
+              style={{
+                position: 'fixed', inset: 0, zIndex: 1000,
+                background: 'rgba(0, 0, 0, 0.8)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: 24, backdropFilter: 'blur(4px)',
+              }}
+            >
+              <div
+                onClick={(event) => event.stopPropagation()}
+                style={{
+                  position: 'relative', background: 'var(--bg-card)', borderRadius: 16,
+                  width: 'min(1100px, 96vw)', height: '92vh', overflow: 'hidden',
+                  padding: 24, display: 'flex', flexDirection: 'column', gap: 16,
+                }}
+              >
+                <button
+                  type="button"
+                  aria-label="Close preview"
+                  onClick={() => setPreviewTemplate(null)}
+                  style={{
+                    position: 'absolute', top: 12, right: 12, zIndex: 1,
+                    background: 'var(--bg-card)', border: '1px solid var(--border)',
+                    borderRadius: '50%', width: 36, height: 36, cursor: 'pointer',
+                    display: 'grid', placeItems: 'center', color: 'var(--text-muted)',
+                  }}
+                >
+                  <X size={20} />
+                </button>
+                <h3 style={{ margin: 0, paddingRight: 48, fontSize: '1.2rem' }}>{previewTemplate.name}</h3>
+                <div style={{ flex: 1, minHeight: 0, overflow: 'auto', background: 'var(--bg-elevated)', borderRadius: 8, padding: 16 }}>
+                  <img
+                    src={previewTemplate.img}
+                    alt={previewTemplate.name}
+                    style={{ display: 'block', width: '900px', maxWidth: 'none', height: 'auto', margin: '0 auto', background: '#fff', borderRadius: 8, boxShadow: 'var(--shadow-lg)' }}
+                  />
+                </div>
+                <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                  <button type="button" className="btn btn-ghost" onClick={() => setPreviewTemplate(null)}>Cancel</button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => {
+                      if (previewTemplate.id && !FREE_TEMPLATES.includes(previewTemplate.id)) {
+                        toast('Upgrade your plan to unlock this template', { icon: '🔒' });
+                        navigate('/upgrade');
+                        return;
+                      }
+                      setField('template', previewTemplate.id);
+                      setField('templateColors', previewTemplate.id ? DEFAULT_COLORS[previewTemplate.id.toLowerCase()] : null);
+                      setPreviewTemplate(null);
+                    }}
+                  >
+                    {previewTemplate.id && !FREE_TEMPLATES.includes(previewTemplate.id) ? 'Upgrade to Use' : 'Use This Template'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Color Customization */}
           {(() => {

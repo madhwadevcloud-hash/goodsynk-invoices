@@ -36,7 +36,6 @@ export default function Template5({ invoice }) {
     headerRight: { width: '50%', alignItems: 'flex-end' },
 
     invoiceTitle: { fontFamily: B, fontSize: 24, color: BLUE, textTransform: 'uppercase', letterSpacing: 1 },
-    logoImage: { height: scaled.logoHeight, maxWidth: 130, objectFit: 'contain' },
 
     bizInfo: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8 },
     bizText: { fontSize: scaled.bizSubTextFontSize, color: '#444', textAlign: 'right', lineHeight: scaled.bizSubTextLineHeight },
@@ -150,7 +149,6 @@ export default function Template5({ invoice }) {
           </View>
 
           <View style={s.headerRight}>
-            {biz?.businessLogo && <Image style={s.logoImage} src={biz.businessLogo} />}
             <View style={s.bizInfo}>
               <View style={{ width: '100%' }}>
                 <Text style={s.bizName}>{bizName}</Text>

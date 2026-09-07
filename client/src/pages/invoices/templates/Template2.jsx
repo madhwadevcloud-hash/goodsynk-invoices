@@ -34,7 +34,6 @@ export default function Template2({ invoice }) {
 
     topHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
     bizBox: { maxWidth: scaled.bizInfoMaxWidth },
-    logoImg: { height: scaled.logoHeight, maxWidth: 140, objectFit: 'contain', marginBottom: 6 },
     bizName: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
     bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight },
     titleBox: { alignItems: 'flex-end' },
@@ -142,7 +141,6 @@ export default function Template2({ invoice }) {
         {/* Top Header */}
         <View style={s.topHeader}>
           <View style={s.bizBox}>
-            {biz?.businessLogo && <Image src={biz.businessLogo} style={s.logoImg} />}
             <Text style={s.bizName}>{bizName}</Text>
             {biz?.address?.street && <Text style={s.bizSubText}>{biz.address.street}</Text>}
             {biz?.address?.city && (

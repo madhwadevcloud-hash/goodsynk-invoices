@@ -83,7 +83,6 @@ export default function Template7({ invoice }) {
   // or push the block tall enough to crowd the sections below it.
   const headerScale = buildScaledStyles(biz);
   const bizInfoWidth = headerScale.bizInfoMaxWidth;
-  const bizLogoWidth = `${100 - parseFloat(bizInfoWidth)}%`;
 
   const s = StyleSheet.create({
     page: { paddingTop: 40, paddingBottom: 60, fontFamily: 'Inter', color: '#000' },
@@ -91,12 +90,11 @@ export default function Template7({ invoice }) {
 
     // Header
     topSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 40, marginBottom: 0 },
-    docTitle: { fontFamily: B, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: PRIMARY, marginBottom: 6 },
+    docTitle: { fontFamily: B, fontSize: 24, letterSpacing: 1.5, textTransform: 'uppercase', color: PRIMARY, marginBottom: 6 },
     bizName: { fontFamily: B, fontSize: headerScale.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
     bizText: { fontSize: headerScale.bizSubTextFontSize, color: '#444', marginBottom: 1, lineHeight: headerScale.bizSubTextLineHeight },
     boldText: { fontFamily: B, color: '#000' },
     originalText: { fontSize: 6.5, color: '#666', textTransform: 'uppercase', textAlign: 'right', marginBottom: 10, fontFamily: B },
-    topLogo: { height: headerScale.logoHeight, maxWidth: 140, objectFit: 'contain', alignSelf: 'flex-end' },
     // Meta & Info Columns
     gridRow: { flexDirection: 'row', paddingHorizontal: 40, marginBottom: 10 },
     col1: { width: '38%' },
@@ -201,9 +199,6 @@ export default function Template7({ invoice }) {
               </Text>
             )}
             {biz?.website && <Text style={s.bizText}><Text style={s.boldText}>Website</Text> {biz.website}</Text>}
-          </View>
-          <View style={{ width: bizLogoWidth, alignItems: 'flex-end' }}>
-            {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
           </View>
         </View>
 

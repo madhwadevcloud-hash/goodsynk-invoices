@@ -119,13 +119,6 @@ export default function Templates() {
             <div
               key={tmpl.id}
               onClick={() => {
-                if (isLocked) {
-                  toast('Upgrade your plan to unlock this template', {
-                    icon: '🔒',
-                  });
-                  navigate('/upgrade');
-                  return;
-                }
                 handleOpenPreview(tmpl);
               }}
               style={{
@@ -159,7 +152,6 @@ export default function Templates() {
                 border: 'none'
               }}>
                 <img src={previewSrc} alt={tmpl.name} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', background: '#fff' }} />
-                <img src="/templates/goodsynk-logo.png" alt="Goodsynk logo" style={{ position: 'absolute', top: '5%', right: '7%', width: '11%', height: '7%', objectFit: 'contain', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.12))' }} />
                 {isLocked && (
                   <div
                     style={{
@@ -228,7 +220,6 @@ export default function Templates() {
               <div style={{ position: 'relative', width: '100%', maxWidth: '500px' }}>
                 <div style={{ position: 'relative' }}>
                   <img src={documentType === 'quotation' ? (QUOTATION_PREVIEWS[previewTemplate.id] || previewTemplate.img) : previewTemplate.img} alt={previewTemplate.name} style={{ height: 'auto', width: '100%', objectFit: 'contain', boxShadow: 'var(--shadow-lg)', borderRadius: '8px', display: 'block' }} />
-                  <img src="/templates/goodsynk-logo.png" alt="Goodsynk logo" style={{ position: 'absolute', top: '5%', right: '7%', width: '11%', height: '7%', objectFit: 'contain', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.12))' }} />
                 </div>
               </div>
               {/* Color Customization UI */}
