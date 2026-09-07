@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { invoiceAPI, clientAPI, productAPI, quotationAPI } from '../../api/services';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, Save, Download, Loader2, X, ChevronDown, Percent, Tag, Lock, Landmark, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, Save, Download, Loader2, X, ChevronDown, Percent, Tag, Lock, Landmark, ArrowLeft, Eye } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const defaultItem = () => ({
@@ -114,6 +114,7 @@ export default function InvoiceForm() {
   const [newItemDiscMode, setNewItemDiscMode] = useState('percent');
   const [newItemDiscValue, setNewItemDiscValue] = useState('');
   const [previewTemplate, setPreviewTemplate] = useState(null);
+  const [showBankDetails, setShowBankDetails] = useState(false);
 
   const updateNewItemDiscount = (val, mode, price, quantity) => {
     const rawVal = val === '' ? 0 : parseFloat(val) || 0;
@@ -591,6 +592,7 @@ export default function InvoiceForm() {
   const selectedBankIndex = Math.min(Number(form.selectedBankIndex || 0), Math.max(bankAccounts.length - 1, 0));
   const bank = bankAccounts[selectedBankIndex] || currentUser?.bankDetails || {};
   const hasBankDetails = bank && (bank.bankName || bank.accountName || bank.accountNumber || bank.ifscCode);
+  const maskedBankValue = (value) => showBankDetails ? value : '********';
   const filteredLineProducts = lineSearchQuery.trim()
     ? products.filter((p) => {
       const q = lineSearchQuery.toLowerCase();
@@ -1230,53 +1232,67 @@ export default function InvoiceForm() {
               <div style={{ padding: 8, background: 'var(--primary-bg)', borderRadius: 8, color: 'var(--primary)' }}>
                 <Landmark size={18} />
               </div>
-              <h2 className="card-title" style={{ margin: 0 }}>Banking Details</h2>
-            </div>
-            {bankAccounts.length > 1 && (
-              <div style={{ position: 'relative' }}>
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  onClick={() => setBankSwitchOpen((open) => !open)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-                >
-                  <Landmark size={13} /> Switch Account <ChevronDown size={13} />
-                </button>
-                {bankSwitchOpen && (
-                  <>
-                    <div onClick={() => setBankSwitchOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 39 }} />
-                    <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 6, zIndex: 40, width: 280, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: 'var(--shadow)', overflow: 'hidden' }}>
-                      {bankAccounts.map((account, idx) => (
-                        <button
-                          key={`${account.accountNumber || account.bankName}-${idx}`}
-                          type="button"
-                          onClick={() => { setField('selectedBankIndex', idx); setBankSwitchOpen(false); }}
-                          style={{
-                            width: '100%', padding: '11px 14px', border: 'none', borderBottom: '1px solid var(--border)',
-                            background: idx === selectedBankIndex ? 'var(--primary-bg)' : 'transparent',
-                            color: 'var(--text-primary)', textAlign: 'left', cursor: 'pointer',
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontWeight: 700 }}>
-                            <span>{account.label || account.bankName || `Bank ${idx + 1}`}</span>
-                            {idx === selectedBankIndex && <span style={{ color: 'var(--primary)', fontSize: '0.72rem' }}>Selected</span>}
-                          </div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 3 }}>
-                            {[account.bankName, account.accountNumber].filter(Boolean).join(' · ')}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
+              <div>
+                <h2 className="card-title" style={{ margin: 0 }}>Banking Details</h2>
+                {bank.bankName && <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', marginTop: 3 }}>{bank.bankName}</div>}
               </div>
-            )}
+            </div>
+            <div className="flex gap-2" style={{ alignItems: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setShowBankDetails((shown) => !shown)}
+                title={showBankDetails ? 'Hide bank details' : 'Show bank details'}
+                aria-label={showBankDetails ? 'Hide bank details' : 'Show bank details'}
+              >
+                {showBankDetails ? <X size={17} /> : <Eye size={17} />}
+              </button>
+              {bankAccounts.length > 1 && (
+                <div style={{ position: 'relative' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => setBankSwitchOpen((open) => !open)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+                  >
+                    <Landmark size={13} /> Switch Account <ChevronDown size={13} />
+                  </button>
+                  {bankSwitchOpen && (
+                    <>
+                      <div onClick={() => setBankSwitchOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 39 }} />
+                      <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 6, zIndex: 40, width: 280, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: 'var(--shadow)', overflow: 'hidden' }}>
+                        {bankAccounts.map((account, idx) => (
+                          <button
+                            key={`${account.accountNumber || account.bankName}-${idx}`}
+                            type="button"
+                            onClick={() => { setField('selectedBankIndex', idx); setBankSwitchOpen(false); }}
+                            style={{
+                              width: '100%', padding: '11px 14px', border: 'none', borderBottom: '1px solid var(--border)',
+                              background: idx === selectedBankIndex ? 'var(--primary-bg)' : 'transparent',
+                              color: 'var(--text-primary)', textAlign: 'left', cursor: 'pointer',
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontWeight: 700 }}>
+                              <span>{account.label || `Bank ${idx + 1}`}</span>
+                              {idx === selectedBankIndex && <span style={{ color: 'var(--primary)', fontSize: '0.72rem' }}>Selected</span>}
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 3 }}>
+                              {[account.bankName, showBankDetails ? account.accountNumber : (account.accountNumber ? '********' : '')].filter(Boolean).join(' · ')}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           <div className="form-grid">
-            {bank.bankName && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Bank Name</div><div style={{ fontWeight: 600, marginTop: 4 }}>{bank.bankName}</div></div>}
-            {bank.accountName && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Account Name</div><div style={{ fontWeight: 600, marginTop: 4 }}>{bank.accountName}</div></div>}
-            {bank.accountNumber && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Account Number</div><div style={{ fontWeight: 600, marginTop: 4 }}>{bank.accountNumber}</div></div>}
-            {bank.ifscCode && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>IFSC</div><div style={{ fontWeight: 600, marginTop: 4 }}>{bank.ifscCode}</div></div>}
+            {bank.accountName && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Account Name</div><div style={{ fontWeight: 600, marginTop: 4 }}>{maskedBankValue(bank.accountName)}</div></div>}
+            {bank.accountNumber && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Account Number</div><div style={{ fontWeight: 600, marginTop: 4 }}>{maskedBankValue(bank.accountNumber)}</div></div>}
+            {bank.ifscCode && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>IFSC</div><div style={{ fontWeight: 600, marginTop: 4 }}>{maskedBankValue(bank.ifscCode)}</div></div>}
+            {bank.branch && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Branch</div><div style={{ fontWeight: 600, marginTop: 4 }}>{maskedBankValue(bank.branch)}</div></div>}
           </div>
         </div>
       )}
