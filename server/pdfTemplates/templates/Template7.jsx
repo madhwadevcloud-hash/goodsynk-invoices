@@ -96,7 +96,7 @@ export default function Template7({ invoice }) {
     bizText: { fontSize: headerScale.bizSubTextFontSize, color: '#444', marginBottom: 1, lineHeight: headerScale.bizSubTextLineHeight },
     boldText: { fontFamily: B, color: '#000' },
     originalText: { fontSize: 6.5, color: '#666', textTransform: 'uppercase', textAlign: 'right', marginBottom: 10, fontFamily: B },
-    topLogo: { height: headerScale.logoHeight, maxWidth: 140, objectFit: 'contain', alignSelf: 'flex-end' },
+    topLogo: { width: 36, height: 36, objectFit: 'contain', alignSelf: 'flex-end', flexShrink: 0 },
     // Meta & Info Columns
     gridRow: { flexDirection: 'row', paddingHorizontal: 40, marginBottom: 10 },
     col1: { width: '38%' },

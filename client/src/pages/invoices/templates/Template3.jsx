@@ -33,7 +33,9 @@ export default function Template3({ invoice }) {
     page: { paddingBottom: 110, fontFamily: 'Inter', color: '#000' },
 
     headerBlock: { backgroundColor: DARK_BLUE, paddingTop: 30, paddingBottom: 25, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-    headerLeft: { width: scaled.bizInfoMaxWidth },
+    headerLeft: { flexDirection: 'row', alignItems: 'center', width: scaled.bizInfoMaxWidth },
+    brandText: { flex: 1 },
+    topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizNameText: { color: '#FFF', fontFamily: B, fontSize: scaled.bizNameFontSize, textTransform: 'uppercase' },
     bizInfoText: { color: '#FFF', fontSize: scaled.bizSubTextFontSize, marginTop: 2, lineHeight: scaled.bizSubTextLineHeight, opacity: 0.85 },
     invoiceTitle: { color: '#FFF', fontFamily: B, fontSize: 26, letterSpacing: 2, marginTop: 10 },
@@ -145,12 +147,16 @@ export default function Template3({ invoice }) {
         {/* Header Block */}
         <View style={s.headerBlock}>
           <View style={s.headerLeft}>
+            {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
+            <View style={s.brandText}>
             <Text style={s.bizNameText}>{bizName}</Text>
             <Text style={s.bizInfoText}>
               {biz?.address?.street && `${biz.address.street}\n`}
               {biz?.address?.city && `${biz.address.city}, ${biz.address.state} ${biz.address.pincode || ''}\n`}
               {biz?.gstin && `GSTIN: ${biz.gstin}`}
             </Text>
+          
+            </View>
           </View>
           <View style={s.headerRight}>
             <Text style={s.invoiceTitle}>{isQuotation ? 'QUOTATION' : 'INVOICE'}</Text>

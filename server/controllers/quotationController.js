@@ -140,6 +140,7 @@ const createQuotation = async (req, res) => {
     await upsertProductsFromItems(req.user._id, items);
 
     await quotation.populate('client', 'name email phone');
+    await quotation.populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors');
     // Map quotationNumber → invoiceNumber for frontend compatibility
     const out = quotation.toObject();
     out.invoiceNumber = out.quotationNumber;
@@ -178,7 +179,9 @@ const updateQuotation = async (req, res) => {
         ...(dueDate !== undefined && { validUntil: dueDate }),
       },
       { new: true, runValidators: true }
-    ).populate('client', 'name email phone');
+    )
+      .populate('client', 'name email phone')
+      .populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors');
 
     // Automatically reflect items in products/services database
     if (items) {

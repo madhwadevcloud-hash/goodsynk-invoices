@@ -22,6 +22,8 @@ export default function PremiumTemplate({ invoice, variant }) {
     topBandMeta: { color: '#FFFFFF', fontSize: 8, textAlign: 'right', lineHeight: 1.5 },
     logo: { width: 92, height: 42, objectFit: 'contain', marginBottom: 6 },
     business: { paddingVertical: 14, flexDirection: 'row', justifyContent: 'space-between' },
+    brand: { flexDirection: 'row', alignItems: 'center' },
+    brandText: { marginLeft: 8 },
     businessName: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: theme.ink, marginBottom: 5 },
     small: { fontSize: 8, color: '#52615D', lineHeight: 1.45 },
     address: { textAlign: 'right', maxWidth: 220 },
@@ -52,10 +54,12 @@ export default function PremiumTemplate({ invoice, variant }) {
           <View><Text style={styles.topBandMeta}>{isQuotation ? 'Prepared for your approval' : 'Payment document'}</Text><Text style={styles.topBandMeta}>{invoice.invoiceNumber || invoice.quotationNumber || 'Draft'}</Text></View>
         </View>
         <View style={styles.business}>
-          <View>
+          <View style={styles.brand}>
             {biz?.businessLogo && <Image src={biz.businessLogo} style={styles.logo} />}
+            <View style={styles.brandText}>
             <Text style={styles.businessName}>{biz?.businessName || biz?.name || ''}</Text>
             {biz?.gstin && <Text style={styles.small}>GSTIN: {biz.gstin}</Text>}
+            </View>
           </View>
           <View style={styles.address}>
             {biz?.address?.street && <Text style={styles.small}>{biz.address.street}</Text>}

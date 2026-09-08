@@ -92,6 +92,9 @@ export default function Template7({ invoice }) {
     topSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 40, marginBottom: 0 },
     docTitle: { fontFamily: B, fontSize: 24, letterSpacing: 1.5, textTransform: 'uppercase', color: PRIMARY, marginBottom: 6 },
     bizName: { fontFamily: B, fontSize: headerScale.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
+    brandRow: { flexDirection: 'row', alignItems: 'center' },
+    brandText: { flex: 1 },
+    topLogoSafe: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizText: { fontSize: headerScale.bizSubTextFontSize, color: '#444', marginBottom: 1, lineHeight: headerScale.bizSubTextLineHeight },
     boldText: { fontFamily: B, color: '#000' },
     originalText: { fontSize: 6.5, color: '#666', textTransform: 'uppercase', textAlign: 'right', marginBottom: 10, fontFamily: B },
@@ -184,8 +187,11 @@ export default function Template7({ invoice }) {
         <View style={s.topSection}>
           <View style={{ width: bizInfoWidth }}>
             <Text style={s.docTitle}>{docTitle}</Text>
-            <Text style={s.bizName}>{bizName}</Text>
-            {biz?.gstin && <Text style={s.bizText}>GSTIN <Text style={s.boldText}>{biz.gstin}</Text></Text>}
+            <View style={s.brandRow}>
+              {biz?.businessLogo && <Image style={s.topLogoSafe} src={biz.businessLogo} />}
+              <View style={s.brandText}>
+                <Text style={s.bizName}>{bizName}</Text>
+                {biz?.gstin && <Text style={s.bizText}>GSTIN <Text style={s.boldText}>{biz.gstin}</Text></Text>}
             {biz?.address?.street && <Text style={s.bizText}>{biz.address.street}</Text>}
             {biz?.address?.city && (
               <Text style={s.bizText}>
@@ -199,6 +205,8 @@ export default function Template7({ invoice }) {
               </Text>
             )}
             {biz?.website && <Text style={s.bizText}><Text style={s.boldText}>Website</Text> {biz.website}</Text>}
+              </View>
+            </View>
           </View>
         </View>
 

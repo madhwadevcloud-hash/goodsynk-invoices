@@ -37,7 +37,9 @@ export default function Template5({ invoice }) {
 
     invoiceTitle: { fontFamily: B, fontSize: 24, color: BLUE, textTransform: 'uppercase', letterSpacing: 1 },
 
-    bizInfo: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8 },
+    bizInfo: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: 8 },
+    brandText: { flex: 1 },
+    topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizText: { fontSize: scaled.bizSubTextFontSize, color: '#444', textAlign: 'right', lineHeight: scaled.bizSubTextLineHeight },
     bizName: { fontSize: scaled.bizNameFontSize, fontFamily: B, color: '#000', marginBottom: 2, textAlign: 'right' },
 
@@ -150,7 +152,9 @@ export default function Template5({ invoice }) {
 
           <View style={s.headerRight}>
             <View style={s.bizInfo}>
-              <View style={{ width: '100%' }}>
+              <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center' }}>
+                {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
+                <View style={s.brandText}>
                 <Text style={s.bizName}>{bizName}</Text>
                 <Text style={s.bizText}>
                   {biz?.address?.street && `${biz.address.street}\n`}
@@ -158,6 +162,7 @@ export default function Template5({ invoice }) {
                   {biz?.email && `${biz.email}\n`}
                   {biz?.phone && `${biz.phone}`}
                 </Text>
+                </View>
               </View>
             </View>
           </View>

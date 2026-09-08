@@ -27,7 +27,7 @@ export default function DocumentTemplate({ invoice, variant }) {
     page: { padding: 34, fontSize: 9, color: '#27313B', fontFamily: 'Helvetica', backgroundColor: '#FFFFFF' },
     top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: 18, borderBottomWidth: theme.mode === 'band' ? 0 : 1, borderBottomColor: theme.accent },
     brand: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    logo: { width: 36, height: 36, objectFit: 'contain' },
+    logo: { width: 36, height: 36, objectFit: 'contain', flexShrink: 0 },
     logoFallback: { width: 36, height: 36, backgroundColor: theme.ink, color: '#FFFFFF', textAlign: 'center', paddingTop: 12, fontSize: 10, fontFamily: 'Helvetica-Bold' },
     bizName: { color: theme.ink, fontSize: 14, fontFamily: 'Helvetica-Bold' },
     muted: { color: '#66717D', marginTop: 3, lineHeight: 1.35 },

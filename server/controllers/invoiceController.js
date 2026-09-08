@@ -147,6 +147,7 @@ const createInvoice = async (req, res) => {
     await upsertProductsFromItems(req.user._id, items);
 
     await invoice.populate('client', 'name email phone');
+    await invoice.populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors');
     res.status(201).json({ success: true, invoice });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -173,7 +174,9 @@ const updateInvoice = async (req, res) => {
       { _id: req.params.id, user: req.user._id, isDeleted: { $ne: true } },
       { ...rest, ...totals, isInterstate: interstate, template: resolvedTemplate },
       { new: true, runValidators: true }
-    ).populate('client', 'name email phone');
+    )
+      .populate('client', 'name email phone')
+      .populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors');
 
     // Automatically reflect items in products/services database
     if (items) {
