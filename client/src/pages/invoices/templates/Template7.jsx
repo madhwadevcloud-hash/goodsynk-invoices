@@ -85,8 +85,6 @@ export default function Template7({ invoice }) {
   const bizInfoWidth = headerScale.bizInfoMaxWidth;
 
   const s = StyleSheet.create({
-    watermarkContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: -100 },
-    watermarkText: { fontSize: 60, fontFamily: B, color: hexToRgba(PRIMARY, 0.08), transform: 'rotate(-45deg)', letterSpacing: 5 },
     page: { paddingTop: 40, paddingBottom: 60, fontFamily: 'Inter', color: '#000' },
     container: { paddingHorizontal: 40 },
 
@@ -186,13 +184,6 @@ export default function Template7({ invoice }) {
   return (
     <Document>
       <Page size="A4" style={s.page}>
-
-        {/* Watermark */}
-        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
-          <View style={s.watermarkContainer} pointerEvents="none" fixed>
-            <Text style={s.watermarkText}>GoodSynk</Text>
-          </View>
-        )}
         <View style={s.topSection}>
           <View style={{ width: bizInfoWidth }}>
             <Text style={s.docTitle}>{docTitle}</Text>
@@ -337,7 +328,7 @@ export default function Template7({ invoice }) {
         <View style={s.footerBox} fixed>
           <View style={s.footerLeft}>
             <Text style={s.footerBrandLine}>
-              Goodsynk Invoice  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
+              Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
               <Link src="https://invoice.goodsynk.com" style={s.footerLink}>invoice.goodsynk.com</Link>
             </Text>
             <Text
@@ -349,7 +340,7 @@ export default function Template7({ invoice }) {
           </View>
           <View style={s.poweredByContainer}>
             <Text style={s.poweredByLabel}>Powered By</Text>
-            <Text style={s.poweredByValue}><Text style={{ fontSize: 8 }}>™</Text>GoodSynk</Text>
+            <Text style={s.poweredByValue}>GoodSynk</Text>
             <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
           </View>
         </View>

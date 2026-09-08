@@ -8,17 +8,6 @@ const themes = {
   invoiceTeal: { accent: '#0F766E', soft: '#CCFBF1', ink: '#123C3A', title: 'INVOICE' },
 };
 
-
-const hexToRgba = (hex, alpha) => {
-  if (!hex) return 'rgba(0, 0, 0, ' + alpha + ')';
-  let clean = hex.replace('#', '');
-  if (clean.length === 3) clean = clean.split('').map(c => c + c).join('');
-  const r = parseInt(clean.substring(0, 2), 16) || 0;
-  const g = parseInt(clean.substring(2, 4), 16) || 0;
-  const b = parseInt(clean.substring(4, 6), 16) || 0;
-  return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
-};
-
 export default function PremiumTemplate({ invoice, variant }) {
   const { client, user: biz } = invoice;
   const theme = themes[variant];
@@ -28,8 +17,6 @@ export default function PremiumTemplate({ invoice, variant }) {
   const date = (value) => value ? new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Upon receipt';
   const styles = StyleSheet.create({
     page: { padding: 38, fontFamily: 'Helvetica', color: theme.ink, backgroundColor: '#FFFFFF' },
-    watermarkContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: -100 },
-    watermarkText: { fontSize: 60, fontFamily: 'Helvetica-Bold', color: hexToRgba(theme.ink, 0.08), transform: 'rotate(-45deg)', letterSpacing: 5 },
     topBand: { backgroundColor: theme.accent, padding: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     topBandTitle: { color: '#FFFFFF', fontSize: 26, fontFamily: 'Helvetica-Bold', letterSpacing: 2 },
     topBandMeta: { color: '#FFFFFF', fontSize: 8, textAlign: 'right', lineHeight: 1.5 },
@@ -57,19 +44,12 @@ export default function PremiumTemplate({ invoice, variant }) {
   });
   return (
     <Document><Page size="A4" style={styles.page}>
-        {/* Watermark */}
-        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
-          <View style={styles.watermarkContainer} pointerEvents="none" fixed>
-            <Text style={styles.watermarkText}>GoodSynk</Text>
-          </View>
-        )}
-
       <View style={styles.topBand}><Text style={styles.topBandTitle}>{theme.title}</Text><View><Text style={styles.topBandMeta}>{isQuotation ? 'Prepared for your approval' : 'Payment document'}</Text><Text style={styles.topBandMeta}>{invoice.invoiceNumber || invoice.quotationNumber || 'Draft'}</Text></View></View>
       <View style={styles.business}><View>{biz?.businessLogo && <Image src={biz.businessLogo} style={styles.logo} />}<Text style={styles.businessName}>{biz?.businessName || biz?.name || ''}</Text>{biz?.gstin && <Text style={styles.small}>GSTIN: {biz.gstin}</Text>}</View><View style={styles.address}>{biz?.address?.street && <Text style={styles.small}>{biz.address.street}</Text>}{biz?.address?.city && <Text style={styles.small}>{biz.address.city}, {biz.address.state} {biz.address.pincode}</Text>}{biz?.phone && <Text style={styles.small}>{biz.phone}</Text>}</View></View>
       <View style={styles.infoGrid}><View style={styles.infoBlock}><Text style={styles.label}>Prepared For</Text><Text style={styles.clientName}>{client?.name || 'Client'}</Text>{client?.companyName && <Text style={styles.small}>{client.companyName}</Text>}{client?.email && <Text style={styles.small}>{client.email}</Text>}{client?.phone && <Text style={styles.small}>{client.phone}</Text>}</View><View style={styles.infoBlock}><Text style={styles.label}>Document Date</Text><Text style={styles.small}>{date(invoice.issueDate)}</Text><Text style={[styles.label, { marginTop: 9 }]}>{isQuotation ? 'Valid Until' : 'Due Date'}</Text><Text style={styles.small}>{date(invoice.dueDate)}</Text></View><View style={[styles.infoBlock, styles.infoLast]}><Text style={styles.label}>Reference</Text><Text style={styles.small}>{isQuotation ? 'Quotation' : 'Invoice'} #{invoice.invoiceNumber || invoice.quotationNumber || 'Draft'}</Text><Text style={[styles.label, { marginTop: 9 }]}>Currency</Text><Text style={styles.small}>{currency}</Text></View></View>
       <View style={styles.table}><View style={styles.head}><Text style={[styles.headCell, styles.number]}>#</Text><Text style={[styles.headCell, styles.desc]}>Description</Text><Text style={[styles.headCell, styles.qty]}>Qty</Text><Text style={[styles.headCell, styles.price]}>Unit Price</Text><Text style={[styles.headCell, styles.total]}>Amount</Text></View>{(invoice.items || []).map((item, index) => <View style={styles.row} key={index}><Text style={[styles.cell, styles.number]}>{index + 1}</Text><View style={styles.desc}><Text style={[styles.cell, { fontFamily: 'Helvetica-Bold' }]}>{item.name || 'Item'}</Text>{item.description && <Text style={[styles.small, { marginTop: 2 }]}>{item.description}</Text>}</View><Text style={[styles.cell, styles.qty]}>{item.itemType === 'Service' ? '-' : item.quantity}</Text><Text style={[styles.cell, styles.price]}>{fmt(item.price)}</Text><Text style={[styles.cell, styles.total]}>{fmt(item.total)}</Text></View>)}</View>
       <View style={styles.lower}><View style={styles.notes}><Text style={styles.label}>Notes &amp; Terms</Text><Text style={styles.small}>{invoice.notes || 'Thank you for your business.'}</Text>{invoice.termsAndConditions && <Text style={[styles.small, { marginTop: 8 }]}>{invoice.termsAndConditions}</Text>}{isQuotation && invoice.paymentInfo && <><Text style={[styles.label, { marginTop: 12 }]}>Payment Details</Text><Text style={styles.small}>{invoice.paymentInfo}</Text></>}</View><View style={styles.totals}><View style={styles.totalLine}><Text style={styles.small}>Subtotal</Text><Text style={styles.small}>{currency} {fmt(invoice.subtotal)}</Text></View>{invoice.discountAmount > 0 && <View style={styles.totalLine}><Text style={styles.small}>Discount</Text><Text style={styles.small}>- {fmt(invoice.discountAmount)}</Text></View>}{invoice.taxTotal > 0 && <View style={styles.totalLine}><Text style={styles.small}>Tax</Text><Text style={styles.small}>{fmt(invoice.taxTotal)}</Text></View>}<View style={[styles.totalLine, styles.grand]}><Text>Total</Text><Text>{currency} {fmt(invoice.total)}</Text></View></View></View>
-      <View style={styles.footer} fixed><Text style={styles.small}>Powered by <Text style={{ fontSize: 8 }}>™</Text>Goodsynk Invoices</Text><View style={styles.signature}>{biz?.businessSignature && <Image src={biz.businessSignature} style={{ height: 28, objectFit: 'contain' }} />}<Text style={styles.small}>Authorised signature</Text></View></View>
+      <View style={styles.footer} fixed><Text style={styles.small}>Generated with Goodsynk Invoices</Text><View style={styles.signature}>{biz?.businessSignature && <Image src={biz.businessSignature} style={{ height: 28, objectFit: 'contain' }} />}<Text style={styles.small}>Authorised signature</Text></View></View>
     </Page></Document>
   );
 }

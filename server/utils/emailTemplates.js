@@ -1,6 +1,6 @@
-const APP_NAME = 'Goodsynk Invoice';
-const BRAND_LINE = 'Goodsynk Invoice | Simple Invoicing, Billing & Quotations | Visit invoice.goodsynk.com';
-const TRUST_LINE = 'Generated securely by Goodsynk Invoice. This is a digitally signed document.';
+const APP_NAME = 'Goodsynk Billing';
+const BRAND_LINE = 'Goodsynk Billing | Simple Invoicing, Billing & Quotations | Visit invoice.goodsynk.com';
+const TRUST_LINE = 'Generated securely by Goodsynk Billing. This is a digitally signed document.';
 
 const CURRENCY_SYMBOLS = { INR: '₹', USD: '$', EUR: '€', GBP: '£', AED: 'د.إ', SGD: 'S$' };
 
@@ -25,7 +25,7 @@ const buildDocumentEmailHTML = ({
       '*** DISCLAIMER ***',
       'This is an automated email sent from',
       'Powered by Goodsynk',
-      'Goodsynk Invoice |',
+      'Goodsynk Billing |',
       'Generated securely by Goodsynk'
     ];
     for (const marker of stripMarkers) {

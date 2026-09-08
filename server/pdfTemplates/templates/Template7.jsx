@@ -86,8 +86,6 @@ export default function Template7({ invoice }) {
   const bizLogoWidth = `${100 - parseFloat(bizInfoWidth)}%`;
 
   const s = StyleSheet.create({
-    watermarkContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: -100 },
-    watermarkText: { fontSize: 60, fontFamily: B, color: hexToRgba(PRIMARY, 0.08), transform: 'rotate(-45deg)', letterSpacing: 5 },
     page: { paddingTop: 40, paddingBottom: 60, fontFamily: 'Inter', color: '#000' },
     container: { paddingHorizontal: 40 },
 
@@ -181,13 +179,6 @@ export default function Template7({ invoice }) {
   return (
     <Document>
       <Page size="A4" style={s.page}>
-
-        {/* Watermark */}
-        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
-          <View style={s.watermarkContainer} pointerEvents="none" fixed>
-            <Text style={s.watermarkText}>GoodSynk</Text>
-          </View>
-        )}
         <View style={s.topSection}>
           <View style={{ width: bizInfoWidth }}>
             <Text style={s.docTitle}>{docTitle}</Text>
@@ -335,7 +326,7 @@ export default function Template7({ invoice }) {
             {biz?.email && <Text>E: {biz.email}</Text>}
             {(biz?.phone || biz?.email) && <Text style={s.footerDot}> • </Text>}
             
-            Powered By <Text style={s.footerBold}><Text style={{ fontSize: 8 }}>™</Text>GoodSynk</Text>
+            Powered By <Text style={s.footerBold}>GoodSynk</Text>
             <Text style={s.footerDot}> • </Text>
             <Link src="https://invoice.goodsynk.com" style={s.footerLink}>invoice.goodsynk.com</Link>
             
