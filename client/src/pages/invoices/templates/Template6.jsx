@@ -155,7 +155,7 @@ export default function Template6({ invoice }) {
     <Document>
       <Page size="A4" style={s.page}>
         {/* Watermark */}
-        {biz?.plan !== 'premium' && (
+        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
           <View style={s.watermarkContainer} fixed pointerEvents="none">
             <Text style={s.watermarkText}>GoodSynk</Text>
           </View>
@@ -318,11 +318,11 @@ export default function Template6({ invoice }) {
           )}
           <View style={s.footerDivider} />
           <Text style={s.footerBrandLine}>
-            Goodsynk Billing  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
+            Goodsynk Invoice  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
             <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
           </Text>
           <Text style={s.footerTrustLine}>
-            Generated securely by Goodsynk Billing. This is a digitally signed document.
+            Generated securely by Goodsynk Invoice. This is a digitally signed document.
           </Text>
         </View>
 
@@ -337,7 +337,7 @@ export default function Template6({ invoice }) {
         {/* Powered By + Tagline, sitting inside the orange corner of the decor */}
         <View style={s.poweredByOnOrange} fixed>
           <Text style={s.poweredByLabelOnOrange}>Powered By</Text>
-          <Text style={s.poweredByValueOnOrange}>GoodSynk</Text>
+          <Text style={s.poweredByValueOnOrange}><Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text>GoodSynk</Text>
           <Text style={s.footerTaglineOnOrange}>Invoice Banega, Payment Badega.</Text>
         </View>
 

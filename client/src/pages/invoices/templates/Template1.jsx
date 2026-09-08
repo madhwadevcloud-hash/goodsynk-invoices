@@ -35,10 +35,10 @@ export default function Template1({ invoice }) {
     topSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 40, marginBottom: 10 },
     headerText: { fontFamily: B, fontSize: 32, letterSpacing: 2, textTransform: 'uppercase', color: PRIMARY, marginTop: 10 },
 
-    bizInfoTop: { flexDirection: 'row', alignItems: 'center', maxWidth: scaled.bizInfoMaxWidth },
+    bizInfoTop: { flexDirection: 'row', alignItems: 'flex-start', maxWidth: scaled.bizInfoMaxWidth },
     brandText: { flex: 1 },
     topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
-    bizNameTop: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
+    bizNameTop: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 4, textAlign: 'right' },
     bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight, textAlign: 'right' },
 
     blueBar: { backgroundColor: PRIMARY, height: 12, width: '100%', marginBottom: 10 },
@@ -129,7 +129,7 @@ export default function Template1({ invoice }) {
     <Document>
       <Page size="A4" style={s.page}>
         {/* Watermark */}
-        {biz?.plan !== 'premium' && (
+        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
           <View style={s.watermarkContainer} pointerEvents="none" fixed>
             <Text style={s.watermarkText}>GoodSynk</Text>
           </View>
@@ -149,7 +149,7 @@ export default function Template1({ invoice }) {
                 {biz.address.city}, {biz.address.state} {biz.address.pincode}
               </Text>
             )}
-            {biz?.gstin && <Text style={[s.bizSubText, { color: PRIMARY, fontFamily: B }]}>GSTIN: {biz.gstin}</Text>}
+            {biz?.gstin && <Text style={[s.bizSubText, { color: PRIMARY, fontFamily: B, marginTop: 4 }]}>GSTIN: {biz.gstin}</Text>}
           
             </View>
           </View>
@@ -287,7 +287,7 @@ export default function Template1({ invoice }) {
           <View style={s.footerCenter}>
             <View style={s.poweredByContainer}>
               <Text style={s.poweredByLabel}>Powered By</Text>
-              <Text style={s.poweredByValue}>GoodSynk</Text>
+              <Text style={s.poweredByValue}><Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text>GoodSynk</Text>
             </View>
             <Text style={s.footerTagline}>Simple Invoicing, Billing & Quotations</Text>
             <Text style={[s.footerTagline, { marginTop: 3 }]}>Invoice Banega, Payment Badega.</Text>
@@ -295,7 +295,7 @@ export default function Template1({ invoice }) {
           {/* Right — Trust */}
           <View style={s.footerRight}>
             <Text style={s.footerTrustLine}>Generated securely by</Text>
-            <Text style={s.footerTrustLine}>Goodsynk Billing.</Text>
+            <Text style={s.footerTrustLine}>Goodsynk Invoice.</Text>
             <Text style={[s.footerTrustLine, { marginTop: 3 }]}>
               <Link style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
             </Text>

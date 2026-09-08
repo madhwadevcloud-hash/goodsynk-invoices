@@ -129,7 +129,7 @@ export default function Template2({ invoice }) {
     <Document>
       <Page size="A4" style={s.page}>
         {/* Watermark */}
-        {biz?.plan !== 'premium' && (
+        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
           <View style={s.watermarkContainer} pointerEvents="none" fixed>
             <Text style={s.watermarkText}>GoodSynk</Text>
           </View>
@@ -269,7 +269,7 @@ export default function Template2({ invoice }) {
         {/* Footer: Split Asymmetric */}
         <View style={s.footerBox} fixed>
           <View style={s.footerLeft}>
-            <Text style={s.footerTitle}>GoodSynk Billing</Text>
+            <Text style={s.footerTitle}>GoodSynk Invoice</Text>
             <Text style={s.footerText}>Simple Invoicing & Quotations</Text>
             <Text style={s.footerText}>Generated securely • Digitally signed document</Text>
             <Link style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
@@ -280,7 +280,7 @@ export default function Template2({ invoice }) {
             {biz?.email && <Text style={s.footerText}>E: {biz.email}</Text>}
             <View style={s.poweredByContainer}>
               <Text style={s.poweredByLabel}>Powered By</Text>
-              <Text style={s.poweredByValue}>GoodSynk</Text>
+              <Text style={s.poweredByValue}><Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text>GoodSynk</Text>
             </View>
           </View>
         </View>
