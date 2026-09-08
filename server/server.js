@@ -29,7 +29,7 @@ app.use(
       'http://localhost:5175',
       'http://localhost:5176',
       'https://goodsynk-invoices-1.onrender.com',
-      'https://invoice.goodynk.com'
+      'https://invoice.goodsynk.com'
     ],
     credentials: true,
   })
