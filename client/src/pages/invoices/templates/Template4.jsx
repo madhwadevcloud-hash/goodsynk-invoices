@@ -130,7 +130,7 @@ export default function Template4({ invoice }) {
     <Document>
       <Page size="A4" style={s.page}>
         {/* Watermark */}
-        {biz?.plan !== 'premium' && (
+        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
           <View style={s.watermarkContainer} fixed pointerEvents="none">
             <Text style={s.watermarkText}>GoodSynk</Text>
           </View>
@@ -292,16 +292,16 @@ export default function Template4({ invoice }) {
           {/* Row 2: Brand left + Trust right */}
           <View style={s.footerBrandRow}>
             <View style={s.footerBrandLeft}>
-              <Text style={s.footerBrandLine}>Goodsynk Billing</Text>
+              <Text style={s.footerBrandLine}>Goodsynk Invoice</Text>
               <Text style={s.footerTagline}>Simple Invoicing, Billing & Quotations</Text>
               <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
             </View>
             <View style={s.poweredByContainer}>
               <Text style={s.poweredByLabel}>Powered By</Text>
-              <Text style={s.poweredByValue}>GoodSynk</Text>
+              <Text style={s.poweredByValue}><Text style={{ fontSize: 8 }}>™</Text>GoodSynk</Text>
             </View>
             <View style={s.footerBrandRight}>
-              <Text style={s.footerTrustLine}>Generated securely by Goodsynk Billing.</Text>
+              <Text style={s.footerTrustLine}>Generated securely by Goodsynk Invoice.</Text>
               <Text style={s.footerTrustLine}>This is a digitally signed document.</Text>
               <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
             </View>

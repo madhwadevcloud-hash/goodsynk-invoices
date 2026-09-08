@@ -28,6 +28,8 @@ export default function Template10({ invoice }) {
   const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
+    watermarkContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: -100 },
+    watermarkText: { fontSize: 60, fontFamily: B, color: hexToRgba(PRIMARY, 0.08), transform: 'rotate(-45deg)', letterSpacing: 5 },
     page: { paddingTop: 40, paddingBottom: 60, paddingHorizontal: 40, fontFamily: 'Inter', color: '#1F2937' },
     
     // Top Bar (No background block)
@@ -117,6 +119,13 @@ export default function Template10({ invoice }) {
   return (
     <Document>
       <Page size="A4" style={s.page}>
+
+        {/* Watermark */}
+        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
+          <View style={s.watermarkContainer} pointerEvents="none" fixed>
+            <Text style={s.watermarkText}>GoodSynk</Text>
+          </View>
+        )}
         
         <View style={s.topFlex}>
           <View style={s.bizBox}>
@@ -257,7 +266,7 @@ export default function Template10({ invoice }) {
 
         <View style={s.footer} fixed>
           <Text style={s.footerText}>
-            {bizName} | Powered by <Link style={s.footerLink} src="https://invoice.goodsynk.com">GoodSynk</Link>
+            {bizName} | Powered by <Text style={{ fontSize: 8 }}>™</Text><Link style={s.footerLink} src="https://invoice.goodsynk.com">GoodSynk</Link>
           </Text>
         </View>
       </Page>
