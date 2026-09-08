@@ -22,6 +22,8 @@ export default function PremiumTemplate({ invoice, variant }) {
     topBandMeta: { color: '#FFFFFF', fontSize: 8, textAlign: 'right', lineHeight: 1.5 },
     logo: { width: 92, height: 42, objectFit: 'contain', marginBottom: 6 },
     business: { paddingVertical: 14, flexDirection: 'row', justifyContent: 'space-between' },
+    brand: { flexDirection: 'row', alignItems: 'center' },
+    brandText: { marginLeft: 8 },
     businessName: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: theme.ink, marginBottom: 5 },
     small: { fontSize: 8, color: '#52615D', lineHeight: 1.45 },
     address: { textAlign: 'right', maxWidth: 220 },

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="595" height="842" viewBox="0 0 595 842">
 <rect width="595" height="842" fill="#fff"/>
-<g transform="translate(55 28)"><rect width="30" height="30" rx="5" fill="#111"/><path d="M7 20h16M10 16l5-7 5 7" fill="none" stroke="#fff" stroke-width="2"/><text x="42" y="20" font-family="Arial" font-size="13" font-weight="700">ABC SOLUTIONS PVT. LTD.</text></g>
+<g transform="translate(55 28)"></g>
 <text x="55" y="92" font-family="Arial" font-size="29" font-weight="700" letter-spacing="5">INVOICE</text><line x1="55" y1="112" x2="540" y2="112" stroke="#111" stroke-width="3"/>
 <text x="55" y="145" font-family="Arial" font-size="10" font-weight="700">BUSINESS DETAILS</text><text x="55" y="163" font-family="Arial" font-size="9">123, MG Road</text><text x="55" y="178" font-family="Arial" font-size="9">Bengaluru, Karnataka 560001</text><text x="55" y="193" font-family="Arial" font-size="9">Phone: 0000000000  |  Email: testuser@example.com</text><text x="55" y="208" font-family="Arial" font-size="9" font-weight="700">GSTIN: 29CXXXX1234F1Z5</text>
 <text x="380" y="145" font-family="Arial" font-size="9">INVOICE NO: <tspan font-weight="700">INV-0011</tspan></text><text x="380" y="162" font-family="Arial" font-size="9">DATE: <tspan font-weight="700">7/16/2026</tspan></text><text x="380" y="179" font-family="Arial" font-size="9">DUE DATE: <tspan font-weight="700">7/19/2026</tspan></text><line x1="55" y1="230" x2="540" y2="230" stroke="#111"/>

@@ -36,7 +36,9 @@ export default function Template6({ invoice }) {
     headerContainer: { height: 160, position: 'relative' },
     headerContent: { position: 'absolute', top: 0, left: 0, right: 0, height: 160, flexDirection: 'row', paddingTop: 30, paddingHorizontal: 40 },
 
-    headerLeft: { width: '30%', paddingTop: 0 },
+    headerLeft: { width: '30%', paddingTop: 0, flexDirection: 'row', alignItems: 'center' },
+    brandText: { flex: 1 },
+    topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizNameHeader: { fontSize: scaled.bizNameFontSize + 2, fontFamily: B, color: '#FFF', textTransform: 'uppercase', marginBottom: 2 },
     bizSubTextHeader: { fontSize: scaled.bizSubTextFontSize, color: '#ffffffff', lineHeight: scaled.bizSubTextLineHeight },
 
@@ -171,12 +173,15 @@ export default function Template6({ invoice }) {
 
           <View style={s.headerContent}>
             <View style={s.headerLeft}>
+              {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
+              <View style={s.brandText}>
               <Text style={s.bizNameHeader}>{bizName}</Text>
               <Text style={s.bizSubTextHeader}>
                 {biz?.address?.street && `${biz.address.street}\n`}
                 {biz?.address?.city && `${biz.address.city}, ${biz.address.state} ${biz.address.pincode || ''}\n`}
                 {biz?.gstin && `GSTIN: ${biz.gstin}`}
               </Text>
+              </View>
             </View>
 
             <View style={s.headerRight}>

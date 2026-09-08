@@ -15,8 +15,9 @@ export default function Template8({ invoice }) {
     
     // Header Layout: Split left/right with massive typography on the right
     headerWrap: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 40 },
-    bizLeft: { width: '50%' },
-    topLogo: { height: scaled.logoHeight, maxWidth: 160, objectFit: 'contain', marginBottom: 12 },
+    bizLeft: { width: '50%', flexDirection: 'row', alignItems: 'flex-start' },
+    brandText: { flex: 1 },
+    topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizName: { fontFamily: B, fontSize: 16, color: '#000', textTransform: 'uppercase', marginBottom: 6, letterSpacing: 2 },
     bizText: { fontSize: 8.5, color: '#444', lineHeight: 1.5 },
     
@@ -104,12 +105,14 @@ export default function Template8({ invoice }) {
         <View style={s.headerWrap}>
           <View style={s.bizLeft}>
             {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
+            <View style={s.brandText}>
             <Text style={s.bizName}>{bizName}</Text>
             {biz?.address?.street && <Text style={s.bizText}>{biz.address.street}</Text>}
             {biz?.address?.city && <Text style={s.bizText}>{biz.address.city}, {biz.address.state} {biz.address.pincode}</Text>}
             {biz?.phone && <Text style={s.bizText}>P: {biz.phone}</Text>}
             {biz?.email && <Text style={s.bizText}>E: {biz.email}</Text>}
             {biz?.gstin && <Text style={[s.bizText, { marginTop: 6, fontFamily: B }]}>GSTIN: {biz.gstin}</Text>}
+            </View>
           </View>
           
           <View style={s.docRight}>

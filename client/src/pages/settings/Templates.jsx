@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../api/services';
 import toast from 'react-hot-toast';
 import { Palette, CheckCircle2, X, Lock } from 'lucide-react';
+import TemplatePreview from '../../components/TemplatePreview';
 const TEMPLATES = [
   { id: 'template1', name: 'Classic Blue', desc: 'A clean, universally trusted design with blue accents.', img: '/templates/t1.png' },
   { id: 'template2', name: 'Minimalist Monochrome', desc: 'Elegant black and white. Perfect for ultra-clean printing.', img: '/templates/t2.png' },
@@ -61,6 +62,12 @@ export default function Templates() {
   const [saving, setSaving] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState(null);
   const handleOpenPreview = (tmpl) => {
+    const isFreePlan = !user?.plan || String(user.plan).toLowerCase() === 'free';
+    if (!FREE_TEMPLATES.includes(tmpl.id) && isFreePlan) {
+      toast('Upgrade your plan to unlock this template', { icon: '🔒' });
+      navigate('/upgrade');
+      return;
+    }
     setPreviewTemplate(tmpl);
     const selectedTemplate = documentType === 'quotation' ? user?.quotationTemplate : user?.invoiceTemplate;
     const selectedColors = documentType === 'quotation' ? user?.quotationTemplateColors : user?.invoiceTemplateColors;
@@ -71,7 +78,8 @@ export default function Templates() {
     }
   };
   const selectTemplate = async (templateId) => {
-    if (!FREE_TEMPLATES.includes(templateId)) {
+    const isFreePlan = !user?.plan || String(user.plan).toLowerCase() === 'free';
+    if (!FREE_TEMPLATES.includes(templateId) && isFreePlan) {
       toast('Upgrade your plan to unlock this template', {
         icon: '🔒',
       });
@@ -113,7 +121,8 @@ export default function Templates() {
       }}>
         {TEMPLATES.filter((tmpl) => !tmpl.type || tmpl.type === documentType).map((tmpl) => {
           const isActive = activeTemplate === tmpl.id;
-          const isLocked = !FREE_TEMPLATES.includes(tmpl.id);
+          const isFreePlan = !user?.plan || String(user.plan).toLowerCase() === 'free';
+          const isLocked = !FREE_TEMPLATES.includes(tmpl.id) && isFreePlan;
           const previewSrc = documentType === 'quotation' ? (QUOTATION_PREVIEWS[tmpl.id] || tmpl.img) : tmpl.img;
           return (
             <div
@@ -151,7 +160,14 @@ export default function Templates() {
                 overflow: 'hidden',
                 border: 'none'
               }}>
-                <img src={previewSrc} alt={tmpl.name} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', background: '#fff' }} />
+                <TemplatePreview
+                  src={previewSrc}
+                  templateId={tmpl.id}
+                  logo={user?.businessLogo}
+                  alt={tmpl.name}
+                  style={{ height: '100%' }}
+                  imageStyle={{ height: '100%' }}
+                />
                 {isLocked && (
                   <div
                     style={{
@@ -219,7 +235,16 @@ export default function Templates() {
             <div style={{ flex: 1, overflow: 'auto', padding: '24px', backgroundColor: 'var(--bg-elevated)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
               <div style={{ position: 'relative', width: '100%', maxWidth: '500px' }}>
                 <div style={{ position: 'relative' }}>
-                  <img src={documentType === 'quotation' ? (QUOTATION_PREVIEWS[previewTemplate.id] || previewTemplate.img) : previewTemplate.img} alt={previewTemplate.name} style={{ height: 'auto', width: '100%', objectFit: 'contain', boxShadow: 'var(--shadow-lg)', borderRadius: '8px', display: 'block' }} />
+                  
+                  <TemplatePreview
+                    src={documentType === 'quotation' ? (QUOTATION_PREVIEWS[previewTemplate.id] || previewTemplate.img) : previewTemplate.img}
+                    templateId={previewTemplate.id}
+                    logo={user?.businessLogo}
+                    alt={previewTemplate.name}
+                    style={{ width: '100%', boxShadow: 'var(--shadow-lg)', borderRadius: '8px' }}
+                    imageStyle={{ height: 'auto' }}
+                  />
+
                 </div>
               </div>
               {/* Color Customization UI */}

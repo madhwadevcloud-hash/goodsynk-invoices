@@ -4,6 +4,7 @@ import { invoiceAPI, clientAPI, productAPI, quotationAPI } from '../../api/servi
 import toast from 'react-hot-toast';
 import { Plus, Trash2, Save, Download, Loader2, X, ChevronDown, Percent, Tag, Lock, Landmark, ArrowLeft, Eye } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import TemplatePreview from '../../components/TemplatePreview';
 
 const defaultItem = () => ({
   productId: null, itemType: 'Product', name: '', description: '', hsn: '', quantity: 1, unit: 'pcs',
@@ -96,6 +97,10 @@ export default function InvoiceForm() {
   const docLabel = isQuotation ? 'Quotation' : 'Invoice';
   const basePath = isQuotation ? '/quotations' : '/invoices';
   const docAPI = isQuotation ? quotationAPI : invoiceAPI;
+  const DRAFT_KEY = isQuotation ? 'draft_quotation' : 'draft_invoice';
+  const DRAFT_CLIENT_QUERY_KEY = isQuotation ? 'draft_quotation_clientQuery' : 'draft_invoice_clientQuery';
+  const DRAFT_DISCOUNT_KEY = isQuotation ? 'draft_quotation_discountConfig' : 'draft_invoice_discountConfig';
+
 
   const [clients, setClients] = useState([]);
   const [products, setProducts] = useState([]);
@@ -112,7 +117,7 @@ export default function InvoiceForm() {
   const [newItemType, setNewItemType] = useState(null);
   const [newItemDraft, setNewItemDraft] = useState(defaultItem());
   const [newItemDiscMode, setNewItemDiscMode] = useState('percent');
-  const [newItemDiscValue, setNewItemDiscValue] = useState('');
+  const [newItemDiscValue, setNewItemDiscValue] = useState('0');
   const [previewTemplate, setPreviewTemplate] = useState(null);
   const [showBankDetails, setShowBankDetails] = useState(false);
 
@@ -126,7 +131,14 @@ export default function InvoiceForm() {
   const [bankSwitchOpen, setBankSwitchOpen] = useState(false);
 
   // ── Client search-select state
-  const [clientQuery, setClientQuery] = useState('');
+  const [clientQuery, setClientQuery] = useState(() => {
+    if (!isEdit) {
+      try {
+        return localStorage.getItem(isQuotation ? 'draft_quotation_clientQuery' : 'draft_invoice_clientQuery') || '';
+      } catch (err) { /* localStorage unavailable — fall back to empty */ }
+    }
+    return '';
+  });
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
 
   // ── Product typeahead state (per line item, keyed by index)
@@ -206,9 +218,15 @@ export default function InvoiceForm() {
 
   // ── Configure Discount modal state
   const [discModal, setDiscModal] = useState(false);
-  const [discConfig, setDiscConfig] = useState({
-    mode: 'item', // 'item' | 'overall'
-    lines: [{ name: 'Discount', type: 'percent', value: 0 }],
+  const [discConfig, setDiscConfig] = useState(() => {
+    const fallback = { mode: 'item', lines: [{ name: 'Discount', type: 'percent', value: 0 }] };
+    if (isEdit) return fallback;
+    try {
+      const saved = localStorage.getItem(DRAFT_DISCOUNT_KEY);
+      return saved ? JSON.parse(saved) : fallback;
+    } catch (err) {
+      return fallback;
+    }
   });
   const [discDraft, setDiscDraft] = useState(discConfig);
 
@@ -240,7 +258,7 @@ export default function InvoiceForm() {
     setTaxModal(false);
   };
 
-  const [form, setForm] = useState({
+  const createBlankForm = () => ({
     client: '',
     invoiceType: docType,
     invoiceNumber: '',
@@ -255,9 +273,89 @@ export default function InvoiceForm() {
     selectedBankIndex: 0,
     paymentInfo: '',
     template: '',
-    templateColors: null, // { primary, secondary }
+    templateColors: null,
     items: [],
   });
+
+  const draftKeyRef = useRef(DRAFT_KEY);
+  const draftClientQueryKeyRef = useRef(DRAFT_CLIENT_QUERY_KEY);
+  const draftDiscountKeyRef = useRef(DRAFT_DISCOUNT_KEY);
+
+  const [form, setForm] = useState(() => {
+    if (location.state?.formDraft) return location.state.formDraft;
+    if (!isEdit) {
+      try {
+        const saved = localStorage.getItem(DRAFT_KEY);
+        if (saved) return JSON.parse(saved);
+      } catch (err) {}
+    }
+    return createBlankForm();
+  });
+
+
+  // Invoice and quotation forms share this component, so React can keep the
+  // component mounted while the route changes. Restore the correct draft when
+  // switching document types instead of carrying the previous form across.
+  useEffect(() => {
+    if (isEdit || location.state?.formDraft || location.state?.newClientId) return;
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      setForm(saved ? JSON.parse(saved) : createBlankForm());
+      setClientQuery(localStorage.getItem(DRAFT_CLIENT_QUERY_KEY) || '');
+    } catch (err) {
+      setForm(createBlankForm());
+      setClientQuery('');
+    }
+  }, [isQuotation]);
+
+  useEffect(() => {
+    if (isEdit) return;
+    try {
+      const saved = localStorage.getItem(DRAFT_DISCOUNT_KEY);
+      setDiscConfig(saved ? JSON.parse(saved) : { mode: 'item', lines: [{ name: 'Discount', type: 'percent', value: 0 }] });
+    } catch (err) {
+      setDiscConfig({ mode: 'item', lines: [{ name: 'Discount', type: 'percent', value: 0 }] });
+    }
+  }, [isQuotation]);
+
+  useEffect(() => {
+    if (draftDiscountKeyRef.current !== DRAFT_DISCOUNT_KEY) {
+      draftDiscountKeyRef.current = DRAFT_DISCOUNT_KEY;
+      return;
+    }
+    if (!isEdit) {
+      try {
+        localStorage.setItem(DRAFT_DISCOUNT_KEY, JSON.stringify(discConfig));
+      } catch (err) { /* localStorage unavailable/full — discount draft simply won't persist */ }
+    }
+  }, [discConfig, isEdit, DRAFT_DISCOUNT_KEY]);
+
+  useEffect(() => {
+    if (draftKeyRef.current !== DRAFT_KEY) {
+      draftKeyRef.current = DRAFT_KEY;
+      return;
+    }
+    if (!isEdit && form) {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+      } catch (err) { /* localStorage unavailable/full — draft simply won't persist */ }
+    }
+  }, [form, isEdit, DRAFT_KEY]);
+
+  // Keep the client search-box text in sync with the draft so it isn't left
+  // blank (while form.client still holds the real id) after navigating away
+  // and back to an in-progress "new invoice"/"new quotation" form.
+  useEffect(() => {
+    if (draftClientQueryKeyRef.current !== DRAFT_CLIENT_QUERY_KEY) {
+      draftClientQueryKeyRef.current = DRAFT_CLIENT_QUERY_KEY;
+      return;
+    }
+    if (!isEdit) {
+      try {
+        localStorage.setItem(DRAFT_CLIENT_QUERY_KEY, clientQuery || '');
+      } catch (err) { /* localStorage unavailable/full — ignore */ }
+    }
+  }, [clientQuery, isEdit, DRAFT_CLIENT_QUERY_KEY]);
 
   useEffect(() => {
     setCheckingLimit(true);
@@ -315,16 +413,22 @@ export default function InvoiceForm() {
       }).catch(() => toast.error('Failed to load invoice'))
         .finally(() => setLoading(false));
     } else if (currentUser) {
-      const tptKey = ((isQuotation ? currentUser.quotationTemplate : currentUser.invoiceTemplate) || 'template1').toLowerCase();
-      setForm(f => ({
-        ...f,
-        template: (isQuotation ? currentUser.quotationTemplate : currentUser.invoiceTemplate) || 'template1',
-        templateColors: resolveTemplateColors(
-          tptKey,
-          isQuotation ? currentUser.quotationTemplateColors : currentUser.invoiceTemplateColors
-        ),
-        currency: currentUser.currency || 'INR',
-      }));
+      // Only fill in the account's default template/colors/currency when the
+      // form doesn't already have a value — this preserves a restored draft's
+      // choices instead of clobbering them every time this effect re-runs.
+      setForm(f => {
+        const resolvedTemplate = f.template || (isQuotation ? currentUser.quotationTemplate : currentUser.invoiceTemplate) || 'template1';
+        const tptKey = resolvedTemplate.toLowerCase();
+        return {
+          ...f,
+          template: resolvedTemplate,
+          templateColors: f.templateColors || resolveTemplateColors(
+            tptKey,
+            isQuotation ? currentUser.quotationTemplateColors : currentUser.invoiceTemplateColors
+          ),
+          currency: f.currency || currentUser.currency || 'INR',
+        };
+      });
       setLoading(false);
     } else {
       setLoading(false);
@@ -393,6 +497,7 @@ export default function InvoiceForm() {
 
   const openNewItemPanel = (type) => {
     setNewItemType(type);
+    setNewItemDiscValue('0');
     setNewItemDraft({ ...defaultItem(), itemType: type, unit: type === 'Service' ? 'hr' : 'pcs' });
     setAddItemMenuOpen(false);
   };
@@ -413,7 +518,7 @@ export default function InvoiceForm() {
     setNewItemType(null);
     setNewItemDraft(defaultItem());
     setNewItemDiscMode('percent');
-    setNewItemDiscValue('');
+    setNewItemDiscValue('0');
     toast.success(`${newItemType} added`);
   };
 
@@ -564,6 +669,11 @@ export default function InvoiceForm() {
         toast.success(`${docLabel} saved & downloaded!`);
       }
 
+      if (!isEdit) {
+        localStorage.removeItem(DRAFT_KEY);
+        localStorage.removeItem(DRAFT_CLIENT_QUERY_KEY);
+        localStorage.removeItem(DRAFT_DISCOUNT_KEY);
+      }
       navigate(`${basePath}/${savedInvoice._id}`);
     } catch (err) {
       if (err.response?.status === 403 && err.response?.data?.code === 'PLAN_LIMIT_DOCUMENTS') {
@@ -933,7 +1043,7 @@ export default function InvoiceForm() {
                   <input
                     type="number"
                     className="form-control"
-                    placeholder="0"
+                    placeholder="Discount"
                     style={{ flex: 1, borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
                     value={newItemDiscValue}
                     min={0}
@@ -1412,12 +1522,18 @@ export default function InvoiceForm() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '10px', marginTop: 8 }}>
                 {TEMPLATES.map((t) => {
                   const isSelected = (form.template || '') === t.id;
-                  const isLocked = Boolean(t.id) && !FREE_TEMPLATES.includes(t.id);
+                  const isFreePlan = !currentUser?.plan || String(currentUser.plan).toLowerCase() === 'free';
+                  const isLocked = Boolean(t.id) && !FREE_TEMPLATES.includes(t.id) && isFreePlan;
                   return (
                     <button
                       key={t.id}
                       type="button"
                       onClick={() => {
+                        if (isLocked) {
+                          toast('Upgrade your plan to unlock this template', { icon: '🔒' });
+                          navigate('/upgrade');
+                          return;
+                        }
                         setPreviewTemplate(t);
                       }}
                       style={{
@@ -1434,7 +1550,14 @@ export default function InvoiceForm() {
                       }}
                     >
                       <div style={{ position: 'relative' }}>
-                        <img src={t.img} alt={t.name} style={{ width: '100%', aspectRatio: '5/7', objectFit: 'contain', display: 'block', background: '#fff' }} onError={(e) => { e.target.style.display = 'none'; }} />
+                        <TemplatePreview
+                          src={t.img}
+                          templateId={t.id || defaultKey}
+                          logo={currentUser?.businessLogo}
+                          alt={t.name}
+                          style={{ aspectRatio: '5/7' }}
+                          imageStyle={{ aspectRatio: '5/7' }}
+                        />
                         {t.id === '' && (
                           <span style={{
                             position: 'absolute', top: 4, left: 4,
@@ -1518,10 +1641,13 @@ export default function InvoiceForm() {
                 </button>
                 <h3 style={{ margin: 0, paddingRight: 48, fontSize: '1.2rem' }}>{previewTemplate.name}</h3>
                 <div style={{ flex: 1, minHeight: 0, overflow: 'auto', background: 'var(--bg-elevated)', borderRadius: 8, padding: 16 }}>
-                  <img
+                  <TemplatePreview
                     src={previewTemplate.img}
+                    templateId={(previewTemplate.id || ((isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) || 'template1')).toLowerCase()}
+                    logo={currentUser?.businessLogo}
                     alt={previewTemplate.name}
-                    style={{ display: 'block', width: '900px', maxWidth: 'none', height: 'auto', margin: '0 auto', background: '#fff', borderRadius: 8, boxShadow: 'var(--shadow-lg)' }}
+                    style={{ width: '900px', maxWidth: 'none', height: 'auto', margin: '0 auto', borderRadius: 8, boxShadow: 'var(--shadow-lg)' }}
+                    imageStyle={{ height: 'auto' }}
                   />
                 </div>
                 <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
@@ -1530,7 +1656,7 @@ export default function InvoiceForm() {
                     type="button"
                     className="btn btn-primary"
                     onClick={() => {
-                      if (previewTemplate.id && !FREE_TEMPLATES.includes(previewTemplate.id)) {
+                      if (previewTemplate.id && !FREE_TEMPLATES.includes(previewTemplate.id) && (!currentUser?.plan || String(currentUser.plan).toLowerCase() === 'free')) {
                         toast('Upgrade your plan to unlock this template', { icon: '🔒' });
                         navigate('/upgrade');
                         return;
@@ -1540,7 +1666,7 @@ export default function InvoiceForm() {
                       setPreviewTemplate(null);
                     }}
                   >
-                    {previewTemplate.id && !FREE_TEMPLATES.includes(previewTemplate.id) ? 'Upgrade to Use' : 'Use This Template'}
+                    {previewTemplate.id && !FREE_TEMPLATES.includes(previewTemplate.id) && (!currentUser?.plan || String(currentUser.plan).toLowerCase() === 'free') ? 'Upgrade to Use' : 'Use This Template'}
                   </button>
                 </div>
               </div>

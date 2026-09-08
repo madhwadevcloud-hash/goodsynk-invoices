@@ -237,25 +237,6 @@ export default function ProfileEdit() {
       return;
     }
 
-    // Optimistic preview
-    setAvatarPreview(dataUrl);
-    setAvatarUploading(true);
-    try {
-      const { data } = await authAPI.updateMe({ businessLogo: dataUrl });
-      updateUser(data.user);
-      toast.success('Profile picture updated!');
-    } catch {
-      toast.error('Upload failed. Please try again.');
-      setAvatarPreview(user?.businessLogo || null);
-    } finally {
-      setAvatarUploading(false);
-    }
-
-    if (!dataUrl) {
-      toast.error('Failed to process image');
-      return;
-    }
-
     // Optimistic local preview
     setAvatarPreview(dataUrl);
     setAvatarUploading(true);

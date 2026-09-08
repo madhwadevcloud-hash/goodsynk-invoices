@@ -36,9 +36,10 @@ export default function Template5({ invoice }) {
     headerRight: { width: '50%', alignItems: 'flex-end' },
 
     invoiceTitle: { fontFamily: B, fontSize: 24, color: BLUE, textTransform: 'uppercase', letterSpacing: 1 },
-    logoImage: { height: scaled.logoHeight, maxWidth: 130, objectFit: 'contain' },
+    logoImage: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
 
-    bizInfo: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8 },
+    bizInfo: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: 8 },
+    brandText: { flex: 1 },
     bizText: { fontSize: scaled.bizSubTextFontSize, color: '#444', textAlign: 'right', lineHeight: scaled.bizSubTextLineHeight },
     bizName: { fontSize: scaled.bizNameFontSize, fontFamily: B, color: '#000', marginBottom: 2, textAlign: 'right' },
 

@@ -16,8 +16,9 @@ export default function Template11({ invoice }) {
     
     // Minimalist Header
     headerWrap: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 50 },
-    bizBox: { width: '45%' },
-    topLogo: { height: scaled.logoHeight, maxWidth: 120, objectFit: 'contain', marginBottom: 15 },
+    bizBox: { width: '45%', flexDirection: 'row', alignItems: 'flex-start' },
+    brandText: { flex: 1 },
+    topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizName: { fontFamily: B, fontSize: 14, color: '#111', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 8 },
     bizText: { fontSize: 8.5, color: '#555', lineHeight: 1.6 },
     
@@ -105,12 +106,14 @@ export default function Template11({ invoice }) {
         <View style={s.headerWrap}>
           <View style={s.bizBox}>
             {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
+            <View style={s.brandText}>
             <Text style={s.bizName}>{bizName}</Text>
             {biz?.address?.street && <Text style={s.bizText}>{biz.address.street}</Text>}
             {biz?.address?.city && <Text style={s.bizText}>{biz.address.city}, {biz.address.state} {biz.address.pincode}</Text>}
             {biz?.phone && <Text style={s.bizText}>{biz.phone}</Text>}
             {biz?.email && <Text style={s.bizText}>{biz.email}</Text>}
             {biz?.gstin && <Text style={[s.bizText, { marginTop: 10, fontFamily: B }]}>GSTIN: {biz.gstin}</Text>}
+            </View>
           </View>
           
           <View style={s.docBox}>

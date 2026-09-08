@@ -33,7 +33,7 @@ export default function Template10({ invoice }) {
     // Top Bar (No background block)
     topFlex: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 },
     bizBox: { flexDirection: 'row', alignItems: 'center', maxWidth: '60%' },
-    topLogo: { height: scaled.logoHeight, maxWidth: 120, objectFit: 'contain', marginRight: 15 },
+    topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 10, flexShrink: 0 },
     bizName: { fontFamily: B, fontSize: 18, color: PRIMARY, textTransform: 'uppercase', letterSpacing: 1 },
     
     docTitleBox: { alignItems: 'flex-end' },
