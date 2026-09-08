@@ -15,6 +15,17 @@ const themes = {
 const money = (value, currency) => `${currency === 'INR' ? 'Rs. ' : `${currency} `}${Number(value || 0).toFixed(2)}`;
 const date = (value) => value ? new Date(value).toLocaleDateString('en-GB') : '-';
 
+const hexToRgba = (hex, alpha) => {
+  if (!hex) return 'rgba(0, 0, 0, ' + alpha + ')';
+  let clean = hex.replace('#', '');
+  if (clean.length === 3) clean = clean.split('').map(c => c + c).join('');
+  const r = parseInt(clean.substring(0, 2), 16) || 0;
+  const g = parseInt(clean.substring(2, 4), 16) || 0;
+  const b = parseInt(clean.substring(4, 6), 16) || 0;
+  return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
+};
+
+
 export default function DocumentTemplate({ invoice, variant }) {
   const theme = themes[variant] || themes.invoice12;
   const biz = invoice.user || {};
@@ -53,11 +64,20 @@ export default function DocumentTemplate({ invoice, variant }) {
     signatureImage: { height: 28, width: 90, objectFit: 'contain', marginBottom: 3 },
     band: { backgroundColor: theme.ink, color: '#FFFFFF', marginHorizontal: -34, padding: '18px 34px', flexDirection: 'row', justifyContent: 'space-between' },
     callout: { marginTop: 18, padding: 14, borderWidth: 1, borderColor: theme.accent, backgroundColor: theme.soft },
+    watermarkContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: -100 },
+    watermarkText: { fontSize: 60, fontFamily: 'Helvetica-Bold', color: hexToRgba(theme.ink, 0.08), transform: 'rotate(-45deg)', letterSpacing: 5 },
   });
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
+
+        {/* Watermark */}
+        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
+          <View style={styles.watermarkContainer} pointerEvents="none" fixed>
+            <Text style={styles.watermarkText}>GoodSynk</Text>
+          </View>
+        )}
         {theme.mode === 'band' ? (
           <View style={styles.band}><View style={styles.brand}>{biz.businessLogo ? <Image src={biz.businessLogo} style={styles.logo} /> : <Text style={styles.logoFallback}>G</Text>}<View><Text style={{ ...styles.bizName, color: '#FFFFFF' }}>{biz.businessName || biz.name || 'Your Business'}</Text><Text style={{ color: '#DCE5ED', marginTop: 3 }}>Tax invoice and payment record</Text></View></View><View><Text style={{ ...styles.title, color: '#FFFFFF' }}>{theme.title}</Text><Text style={{ color: '#DCE5ED', textAlign: 'right', marginTop: 4 }}>#{number}</Text></View></View>
         ) : (
@@ -67,7 +87,7 @@ export default function DocumentTemplate({ invoice, variant }) {
         <View style={styles.intro}><View><Text style={styles.sectionLabel}>{isQuotation ? 'Prepared for' : 'Bill to'}</Text><Text style={{ ...styles.address, fontFamily: 'Helvetica-Bold', color: theme.ink }}>{client.name || 'Client'}</Text><Text style={styles.address}>{client.email || ''}{client.phone ? `\n${client.phone}` : ''}{client.address ? `\n${client.address}` : ''}</Text></View><View><Text style={styles.sectionLabel}>Business details</Text><Text style={styles.address}>{biz.phone || ''}{biz.gstin ? `\nGSTIN: ${biz.gstin}` : ''}{biz.address?.city ? `\n${biz.address.city}, ${biz.address.state || ''}` : ''}</Text></View></View>
         <View style={styles.table}><View style={styles.head}><Text style={styles.desc}>Description</Text><Text style={styles.qty}>Qty</Text><Text style={styles.price}>Rate</Text><Text style={styles.tax}>Tax</Text><Text style={styles.total}>Amount</Text></View>{items.map((item, index) => <View key={index} style={[styles.row, index % 2 ? styles.alt : {}]}><View style={styles.desc}><Text style={styles.itemName}>{item.name || 'Item'}</Text><Text style={styles.itemSub}>{item.description || ''}{item.hsn ? ` | HSN ${item.hsn}` : ''}</Text></View><Text style={styles.qty}>{item.quantity || 0} {item.unit || ''}</Text><Text style={styles.price}>{money(item.price, currency)}</Text><Text style={styles.tax}>{Number(item.cgstRate || 0) + Number(item.sgstRate || 0) + Number(item.igstRate || 0) + Number(item.vatRate || 0)}%</Text><Text style={styles.total}>{money(item.total ?? (item.price || 0) * (item.quantity || 0), currency)}</Text></View>)}</View>
         <View style={styles.lower}><View style={styles.notes}><Text style={styles.sectionLabel}>{isQuotation ? 'Scope and terms' : 'Notes and payment details'}</Text><Text>{invoice.notes || 'Thank you for your business.'}</Text><Text style={{ marginTop: 8 }}>{invoice.termsAndConditions || ''}</Text>{biz.bankDetails?.bankName && <Text style={{ marginTop: 8 }}>Bank: {biz.bankDetails.bankName}{biz.bankDetails.accountNumber ? ` | A/C ${biz.bankDetails.accountNumber}` : ''}</Text>}</View><View style={styles.totals}><View style={styles.totalLine}><Text>Subtotal</Text><Text>{money(invoice.subtotal, currency)}</Text></View><View style={styles.totalLine}><Text>Discount</Text><Text>- {money(invoice.discountAmount, currency)}</Text></View><View style={styles.totalLine}><Text>Tax</Text><Text>{money(invoice.taxTotal, currency)}</Text></View><View style={styles.grand}><Text>{isQuotation ? 'Estimated total' : 'Amount due'}</Text><Text>{money(invoice.total, currency)}</Text></View></View></View>
-        <View style={styles.footer}><Text style={styles.muted}>Goodsynk Invoices | {biz.email || 'invoice.goodsynk.com'}</Text><View style={styles.signature}>{biz.businessSignature && <Image src={biz.businessSignature} style={styles.signatureImage} />}<Text>Authorised signature</Text></View></View>
+        <View style={styles.footer}><Text style={styles.muted}>Powered by <Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text>Goodsynk Invoices | {biz.email || 'invoice.goodsynk.com'}</Text><View style={styles.signature}>{biz.businessSignature && <Image src={biz.businessSignature} style={styles.signatureImage} />}<Text>Authorised signature</Text></View></View>
       </Page>
     </Document>
   );

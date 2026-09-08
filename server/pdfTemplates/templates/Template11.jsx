@@ -3,6 +3,17 @@ import { Document, Page, Text, View, StyleSheet, Font, Image, Link } from '@reac
 import { buildScaledStyles } from './Pdfheaderscaling';
 
 const B = 'Inter-Bold';
+
+const hexToRgba = (hex, alpha) => {
+  if (!hex) return 'rgba(0, 0, 0, ' + alpha + ')';
+  let clean = hex.replace('#', '');
+  if (clean.length === 3) clean = clean.split('').map(c => c + c).join('');
+  const r = parseInt(clean.substring(0, 2), 16) || 0;
+  const g = parseInt(clean.substring(2, 4), 16) || 0;
+  const b = parseInt(clean.substring(4, 6), 16) || 0;
+  return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
+};
+
 const M = 'Inter-SemiBold';
 
 export default function Template11({ invoice }) {
@@ -12,6 +23,8 @@ export default function Template11({ invoice }) {
   const scaled = buildScaledStyles(biz);
 
   const s = StyleSheet.create({
+    watermarkContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: -100 },
+    watermarkText: { fontSize: 60, fontFamily: B, color: hexToRgba(PRIMARY, 0.08), transform: 'rotate(-45deg)', letterSpacing: 5 },
     page: { paddingTop: 60, paddingBottom: 80, paddingHorizontal: 60, fontFamily: 'Inter', color: '#111', backgroundColor: '#FFF' },
     
     // Minimalist Header
@@ -102,6 +115,13 @@ export default function Template11({ invoice }) {
   return (
     <Document>
       <Page size="A4" style={s.page}>
+
+        {/* Watermark */}
+        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
+          <View style={s.watermarkContainer} pointerEvents="none" fixed>
+            <Text style={s.watermarkText}>GoodSynk</Text>
+          </View>
+        )}
         
         <View style={s.headerWrap}>
           <View style={s.bizBox}>
@@ -245,7 +265,7 @@ export default function Template11({ invoice }) {
               {biz?.email && `E: ${biz.email}`}
             </Text>
             <Text style={s.footerText}>
-              Generated securely by <Link style={s.footerLink} src="https://invoice.goodsynk.com">GoodSynk</Link>
+              Generated securely • Powered by <Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text><Link style={s.footerLink} src="https://invoice.goodsynk.com">GoodSynk</Link>
             </Text>
           </View>
         </View>
