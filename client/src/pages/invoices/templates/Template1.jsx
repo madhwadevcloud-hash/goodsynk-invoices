@@ -129,7 +129,7 @@ export default function Template1({ invoice }) {
     <Document>
       <Page size="A4" style={s.page}>
         {/* Watermark */}
-        {biz?.plan !== 'premium' && (
+        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
           <View style={s.watermarkContainer} pointerEvents="none" fixed>
             <Text style={s.watermarkText}>GoodSynk</Text>
           </View>
@@ -287,7 +287,7 @@ export default function Template1({ invoice }) {
           <View style={s.footerCenter}>
             <View style={s.poweredByContainer}>
               <Text style={s.poweredByLabel}>Powered By</Text>
-              <Text style={s.poweredByValue}>GoodSynk</Text>
+              <Text style={s.poweredByValue}><Text style={{ fontSize: 8 }}>™</Text>GoodSynk</Text>
             </View>
             <Text style={s.footerTagline}>Simple Invoicing, Billing & Quotations</Text>
             <Text style={[s.footerTagline, { marginTop: 3 }]}>Invoice Banega, Payment Badega.</Text>
@@ -295,7 +295,7 @@ export default function Template1({ invoice }) {
           {/* Right — Trust */}
           <View style={s.footerRight}>
             <Text style={s.footerTrustLine}>Generated securely by</Text>
-            <Text style={s.footerTrustLine}>Goodsynk Billing.</Text>
+            <Text style={s.footerTrustLine}>Goodsynk Invoice.</Text>
             <Text style={[s.footerTrustLine, { marginTop: 3 }]}>
               <Link style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
             </Text>

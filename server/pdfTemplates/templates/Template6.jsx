@@ -144,7 +144,7 @@ export default function Template6({ invoice }) {
     <Document>
       <Page size="A4" style={s.page}>
         {/* Watermark */}
-        {biz?.plan !== 'premium' && (
+        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
           <View style={s.watermarkContainer} fixed pointerEvents="none">
             <Text style={s.watermarkText}>GoodSynk</Text>
           </View>
@@ -320,7 +320,7 @@ export default function Template6({ invoice }) {
         {/* Powered By + Tagline, sitting inside the orange corner of the decor */}
         <View style={s.poweredByOnOrange} fixed>
           <Text style={s.poweredByLabelOnOrange}>Powered By</Text>
-          <Text style={s.poweredByValueOnOrange}>GoodSynk</Text>
+          <Text style={s.poweredByValueOnOrange}><Text style={{ fontSize: 8 }}>™</Text>GoodSynk</Text>
           <Text style={s.footerTaglineOnOrange}>Invoice Banega, Payment Badega.</Text>
         </View>
 

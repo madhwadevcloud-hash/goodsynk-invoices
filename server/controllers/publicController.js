@@ -24,7 +24,7 @@ const streamDocumentPdf = async (req, res, { Model, docLabel, numberField }) => 
     try {
         const doc = await Model.findOne({ shareToken: req.params.token, isDeleted: { $ne: true } })
             .populate('client')
-            .populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors');
+            .populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan');
 
         if (!doc) return res.status(404).send('Document not found or link expired');
 

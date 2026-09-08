@@ -108,7 +108,7 @@ export default function Template1({ invoice }) {
     <Document>
       <Page size="A4" style={s.page}>
         {/* Watermark */}
-        {biz?.plan !== 'premium' && (
+        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
           <View style={s.watermarkContainer} pointerEvents="none" fixed>
             <Text style={s.watermarkText}>GoodSynk</Text>
           </View>
@@ -268,7 +268,7 @@ export default function Template1({ invoice }) {
           <View style={s.footerColRight}>
             <View style={s.poweredByContainer}>
               <Text style={s.poweredByLabel}>Powered By</Text>
-              <Text style={s.poweredByValue}>GoodSynk</Text>
+              <Text style={s.poweredByValue}><Text style={{ fontSize: 8 }}>™</Text>GoodSynk</Text>
             </View>
             <Text style={s.footerText}>Digitally signed document</Text>
             <Link style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
