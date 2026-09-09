@@ -32,22 +32,23 @@ export default function Template1({ invoice }) {
   const s = StyleSheet.create({
     page: { paddingTop: 30, paddingBottom: 75, fontFamily: 'Inter', color: '#000' },
     container: { paddingHorizontal: 40 },
-    topSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 40, marginBottom: 10 },
+    topSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 40, marginBottom: 16 },
     headerText: { fontFamily: B, fontSize: 32, letterSpacing: 2, textTransform: 'uppercase', color: PRIMARY, marginTop: 10 },
 
-    bizInfoTop: { flexDirection: 'row', alignItems: 'flex-start', maxWidth: scaled.bizInfoMaxWidth },
-    brandText: { flex: 1 },
+    bizInfoTop: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0, justifyContent: 'flex-end' },
+    titleCol: { flexShrink: 0, marginRight: 24 },
+    brandText: { flexShrink: 1, minWidth: 0 },
     topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizNameTop: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 4, textAlign: 'right' },
     bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight, textAlign: 'right' },
 
-    blueBar: { backgroundColor: PRIMARY, height: 12, width: '100%', marginBottom: 10 },
-    detailsRow: { flexDirection: 'row', paddingHorizontal: 40, marginBottom: 25, gap: 40 },
+    blueBar: { backgroundColor: PRIMARY, height: 12, width: '100%', marginBottom: 18 },
+    detailsRow: { flexDirection: 'row', paddingHorizontal: 40, marginBottom: 18, gap: 40 },
     detailsCol: {},
-    detailsLabel: { fontSize: 7.5, fontFamily: B, color: '#666', textTransform: 'uppercase', marginBottom: 3 },
+    detailsLabel: { fontSize: 7.5, fontFamily: B, color: '#666', textTransform: 'uppercase', marginBottom: 4, letterSpacing: 0.5 },
     detailsValue: { fontSize: 9.5, fontFamily: M, color: '#000' },
 
-    table: { width: '100%', marginTop: 5 },
+    table: { width: '100%', marginTop: 12 },
     tHeadRow: { flexDirection: 'row', borderBottom: `1pt solid ${PRIMARY}`, paddingBottom: 8, marginBottom: 8 },
     tRow: { flexDirection: 'row', borderBottom: `0.5pt solid ${PRIMARY}`, paddingVertical: 10 },
     th: { fontSize: 9.5, fontFamily: B, color: '#000' },
@@ -65,17 +66,17 @@ export default function Template1({ invoice }) {
     thTotal: { fontSize: 9.5, fontFamily: B, color: PRIMARY, textAlign: 'right' },
     tdTotal: { fontSize: 9, color: PRIMARY, textAlign: 'right', fontFamily: M },
 
-    totalsBox: { marginTop: 12, alignItems: 'flex-end', paddingRight: 4 },
-    totalRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 4 },
+    totalsBox: { marginTop: 16, alignItems: 'flex-end', paddingRight: 4 },
+    totalRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 5 },
     totalLabel: { fontSize: 9, color: '#000', width: 80, textAlign: 'right', paddingRight: 8 },
     totalVal: { fontSize: 9, fontFamily: M, width: 80, textAlign: 'right', color: PRIMARY },
-    grandTotalLabel: { fontSize: 11, fontFamily: B, width: 80, textAlign: 'right', paddingRight: 8, color: '#000', marginTop: 4 },
-    grandTotalVal: { fontSize: 11, fontFamily: B, width: 80, textAlign: 'right', color: PRIMARY, marginTop: 4 },
+    grandTotalLabel: { fontSize: 11, fontFamily: B, width: 80, textAlign: 'right', paddingRight: 8, color: '#000', marginTop: 8 },
+    grandTotalVal: { fontSize: 11, fontFamily: B, width: 80, textAlign: 'right', color: PRIMARY, marginTop: 8 },
 
-    infoBlock: { flexDirection: 'row', marginTop: 10, justifyContent: 'space-between' },
+    infoBlock: { flexDirection: 'row', marginTop: 24, justifyContent: 'space-between' },
     infoCol: { width: '30%' },
-    infoTitle: { fontFamily: B, fontSize: 10, textTransform: 'uppercase', marginBottom: 6, paddingBottom: 4, borderBottom: `1pt solid ${PRIMARY}` },
-    infoText: { fontSize: 9, color: '#333', marginBottom: 3, lineHeight: 1.4 },
+    infoTitle: { fontFamily: B, fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, paddingBottom: 5, borderBottom: `1pt solid ${PRIMARY}` },
+    infoText: { fontSize: 8.5, color: '#333', marginBottom: 3, lineHeight: 1.5 },
 
     footerBox: { position: 'absolute', bottom: 20, left: 40, right: 40, borderTopWidth: 2, borderTopColor: PRIMARY, flexDirection: 'row', justifyContent: 'space-between', paddingTop: 12 },
     footerColLeft: { width: '30%' },
@@ -115,17 +116,20 @@ export default function Template1({ invoice }) {
         )}
 
         <View style={s.topSection}>
-          <View>
+          <View style={s.titleCol}>
             <Text style={s.headerText}>{docTitle}</Text>
           </View>
           <View style={s.bizInfoTop}>
             {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
             <View style={s.brandText}>
             <Text style={s.bizNameTop}>{bizName}</Text>
-            {biz?.address?.street && <Text style={s.bizSubText}>{biz.address.street}</Text>}
-            {biz?.address?.city && (
+            {biz?.address?.street && <Text style={s.bizSubText}>{String(biz.address.street).replace(/\s+,/g, ',').replace(/,(?=\S)/g, ', ').trim()}</Text>}
+            {(biz?.address?.city || biz?.address?.state || biz?.address?.pincode) && (
               <Text style={s.bizSubText}>
-                {biz.address.city}, {biz.address.state} {biz.address.pincode}
+                {[[biz?.address?.city, biz?.address?.state]
+                    .map((v) => String(v || '').trim().replace(/[-,\s]+$/, ''))
+                    .filter(Boolean).join(', '),
+                  String(biz?.address?.pincode || '').trim()].filter(Boolean).join(' ')}
               </Text>
             )}
             {biz?.gstin && <Text style={[s.bizSubText, { color: PRIMARY, fontFamily: B, marginTop: 4 }]}>GSTIN: {biz.gstin}</Text>}
