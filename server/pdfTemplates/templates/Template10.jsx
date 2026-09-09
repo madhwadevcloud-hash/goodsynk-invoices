@@ -55,7 +55,7 @@ export default function Template10({ invoice }) {
     metaVal: { fontSize: 8.5, fontFamily: B, color: '#111' },
 
     // Clean Table
-    table: { width: '100%', marginBottom: 30 },
+    table: { width: '100%', marginBottom: 14 },
     tHead: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: PRIMARY, paddingBottom: 8, marginBottom: 8 },
     tRow: { flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
     th: { fontSize: 8, fontFamily: B, color: '#111', textTransform: 'uppercase', letterSpacing: 0.5 },

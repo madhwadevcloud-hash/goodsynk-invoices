@@ -34,7 +34,7 @@ export default function Template2({ invoice }) {
 
     topHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
     bizBox: { maxWidth: scaled.bizInfoMaxWidth, flexDirection: 'row', alignItems: 'center' },
-    brandText: { width: 190, flexShrink: 1 },
+    brandText: { width: 230, flexShrink: 1 },
     logoImg: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizName: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
     bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight },

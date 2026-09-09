@@ -41,7 +41,7 @@ export default function Template9({ invoice }) {
     // Right Header (Dark Gray/Black)
     topRight: { width: '65%', padding: 30, paddingLeft: 40, color: '#FFF', justifyContent: 'space-between' },
     brandRow: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0 },
-    brandText: { width: 190, flexShrink: 1 },
+    brandText: { width: 230, flexShrink: 1 },
     topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0, backgroundColor: '#FFF', padding: 2, borderRadius: 2 },
     bizName: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#FFF', textTransform: 'uppercase', marginBottom: 4, letterSpacing: 1 },
     bizText: { fontSize: scaled.bizSubTextFontSize, color: '#FFF', opacity: 0.7, lineHeight: scaled.bizSubTextLineHeight },
@@ -55,7 +55,7 @@ export default function Template9({ invoice }) {
     contentWrap: { paddingHorizontal: 30, paddingTop: 30 },
 
     // Dynamic Table
-    table: { width: '100%', marginBottom: 30 },
+    table: { width: '100%', marginBottom: 14 },
     tHead: { flexDirection: 'row', borderBottomWidth: 2, borderBottomColor: '#111', paddingBottom: 8, marginBottom: 8 },
     tRow: { flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#EEE' },
     th: { fontSize: 8.5, fontFamily: B, color: '#111', textTransform: 'uppercase', letterSpacing: 0.5 },
@@ -71,7 +71,7 @@ export default function Template9({ invoice }) {
     colTotal: { flex: 1.2, textAlign: 'right' },
 
     // Totals Section
-    totalsWrapper: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 },
+    totalsWrapper: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 6 },
     totalsBox: { width: '45%' },
     totRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
     totLabel: { fontSize: 9, color: '#555', fontFamily: M },
