@@ -33,8 +33,8 @@ export default function Template2({ invoice }) {
     page: { paddingTop: 30, paddingBottom: 75, paddingHorizontal: 40, fontFamily: 'Inter', color: '#000' },
 
     topHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
-    bizBox: { flexDirection: 'row', alignItems: 'center', maxWidth: scaled.bizInfoMaxWidth },
-    brandText: { flex: 1 },
+    bizBox: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0 },
+    brandText: { width: 190, flexShrink: 1 },
     topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizName: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
     bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight },
@@ -146,10 +146,10 @@ export default function Template2({ invoice }) {
             {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
             <View style={s.brandText}>
             <Text style={s.bizName}>{bizName}</Text>
-            {biz?.address?.street && <Text style={s.bizSubText}>{biz.address.street}</Text>}
+            {biz?.address?.street && <Text style={s.bizSubText}>{String(biz.address.street).replace(/\s+,/g, ',').replace(/,(?=\S)/g, ', ').trim()}</Text>}
             {biz?.address?.city && (
               <Text style={s.bizSubText}>
-                {biz.address.city}, {biz.address.state} {biz.address.pincode}
+                {[[biz?.address?.city, biz?.address?.state].map((v) => String(v || '').trim().replace(/[-,\s]+$/, '')).filter(Boolean).join(', '), String(biz?.address?.pincode || '').trim()].filter(Boolean).join(' ')}
               </Text>
             )}
             {biz?.gstin && <Text style={[s.bizSubText, { fontFamily: B }]}>GSTIN: {biz.gstin}</Text>}

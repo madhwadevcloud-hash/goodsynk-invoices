@@ -34,7 +34,7 @@ export default function Template10({ invoice }) {
     
     // Top Bar (No background block)
     topFlex: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 },
-    bizBox: { flexDirection: 'row', alignItems: 'center', maxWidth: '60%' },
+    bizBox: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0 },
     topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 10, flexShrink: 0 },
     bizName: { fontFamily: B, fontSize: 18, color: PRIMARY, textTransform: 'uppercase', letterSpacing: 1 },
     
@@ -140,7 +140,7 @@ export default function Template10({ invoice }) {
 
         <View style={s.bizDetailsRow}>
           {biz?.address?.street && <Text style={s.bizText}>{biz.address.street}, </Text>}
-          {biz?.address?.city && <Text style={s.bizText}>{biz.address.city}, {biz.address.state} {biz.address.pincode}</Text>}
+          {biz?.address?.city && <Text style={s.bizText}>{[[biz?.address?.city, biz?.address?.state].map((v) => String(v || '').trim().replace(/[-,\s]+$/, '')).filter(Boolean).join(', '), String(biz?.address?.pincode || '').trim()].filter(Boolean).join(' ')}</Text>}
           {biz?.phone && <Text style={s.bizText}> | P: {biz.phone}</Text>}
           {biz?.email && <Text style={s.bizText}> | E: {biz.email}</Text>}
           {biz?.gstin && <Text style={[s.bizText, { fontFamily: B, color: PRIMARY }]}> | GSTIN: {biz.gstin}</Text>}

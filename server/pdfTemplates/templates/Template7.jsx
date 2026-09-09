@@ -189,7 +189,7 @@ export default function Template7({ invoice }) {
           </View>
         )}
         <View style={s.topSection}>
-          <View style={{ width: bizInfoWidth }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={s.docTitle}>{docTitle}</Text>
             <Text style={s.bizName}>{bizName}</Text>
             {biz?.gstin && <Text style={s.bizText}>GSTIN <Text style={s.boldText}>{biz.gstin}</Text></Text>}

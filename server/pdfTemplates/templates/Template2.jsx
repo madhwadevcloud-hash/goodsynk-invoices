@@ -34,7 +34,7 @@ export default function Template2({ invoice }) {
 
     topHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
     bizBox: { maxWidth: scaled.bizInfoMaxWidth, flexDirection: 'row', alignItems: 'center' },
-    brandText: { flex: 1 },
+    brandText: { width: 190, flexShrink: 1 },
     logoImg: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizName: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
     bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight },
@@ -141,10 +141,10 @@ export default function Template2({ invoice }) {
             {biz?.businessLogo && <Image src={biz.businessLogo} style={s.logoImg} />}
             <View style={s.brandText}>
             <Text style={s.bizName}>{bizName}</Text>
-            {biz?.address?.street && <Text style={s.bizSubText}>{biz.address.street}</Text>}
+            {biz?.address?.street && <Text style={s.bizSubText}>{String(biz.address.street).replace(/\s+,/g, ',').replace(/,(?=\S)/g, ', ').trim()}</Text>}
             {biz?.address?.city && (
               <Text style={s.bizSubText}>
-                {biz.address.city}, {biz.address.state} {biz.address.pincode}
+                {[[biz?.address?.city, biz?.address?.state].map((v) => String(v || '').trim().replace(/[-,\s]+$/, '')).filter(Boolean).join(', '), String(biz?.address?.pincode || '').trim()].filter(Boolean).join(' ')}
               </Text>
             )}
             {biz?.gstin && <Text style={[s.bizSubText, { fontFamily: B }]}>GSTIN: {biz.gstin}</Text>}
