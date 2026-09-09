@@ -33,8 +33,8 @@ export default function Template3({ invoice }) {
     page: { paddingBottom: 110, fontFamily: 'Inter', color: '#000' },
 
     headerBlock: { backgroundColor: DARK_BLUE, paddingTop: 30, paddingBottom: 25, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-    headerLeft: { flexDirection: 'row', alignItems: 'center', width: scaled.bizInfoMaxWidth },
-    brandText: { flex: 1 },
+    headerLeft: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0 },
+    brandText: { width: 190, flexShrink: 1 },
     topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizNameText: { color: '#FFF', fontFamily: B, fontSize: scaled.bizNameFontSize, textTransform: 'uppercase' },
     bizInfoText: { color: '#FFF', fontSize: scaled.bizSubTextFontSize, marginTop: 2, lineHeight: scaled.bizSubTextLineHeight, opacity: 0.85 },

@@ -36,13 +36,13 @@ export default function Template6({ invoice }) {
     headerContainer: { height: 160, position: 'relative' },
     headerContent: { position: 'absolute', top: 0, left: 0, right: 0, height: 160, flexDirection: 'row', paddingTop: 30, paddingHorizontal: 40 },
 
-    headerLeft: { width: '30%', paddingTop: 0, flexDirection: 'row', alignItems: 'center' },
-    brandText: { flex: 1 },
+    headerLeft: { width: '42%', paddingTop: 0, flexDirection: 'row', alignItems: 'flex-start', minWidth: 0 },
+    brandText: { width: 190, flexShrink: 1 },
     bizNameHeader: { fontSize: scaled.bizNameFontSize + 2, fontFamily: B, color: '#FFF', textTransform: 'uppercase', marginBottom: 2 },
     bizSubTextHeader: { fontSize: scaled.bizSubTextFontSize, color: '#ffffffff', lineHeight: scaled.bizSubTextLineHeight },
     logoImgHeader: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
 
-    headerRight: { width: '70%', alignItems: 'flex-end', paddingTop: 25 },
+    headerRight: { width: '58%', alignItems: 'flex-end', paddingTop: 25 },
     invoiceTitleHeader: { fontSize: 28, fontFamily: B, color: '#FFF', letterSpacing: 2, marginBottom: 12 },
     headerTextRow: { flexDirection: 'row', marginBottom: 4, justifyContent: 'flex-end' },
     headerTextLabel: { fontSize: 8.5, color: '#B0C4DE', marginRight: 6 },

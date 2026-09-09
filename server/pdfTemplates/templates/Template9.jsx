@@ -40,8 +40,8 @@ export default function Template9({ invoice }) {
     
     // Right Header (Dark Gray/Black)
     topRight: { width: '65%', padding: 30, paddingLeft: 40, color: '#FFF', justifyContent: 'space-between' },
-    brandRow: { flexDirection: 'row', alignItems: 'flex-start' },
-    brandText: { flex: 1 },
+    brandRow: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0 },
+    brandText: { width: 190, flexShrink: 1 },
     topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0, backgroundColor: '#FFF', padding: 2, borderRadius: 2 },
     bizName: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#FFF', textTransform: 'uppercase', marginBottom: 4, letterSpacing: 1 },
     bizText: { fontSize: scaled.bizSubTextFontSize, color: '#FFF', opacity: 0.7, lineHeight: scaled.bizSubTextLineHeight },
@@ -164,8 +164,8 @@ export default function Template9({ invoice }) {
               {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
               <View style={s.brandText}>
               <Text style={s.bizName}>{bizName}</Text>
-              {biz?.address?.street && <Text style={s.bizText}>{biz.address.street}</Text>}
-              {biz?.address?.city && <Text style={s.bizText}>{biz.address.city}, {biz.address.state} {biz.address.pincode}</Text>}
+              {biz?.address?.street && <Text style={s.bizText}>{String(biz.address.street).replace(/\s+,/g, ',').replace(/,(?=\S)/g, ', ').trim()}</Text>}
+              {biz?.address?.city && <Text style={s.bizText}>{[[biz?.address?.city, biz?.address?.state].map((v) => String(v || '').trim().replace(/[-,\s]+$/, '')).filter(Boolean).join(', '), String(biz?.address?.pincode || '').trim()].filter(Boolean).join(' ')}</Text>}
               {biz?.phone && <Text style={s.bizText}>P: {biz.phone}</Text>}
               {biz?.email && <Text style={s.bizText}>E: {biz.email}</Text>}
               {biz?.gstin && <Text style={[s.bizText, { marginTop: 6, fontFamily: B, color: PRIMARY }]}>GSTIN: {biz.gstin}</Text>}

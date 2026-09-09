@@ -94,8 +94,8 @@ export default function Template7({ invoice }) {
     topSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 40, marginBottom: 0 },
     docTitle: { fontFamily: B, fontSize: 24, letterSpacing: 1.5, textTransform: 'uppercase', color: PRIMARY, marginBottom: 6 },
     bizName: { fontFamily: B, fontSize: headerScale.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
-    brandRow: { flexDirection: 'row', alignItems: 'center' },
-    brandText: { flex: 1 },
+    brandRow: { flexDirection: 'row', alignItems: 'flex-start', minWidth: 0 },
+    brandText: { width: 190, flexShrink: 1 },
     topLogoSafe: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizText: { fontSize: headerScale.bizSubTextFontSize, color: '#444', marginBottom: 1, lineHeight: headerScale.bizSubTextLineHeight },
     boldText: { fontFamily: B, color: '#000' },
@@ -194,7 +194,7 @@ export default function Template7({ invoice }) {
           </View>
         )}
         <View style={s.topSection}>
-          <View style={{ width: bizInfoWidth }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={s.docTitle}>{docTitle}</Text>
             <View style={s.brandRow}>
               {biz?.businessLogo && <Image style={s.topLogoSafe} src={biz.businessLogo} />}
