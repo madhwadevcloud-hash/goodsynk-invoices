@@ -27,9 +27,9 @@ export default function Template8({ invoice }) {
     page: { paddingTop: 50, paddingBottom: 60, paddingHorizontal: 50, fontFamily: 'Inter', color: '#000', backgroundColor: '#FFF' },
     
     // Header Layout: Split left/right with massive typography on the right
-    headerWrap: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 40 },
+    headerWrap: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 },
     bizLeft: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'flex-start' },
-    brandText: { width: 190, flexShrink: 1 },
+    brandText: { width: 230, flexShrink: 1 },
     topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizName: { fontFamily: B, fontSize: 16, color: '#000', textTransform: 'uppercase', marginBottom: 6, letterSpacing: 2 },
     bizText: { fontSize: 8.5, color: '#444', lineHeight: 1.5 },
@@ -49,7 +49,7 @@ export default function Template8({ invoice }) {
     clientText: { fontSize: 8.5, color: '#333', lineHeight: 1.4 },
 
     // Table: No background colors, just stark lines
-    table: { width: '100%', marginBottom: 30 },
+    table: { width: '100%', marginBottom: 14 },
     tHead: { flexDirection: 'row', borderBottomWidth: 2, borderBottomColor: '#000', paddingBottom: 8, marginBottom: 8 },
     tRow: { flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#E5E5E5' },
     th: { fontSize: 8.5, fontFamily: B, color: '#000', textTransform: 'uppercase', letterSpacing: 0.5 },
@@ -65,7 +65,7 @@ export default function Template8({ invoice }) {
     colTotal: { flex: 1.2, textAlign: 'right' },
 
     // Totals section: Clean, right-aligned block
-    totalsWrapper: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 },
+    totalsWrapper: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 6 },
     totalsBox: { width: '45%' },
     totRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
     totLabel: { fontSize: 9, color: '#444' },

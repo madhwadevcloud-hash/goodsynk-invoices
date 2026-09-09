@@ -30,7 +30,7 @@ export default function Template11({ invoice }) {
     // Minimalist Header
     headerWrap: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 50 },
     bizBox: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'flex-start' },
-    brandText: { width: 190, flexShrink: 1 },
+    brandText: { width: 230, flexShrink: 1 },
     topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizName: { fontFamily: B, fontSize: 14, color: '#111', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 8 },
     bizText: { fontSize: 8.5, color: '#555', lineHeight: 1.6 },
@@ -64,7 +64,7 @@ export default function Template11({ invoice }) {
     colTotal: { flex: 1.2, textAlign: 'right' },
 
     // Airy Totals
-    totalsWrapper: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 },
+    totalsWrapper: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 6 },
     totalsBox: { width: '50%' },
     totRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
     totLabel: { fontSize: 9, color: '#555' },

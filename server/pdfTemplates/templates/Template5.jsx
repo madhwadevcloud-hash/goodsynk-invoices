@@ -39,7 +39,7 @@ export default function Template5({ invoice }) {
     logoImage: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
 
     bizInfo: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-start', marginTop: 8, minWidth: 0 },
-    brandText: { width: 190, flexShrink: 1 },
+    brandText: { width: 230, flexShrink: 1 },
     bizText: { fontSize: scaled.bizSubTextFontSize, color: '#444', textAlign: 'right', lineHeight: scaled.bizSubTextLineHeight },
     bizName: { fontSize: scaled.bizNameFontSize, fontFamily: B, color: '#000', marginBottom: 2, textAlign: 'right' },
 
