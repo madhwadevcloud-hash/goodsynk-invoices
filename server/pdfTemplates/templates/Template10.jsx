@@ -65,10 +65,10 @@ export default function Template10({ invoice }) {
     colDesc: { flex: 2.2, paddingRight: 10 },
     colHsn: { flex: 0.8, textAlign: 'center' },
     colQty: { flex: 0.9, textAlign: 'center' },
-    colPrice: { flex: 1.1, textAlign: 'right' },
-    colDisc: { flex: 0.7, textAlign: 'center' },
-    colTax: { flex: 0.8, textAlign: 'center' },
-    colTotal: { flex: 1.2, textAlign: 'right' },
+    colPrice: { flex: 1.2, textAlign: 'right', paddingRight: 10 },
+    colDisc: { flex: 0.8, textAlign: 'center', paddingRight: 4 },
+    colTax: { flex: 0.8, textAlign: 'center', paddingRight: 4 },
+    colTotal: { flex: 1.3, textAlign: 'right' },
 
     // Totals Section in a Card
     bottomFlex: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },

@@ -80,9 +80,9 @@ export default function Template6({ invoice }) {
     colDesc: { flex: 2.2, textAlign: 'left', paddingLeft: 10 },
     colHsn: { flex: 0.8, textAlign: 'center' },
     colQty: { flex: 0.9, textAlign: 'center' },
-    colPrice: { flex: 1.1, textAlign: 'right' },
-    colDisc: { flex: 0.7, textAlign: 'center' },
-    colTax: { flex: 0.8, textAlign: 'center' },
+    colPrice: { flex: 1.2, textAlign: 'right', paddingRight: 10 },
+    colDisc: { flex: 0.8, textAlign: 'center', paddingRight: 4 },
+    colTax: { flex: 0.8, textAlign: 'center', paddingRight: 4 },
     colTotal: { flex: 1.2, textAlign: 'right', paddingRight: 10 },
 
     bottomGrid: { flexDirection: 'row', paddingHorizontal: 40, marginTop: 5 },
