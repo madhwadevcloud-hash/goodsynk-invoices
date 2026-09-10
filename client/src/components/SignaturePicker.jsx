@@ -46,8 +46,15 @@ function renderSignatureToDataURL(text, fontFamily, color = '#1a1a2e') {
   return canvas.toDataURL('image/png');
 }
 
-export default function SignaturePicker({ currentSignature, onSave }) {
-  const [mode, setMode] = useState('type'); // 'type' | 'upload'
+export default function SignaturePicker({
+  currentSignature,
+  onSave,
+  title = 'Business Signature',
+  itemLabel = 'Signature',
+  allowType = true,
+  uploadHint = 'PNG with transparent background works best',
+}) {
+  const [mode, setMode] = useState(allowType ? 'type' : 'upload'); // 'type' | 'upload'
   const [typedName, setTypedName] = useState('');
   const [selectedFont, setSelectedFont] = useState(CALLIGRAPHY_FONTS[0]);
   const [preview, setPreview] = useState(null);
@@ -97,8 +104,9 @@ export default function SignaturePicker({ currentSignature, onSave }) {
   return (
     <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 20, background: 'var(--bg-card)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h4 style={{ fontWeight: 700, fontSize: '0.95rem', margin: 0 }}>Business Signature</h4>
+        <h4 style={{ fontWeight: 700, fontSize: '0.95rem', margin: 0 }}>{title}</h4>
         {/* Mode Toggle */}
+        {allowType && (
         <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
           <button type="button" onClick={() => setMode('type')} style={{
             padding: '6px 14px', fontSize: '0.78rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5,
@@ -117,14 +125,15 @@ export default function SignaturePicker({ currentSignature, onSave }) {
             <Upload size={13} /> Upload
           </button>
         </div>
+        )}
       </div>
 
       {/* Current Signature Preview */}
       {currentSignature && !preview && !uploadedImg && (
         <div style={{ marginBottom: 12, padding: 10, background: 'var(--bg-hover)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 4 }}>Current Signature</div>
-            <img src={currentSignature} alt="signature" style={{ height: 40, objectFit: 'contain' }} />
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 4 }}>Current {itemLabel}</div>
+            <img src={currentSignature} alt={itemLabel} style={{ height: 40, objectFit: 'contain' }} />
           </div>
           <button type="button" onClick={handleClear} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger, #ef4444)' }} title="Remove">
             <X size={16} />
@@ -179,7 +188,7 @@ export default function SignaturePicker({ currentSignature, onSave }) {
           {/* Calligraphy Preview */}
           {preview && (
             <div style={{ marginBottom: 12, padding: 16, background: '#fff', border: '1px dashed var(--border)', borderRadius: 8, textAlign: 'center' }}>
-              <img src={preview} alt="signature preview" style={{ maxHeight: 70, objectFit: 'contain' }} />
+              <img src={preview} alt={`${itemLabel} preview`} style={{ maxHeight: 70, objectFit: 'contain' }} />
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 6 }}>Preview — {selectedFont.name} style</div>
             </div>
           )}
@@ -194,13 +203,13 @@ export default function SignaturePicker({ currentSignature, onSave }) {
             }}
           >
             <Upload size={24} style={{ color: 'var(--text-muted)', marginBottom: 8 }} />
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Click to upload signature image</div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>PNG with transparent background works best</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Click to upload {itemLabel.toLowerCase()} image</div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>{uploadHint}</div>
           </div>
           <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileUpload} />
           {uploadedImg && (
             <div style={{ padding: 16, background: '#fff', border: '1px dashed var(--border)', borderRadius: 8, textAlign: 'center', marginBottom: 12 }}>
-              <img src={uploadedImg} alt="uploaded signature" style={{ maxHeight: 70, objectFit: 'contain' }} />
+              <img src={uploadedImg} alt={`uploaded ${itemLabel.toLowerCase()}`} style={{ maxHeight: 70, objectFit: 'contain' }} />
             </div>
           )}
         </div>
@@ -219,7 +228,7 @@ export default function SignaturePicker({ currentSignature, onSave }) {
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
         }}
       >
-        <Check size={15} /> Save Signature
+        <Check size={15} /> Save {itemLabel}
       </button>
     </div>
   );

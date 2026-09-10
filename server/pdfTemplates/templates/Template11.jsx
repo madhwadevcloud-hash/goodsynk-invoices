@@ -251,6 +251,7 @@ export default function Template11({ invoice }) {
             {biz?.businessSignature && <Image src={biz.businessSignature} style={s.sigImg} />}
             <View style={s.sigLine} />
             <Text style={s.sigText}>Authorised Signatory</Text>
+            {biz?.businessSeal && <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />}
           </View>
         </View>
 

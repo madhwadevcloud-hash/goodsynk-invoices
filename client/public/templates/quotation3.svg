@@ -5,4 +5,5 @@
     <text x="50" y="780" fill="#cbd5e1" font-family="Arial" font-size="10" >Payment due within 14 days of acceptance.</text>
     <rect x="400" y="770" width="150" height="1" fill="#fff"/>
     <text x="400" y="785" fill="#cbd5e1" font-family="Arial" font-size="10" >Signature</text>
+    <circle cx="500" cy="778" r="14" fill="none" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="2,2"/><text x="500" y="780" text-anchor="middle" font-family="Arial" font-size="6" font-weight="700" fill="#cbd5e1">SEAL</text>
 </g></svg>

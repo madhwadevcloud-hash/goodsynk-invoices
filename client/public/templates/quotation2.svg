@@ -3,5 +3,5 @@
     <text x="70" y="745" fill="#111" font-family="Arial" font-size="10" font-weight="700">TERMS AND CONDITIONS</text>
     <text x="70" y="760" fill="#53606c" font-family="Arial" font-size="10" >Please refer to the detailed project contract.</text>
     <rect x="400" y="760" width="148" height="1" fill="#000"/>
-    <text x="400" y="775" fill="#53606c" font-family="Arial" font-size="10" >Authorised Signatory</text>
+    <text x="400" y="775" fill="#53606c" font-family="Arial" font-size="10" >Authorised Signatory</text><circle cx="490" cy="775" r="16" fill="none" stroke="#53606c" stroke-width="1" stroke-dasharray="2,2"/><text x="490" y="777" text-anchor="middle" font-family="Arial" font-size="6" font-weight="700" fill="#53606c">SEAL</text>
 </g></svg>

@@ -6,12 +6,12 @@ import toast from 'react-hot-toast';
 import { Palette, CheckCircle2, X, Lock } from 'lucide-react';
 import TemplatePreview from '../../components/TemplatePreview';
 const TEMPLATES = [
-  { id: 'template1', name: 'Classic Blue', desc: 'A clean, universally trusted design with blue accents.', img: '/templates/t1.png' },
-  { id: 'template2', name: 'Minimalist Monochrome', desc: 'Elegant black and white. Perfect for ultra-clean printing.', img: '/templates/t2.png' },
-  { id: 'template3', name: 'Modern Wave', desc: 'Dark top header with stylized shapes. Contemporary.', img: '/templates/t3.png' },
-  { id: 'template4', name: 'Elegant Navy', desc: 'Navy blue and gold accents for a premium agency feel.', img: '/templates/t4.png' },
-  { id: 'template5', name: 'Corporate Bright', desc: 'High contrast blue table headers and minimalist layout.', img: '/templates/t5.png' },
-  { id: 'template6', name: 'Angular Orange', desc: 'Striking orange and navy blue angular design.', img: '/templates/t6.png' },
+  { id: 'template1', name: 'Classic Blue', desc: 'A clean, universally trusted design with blue accents.', img: '/templates/t1.svg' },
+  { id: 'template2', name: 'Minimalist Monochrome', desc: 'Elegant black and white. Perfect for ultra-clean printing.', img: '/templates/t2.svg' },
+  { id: 'template3', name: 'Modern Wave', desc: 'Dark top header with stylized shapes. Contemporary.', img: '/templates/t3.svg' },
+  { id: 'template4', name: 'Elegant Navy', desc: 'Navy blue and gold accents for a premium agency feel.', img: '/templates/t4.svg' },
+  { id: 'template5', name: 'Corporate Bright', desc: 'High contrast blue table headers and minimalist layout.', img: '/templates/t5.svg' },
+  { id: 'template6', name: 'Angular Orange', desc: 'Striking orange and navy blue angular design.', img: '/templates/t6.svg' },
   { id: 'template7', name: 'Standard Layout', desc: 'Traditional invoice layout with side-by-side details.', img: '/templates/t7.png' },
   { id: 'template8', name: 'Monochrome Casual Corporate', desc: 'Stark borders and oversized typography with no background blocks.', img: '/templates/t8.svg' },
   { id: 'template9', name: 'Split Sidebar Modern', desc: 'An asymmetrical 35% sidebar that changes the reading flow.', img: '/templates/t9.svg' },
@@ -61,8 +61,8 @@ export default function Templates() {
   const [templateColors, setTemplateColors] = useState(user?.invoiceTemplateColors || null);
   const [saving, setSaving] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState(null);
+  const isFreePlan = !user?.plan || String(user.plan).toLowerCase() === 'free';
   const handleOpenPreview = (tmpl) => {
-    const isFreePlan = !user?.plan || String(user.plan).toLowerCase() === 'free';
     if (!FREE_TEMPLATES.includes(tmpl.id) && isFreePlan) {
       toast('Upgrade your plan to unlock this template', { icon: '🔒' });
       navigate('/upgrade');
@@ -78,7 +78,6 @@ export default function Templates() {
     }
   };
   const selectTemplate = async (templateId) => {
-    const isFreePlan = !user?.plan || String(user.plan).toLowerCase() === 'free';
     if (!FREE_TEMPLATES.includes(templateId) && isFreePlan) {
       toast('Upgrade your plan to unlock this template', {
         icon: '🔒',
@@ -121,7 +120,6 @@ export default function Templates() {
       }}>
         {TEMPLATES.filter((tmpl) => !tmpl.type || tmpl.type === documentType).map((tmpl) => {
           const isActive = activeTemplate === tmpl.id;
-          const isFreePlan = !user?.plan || String(user.plan).toLowerCase() === 'free';
           const isLocked = !FREE_TEMPLATES.includes(tmpl.id) && isFreePlan;
           const previewSrc = documentType === 'quotation' ? (QUOTATION_PREVIEWS[tmpl.id] || tmpl.img) : tmpl.img;
           return (
@@ -164,9 +162,11 @@ export default function Templates() {
                   src={previewSrc}
                   templateId={tmpl.id}
                   logo={user?.businessLogo}
+                  seal={user?.businessSeal}
                   alt={tmpl.name}
                   style={{ height: '100%' }}
                   imageStyle={{ height: '100%' }}
+                  isFreePlan={isFreePlan}
                 />
                 {isLocked && (
                   <div
@@ -240,9 +240,11 @@ export default function Templates() {
                     src={documentType === 'quotation' ? (QUOTATION_PREVIEWS[previewTemplate.id] || previewTemplate.img) : previewTemplate.img}
                     templateId={previewTemplate.id}
                     logo={user?.businessLogo}
+                    seal={user?.businessSeal}
                     alt={previewTemplate.name}
                     style={{ width: '100%', boxShadow: 'var(--shadow-lg)', borderRadius: '8px' }}
                     imageStyle={{ height: 'auto' }}
+                    isFreePlan={isFreePlan}
                   />
 
                 </div>

@@ -49,6 +49,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    businessSeal: {
+      type: String,
+      default: '',
+    },
     address: {
       street: { type: String, default: '' },
       city: { type: String, default: '' },

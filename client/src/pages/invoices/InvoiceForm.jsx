@@ -1475,12 +1475,12 @@ export default function InvoiceForm() {
           <label className="form-label">Template <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 400 }}>(uses account default if none selected)</span></label>
           {(() => {
             const TEMPLATE_IMGS = {
-              template1: isQuotation ? '/templates/quotation1.svg' : '/templates/t1.png',
-              template2: isQuotation ? '/templates/quotation2.svg' : '/templates/t2.png',
-              template3: isQuotation ? '/templates/quotation3.svg' : '/templates/t3.png',
-              template4: isQuotation ? '/templates/quotation4.svg' : '/templates/t4.png',
-              template5: isQuotation ? '/templates/quotation5.svg' : '/templates/t5.png',
-              template6: isQuotation ? '/templates/quotation6.svg' : '/templates/t6.png',
+              template1: isQuotation ? '/templates/quotation1.svg' : '/templates/t1.svg',
+              template2: isQuotation ? '/templates/quotation2.svg' : '/templates/t2.svg',
+              template3: isQuotation ? '/templates/quotation3.svg' : '/templates/t3.svg',
+              template4: isQuotation ? '/templates/quotation4.svg' : '/templates/t4.svg',
+              template5: isQuotation ? '/templates/quotation5.svg' : '/templates/t5.svg',
+              template6: isQuotation ? '/templates/quotation6.svg' : '/templates/t6.svg',
               template7: isQuotation ? '/templates/quotation7.svg' : '/templates/t7.png',
               template8: isQuotation ? '/templates/quotation8.svg' : '/templates/t8.svg',
               template9: isQuotation ? '/templates/quotation9.svg' : '/templates/t9.svg',
@@ -1492,7 +1492,7 @@ export default function InvoiceForm() {
               quotation14: '/templates/quotation14.svg', quotation15: '/templates/quotation15.svg',
             };
             const defaultKey = ((isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) || 'template1').toLowerCase();
-            const defaultImg = TEMPLATE_IMGS[defaultKey] || '/templates/t1.png';
+            const defaultImg = TEMPLATE_IMGS[defaultKey] || '/templates/t1.svg';
             const TEMPLATES = [
               { id: '', name: 'Account Default', img: defaultImg },
               { id: 'template1', name: 'Classic Blue', img: TEMPLATE_IMGS.template1 },
@@ -1554,9 +1554,11 @@ export default function InvoiceForm() {
                           src={t.img}
                           templateId={t.id || defaultKey}
                           logo={currentUser?.businessLogo}
+                          seal={currentUser?.businessSeal}
                           alt={t.name}
                           style={{ aspectRatio: '5/7' }}
                           imageStyle={{ aspectRatio: '5/7' }}
+                          isFreePlan={isFreePlan}
                         />
                         {t.id === '' && (
                           <span style={{
@@ -1645,9 +1647,11 @@ export default function InvoiceForm() {
                     src={previewTemplate.img}
                     templateId={(previewTemplate.id || ((isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) || 'template1')).toLowerCase()}
                     logo={currentUser?.businessLogo}
+                    seal={currentUser?.businessSeal}
                     alt={previewTemplate.name}
                     style={{ width: '900px', maxWidth: 'none', height: 'auto', margin: '0 auto', borderRadius: 8, boxShadow: 'var(--shadow-lg)' }}
                     imageStyle={{ height: 'auto' }}
+                    isFreePlan={!currentUser?.plan || String(currentUser.plan).toLowerCase() === 'free'}
                   />
                 </div>
                 <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>

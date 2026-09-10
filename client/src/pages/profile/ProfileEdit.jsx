@@ -174,6 +174,7 @@ export default function ProfileEdit() {
   const [deleting, setDeleting] = useState(false);
   const fileRef = useRef();
   const [signatureImg, setSignatureImg] = useState(user?.businessSignature || '');
+  const [sealImg, setSealImg] = useState(user?.businessSeal || '');
   const [bankAccounts, setBankAccounts] = useState(() => normalizeBankAccounts(user));
   const [bankModal, setBankModal] = useState({ open: false, index: null, draft: emptyBankAccount() });
 
@@ -186,6 +187,18 @@ export default function ProfileEdit() {
       toast.success(dataUrl ? 'Signature saved!' : 'Signature removed.');
     } catch {
       toast.error('Failed to save signature.');
+    }
+  };
+
+  /* ── Save seal immediately ── */
+  const handleSealSave = async (dataUrl) => {
+    try {
+      const { data } = await authAPI.updateMe({ businessSeal: dataUrl });
+      updateUser(data.user);
+      setSealImg(dataUrl);
+      toast.success(dataUrl ? 'Seal saved!' : 'Seal removed.');
+    } catch {
+      toast.error('Failed to save seal.');
     }
   };
 
@@ -684,6 +697,16 @@ export default function ProfileEdit() {
           <SignaturePicker
             currentSignature={signatureImg}
             onSave={handleSignatureSave}
+          />
+
+          {/* ── Seal Card (always visible) ── */}
+          <SignaturePicker
+            currentSignature={sealImg}
+            onSave={handleSealSave}
+            title="Business Seal"
+            itemLabel="Seal"
+            allowType={false}
+            uploadHint="PNG with transparent background works best"
           />
 
           {/* ── Change Password card ── */}

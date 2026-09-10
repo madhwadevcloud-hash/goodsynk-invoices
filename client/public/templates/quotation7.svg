@@ -3,4 +3,6 @@
     <text x="250" y="760" fill="#111" font-family="Arial" font-size="10" font-weight="700">Terms &amp; Conditions</text>
     <text x="180" y="775" fill="#555" font-family="Arial" font-size="10" >Payment due upon receipt. Quote valid for 14 days.</text>
     <rect x="250" y="800" width="100" height="1" fill="#000"/>
+    <text x="250" y="815" fill="#555" font-family="Arial" font-size="10">Signature</text>
+    <circle cx="420" cy="800" r="14" fill="none" stroke="#B565D8" stroke-width="1" stroke-dasharray="2,2"/><text x="420" y="802" text-anchor="middle" font-family="Arial" font-size="6" font-weight="700" fill="#B565D8">SEAL</text>
 </g></svg>

@@ -324,6 +324,9 @@ export default function Template7({ invoice }) {
               <Image src={biz.businessSignature} style={{ width: 100, height: 40, objectFit: 'contain', marginBottom: 4 }} />
             )}
             <Text style={s.sigLine}>Authorized Signatory</Text>
+            {biz?.businessSeal && (
+              <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />
+            )}
           </View>
         </View>
 

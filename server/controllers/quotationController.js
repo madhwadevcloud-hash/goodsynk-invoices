@@ -75,7 +75,7 @@ const getQuotation = async (req, res) => {
   try {
     const quotation = await Quotation.findOne({ _id: req.params.id, user: req.user._id, isDeleted: { $ne: true } })
       .populate('client')
-      .populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan');
+      .populate('user', 'name email businessName businessLogo businessSignature businessSeal address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan');
     if (!quotation) return res.status(404).json({ success: false, message: 'Quotation not found' });
     
     // Ensure shareToken exists
@@ -140,7 +140,7 @@ const createQuotation = async (req, res) => {
     await upsertProductsFromItems(req.user._id, items);
 
     await quotation.populate('client', 'name email phone');
-    await quotation.populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan');
+    await quotation.populate('user', 'name email businessName businessLogo businessSignature businessSeal address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan');
     // Map quotationNumber → invoiceNumber for frontend compatibility
     const out = quotation.toObject();
     out.invoiceNumber = out.quotationNumber;
@@ -181,7 +181,7 @@ const updateQuotation = async (req, res) => {
       { new: true, runValidators: true }
     )
       .populate('client', 'name email phone')
-      .populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan');
+      .populate('user', 'name email businessName businessLogo businessSignature businessSeal address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan');
 
     // Automatically reflect items in products/services database
     if (items) {
