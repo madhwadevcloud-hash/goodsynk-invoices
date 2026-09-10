@@ -5,4 +5,5 @@
     <text x="60" y="785" fill="#64748b" font-family="Arial" font-size="10" >Quote valid for 30 days.</text>
     <rect x="390" y="775" width="150" height="1" fill="#64748b"/>
     <text x="390" y="790" fill="#334155" font-family="Arial" font-size="10" >AUTHORISED SIGNATURE</text>
+    <circle cx="570" cy="782" r="14" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="2,2"/><text x="570" y="784" text-anchor="middle" font-family="Arial" font-size="6" font-weight="700" fill="#334155">SEAL</text>
 </g></svg>

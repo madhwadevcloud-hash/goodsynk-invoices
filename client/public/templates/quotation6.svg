@@ -5,5 +5,5 @@
     <text x="40" y="750" fill="#f1f1f1" font-family="Arial" font-size="10" >Due within 14 Days.</text>
     <text x="40" y="765" fill="#f1f1f1" font-family="Arial" font-size="10" >Thank you!</text>
     <rect x="380" y="760" width="150" height="1" fill="#1C2541"/>
-    <text x="380" y="775" fill="#1C2541" font-family="Arial" font-size="10" >Authorised Signature</text>
+    <text x="380" y="775" fill="#1C2541" font-family="Arial" font-size="10" >Authorised Signature</text><circle cx="460" cy="775" r="16" fill="none" stroke="#1C2541" stroke-width="1" stroke-dasharray="2,2"/><text x="460" y="777" text-anchor="middle" font-family="Arial" font-size="6" font-weight="700" fill="#1C2541">SEAL</text>
 </g></svg>

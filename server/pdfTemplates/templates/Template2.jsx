@@ -264,6 +264,9 @@ export default function Template2({ invoice }) {
           <View style={s.signatureLine}>
             <Text style={{ fontSize: 9, fontFamily: M }}>Authorised Signature</Text>
           </View>
+          {biz?.businessSeal && (
+            <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />
+          )}
         </View>
 
         {/* Footer: Split Asymmetric */}

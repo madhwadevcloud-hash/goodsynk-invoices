@@ -264,6 +264,9 @@ export default function Template5({ invoice }) {
           <View style={{ width: 120, borderTopWidth: 2, borderTopColor: '#0A66C2', borderTopStyle: 'solid', paddingTop: 4 }}>
             <Text style={{ fontSize: 8, color: '#0A66C2', textAlign: 'center' }}>Authorised Signature</Text>
           </View>
+          {biz?.businessSeal && (
+            <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />
+          )}
         </View>
 
         {/* Footer: Corporate Two-Tone Bands */}

@@ -5,6 +5,8 @@ import toast from 'react-hot-toast';
 import { Pencil, ArrowLeft, CheckCircle, Send, Download, FileText, Loader2 } from 'lucide-react';
 import { DEFAULT_COLORS } from './InvoiceForm';
 
+import { useAuth } from '../../context/AuthContext';
+
 const PdfPane = lazy(() => import('./PdfPane'));
 
 const PdfPaneFallback = () => (
@@ -15,6 +17,7 @@ const PdfPaneFallback = () => (
 );
 
 export default function InvoiceView() {
+  const { user: currentUser } = useAuth();
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -95,6 +98,13 @@ export default function InvoiceView() {
     (invoice.template ? (DEFAULT_COLORS[invoice.template.toLowerCase()] || null) : (isQuotation ? invoice.user?.quotationTemplateColors : invoice.user?.invoiceTemplateColors)) ||
     DEFAULT_COLORS[(effectiveTemplate || 'template1').toLowerCase()];
 
+  const userForPDF = {
+    ...currentUser,
+    ...invoice.user,
+    ...(logoBase64 ? { businessLogo: logoBase64 } : {}),
+    businessSeal: invoice.user?.businessSeal || currentUser?.businessSeal || '',
+  };
+
   const invoiceForPDF = {
     ...invoice,
     invoiceType: isQuotation ? 'quotation' : 'invoice',
@@ -102,7 +112,7 @@ export default function InvoiceView() {
     // Always resolve the effective template so '' (account default) renders correctly
     template: effectiveTemplate,
     templateColors: colors,
-    user: logoBase64 ? { ...invoice.user, businessLogo: logoBase64 } : invoice.user
+    user: userForPDF
   };
 
   return (

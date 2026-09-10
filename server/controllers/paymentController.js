@@ -108,6 +108,7 @@ const verifyPayment = async (req, res) => {
         businessName: user.businessName,
         businessLogo: user.businessLogo,
         businessSignature: user.businessSignature,
+        businessSeal: user.businessSeal,
         address: user.address,
         phone: user.phone,
         gstin: user.gstin,

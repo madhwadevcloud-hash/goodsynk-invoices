@@ -6,7 +6,7 @@
     
     <rect x="225" y="740" width="150" height="40" fill="#f8fafc"/>
     <rect x="235" y="760" width="130" height="1" fill="#cbd5e1"/>
-    <text x="235" y="775" fill="#53606c" font-family="Arial" font-size="10" >Authorised Signature</text>
+    <text x="235" y="775" fill="#53606c" font-family="Arial" font-size="10" >Authorised Signature</text><circle cx="305" cy="775" r="16" fill="none" stroke="#53606c" stroke-width="1" stroke-dasharray="2,2"/><text x="305" y="777" text-anchor="middle" font-family="Arial" font-size="6" font-weight="700" fill="#53606c">SEAL</text>
     
     <rect x="398" y="740" width="150" height="40" fill="#f8fafc"/>
     <text x="408" y="755" fill="#4A72D4" font-family="Arial" font-size="10" font-weight="700">THANK YOU</text>

@@ -4,4 +4,5 @@
     <text x="50" y="790" fill="#ccc" font-family="Arial" font-size="10" >Thank you for your business.</text>
     <rect x="420" y="770" width="130" height="1" fill="#C2410C"/>
     <text x="420" y="790" fill="#ccc" font-family="Arial" font-size="10" >SIGNATURE</text>
+    <circle cx="570" cy="780" r="14" fill="none" stroke="#C2410C" stroke-width="1" stroke-dasharray="2,2"/><text x="570" y="782" text-anchor="middle" font-family="Arial" font-size="6" font-weight="700" fill="#C2410C">SEAL</text>
 </g></svg>

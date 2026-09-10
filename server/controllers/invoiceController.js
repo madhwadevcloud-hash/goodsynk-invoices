@@ -95,7 +95,7 @@ const getInvoice = async (req, res) => {
   try {
     const invoice = await Invoice.findOne({ _id: req.params.id, user: req.user._id, isDeleted: { $ne: true } })
       .populate('client')
-      .populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan');
+      .populate('user', 'name email businessName businessLogo businessSignature businessSeal address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan');
     if (!invoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
 
     // Ensure shareToken exists
@@ -147,7 +147,7 @@ const createInvoice = async (req, res) => {
     await upsertProductsFromItems(req.user._id, items);
 
     await invoice.populate('client', 'name email phone');
-    await invoice.populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan');
+    await invoice.populate('user', 'name email businessName businessLogo businessSignature businessSeal address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan');
     res.status(201).json({ success: true, invoice });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -176,7 +176,7 @@ const updateInvoice = async (req, res) => {
       { new: true, runValidators: true }
     )
       .populate('client', 'name email phone')
-      .populate('user', 'name email businessName businessLogo businessSignature address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan');
+      .populate('user', 'name email businessName businessLogo businessSignature businessSeal address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan');
 
     // Automatically reflect items in products/services database
     if (items) {
