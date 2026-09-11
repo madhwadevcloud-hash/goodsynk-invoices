@@ -169,7 +169,7 @@ export default function Template4({ invoice }) {
           </View>
 
           <View style={s.infoCol}>
-            {isQuotation && (
+            {(
               <>
                 <Text style={s.infoLabel}>Payment Info</Text>
                 {biz?.bankDetails?.accountNumber ? (
@@ -178,6 +178,7 @@ export default function Template4({ invoice }) {
                     <Text style={s.infoText}>Account Name: {biz.bankDetails.accountName}</Text>
                     <Text style={s.infoText}>Account No.: {biz.bankDetails.accountNumber}</Text>
                     {biz.bankDetails.ifscCode && <Text style={s.infoText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
+                    {biz.bankDetails.branch && <Text style={s.infoText}>Branch: {biz.bankDetails.branch}</Text>}
                   </>
                 ) : invoice.paymentInfo ? (
                   <Text style={s.infoText}>{invoice.paymentInfo}</Text>
@@ -301,15 +302,20 @@ export default function Template4({ invoice }) {
             </View>
             <View style={s.poweredByContainer}>
               <Text style={s.poweredByLabel}>Powered By</Text>
-              <Text style={s.poweredByValue}><Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text>GoodSynk</Text>
+              <Text style={s.poweredByValue}>GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text></Text>
             </View>
             <View style={s.footerBrandRight}>
-              <Text style={s.footerTrustLine}>Generated securely by Goodsynk Invoice.</Text>
+              <Text style={s.footerTrustLine}>Generated securely by GoodSynk<Text style={{ fontSize: 6, fontFamily: 'Helvetica' }}>™</Text>.</Text>
               <Text style={s.footerTrustLine}>This is a digitally signed document.</Text>
               <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
             </View>
           </View>
         </View>
+        <Text
+          style={{ position: 'absolute', bottom: 6, right: 40, fontSize: 7, color: '#666' }}
+          render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`}
+          fixed
+        />
       </Page>
     </Document>
   );

@@ -197,7 +197,7 @@ export default function Template3({ invoice }) {
           </View>
 
           <View style={s.metaColumn}>
-            {isQuotation && (
+            {(
               <>
                 <Text style={s.metaLabel}>Payment Details</Text>
                 {biz?.bankDetails?.accountNumber ? (
@@ -206,6 +206,7 @@ export default function Template3({ invoice }) {
                     <Text style={s.billToText}>A/C Name: {biz.bankDetails.accountName}</Text>
                     <Text style={s.billToText}>A/C Number: {biz.bankDetails.accountNumber}</Text>
                     {biz.bankDetails.ifscCode && <Text style={s.billToText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
+                    {biz.bankDetails.branch && <Text style={s.billToText}>Branch: {biz.bankDetails.branch}</Text>}
                   </View>
                 ) : (
                   <Text style={s.billToText}>{invoice.paymentInfo || '—'}</Text>
@@ -300,7 +301,7 @@ export default function Template3({ invoice }) {
           <View style={s.footerTopRow}>
             {biz?.phone && <Text style={s.footerText}>Phone: {biz.phone}</Text>}
             <View style={s.footerBrandPill}>
-              <Text style={s.footerBrandPillText}>GoodSynk</Text>
+              <Text style={s.footerBrandPillText}>GoodSynk<Text style={{ fontSize: 6, fontFamily: 'Helvetica' }}>™</Text></Text>
             </View>
             {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
           </View>
@@ -316,9 +317,14 @@ export default function Template3({ invoice }) {
           </View>
           <View style={s.poweredByContainer}>
             <Text style={s.poweredByLabel}>Powered By</Text>
-            <Text style={s.poweredByValue}><Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text>GoodSynk</Text>
+            <Text style={s.poweredByValue}>GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text></Text>
           </View>
         </View>
+        <Text
+          style={{ position: 'absolute', bottom: 6, right: 40, fontSize: 7, color: '#666' }}
+          render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`}
+          fixed
+        />
       </Page>
     </Document>
   );

@@ -30,6 +30,10 @@ const LOGO_POSITIONS = {
   quotation9: { top: '1.5%', right: '6%', width: '9%', maxHeight: '6%' },
   quotation10: { top: '1.5%', left: '5%', width: '9%', maxHeight: '6%' },
   quotation11: { top: '1.5%', right: '6%', width: '9%', maxHeight: '6%' },
+  template16: { top: '3.2%', left: '6.5%', width: '8%', maxHeight: '5%' },
+  quotation16: { top: '3.2%', left: '6.5%', width: '8%', maxHeight: '5%' },
+  template17: { top: '3%', left: '6%', width: '8%', maxHeight: '5%' },
+  quotation17: { top: '3%', left: '6%', width: '8%', maxHeight: '5%' },
   quotation12: { top: '1.5%', left: '6%', width: '9%', maxHeight: '6%' },
   quotation13: { top: '1.5%', right: '6%', width: '9%', maxHeight: '6%' },
   quotation14: { top: '1.5%', left: '6%', width: '9%', maxHeight: '6%' },
@@ -63,15 +67,23 @@ const SEAL_POSITIONS = {
   quotation9: { top: '92.9%', left: '95%' },
   quotation10: { top: '92.9%', left: '75%' },
   quotation11: { top: '93.1%', left: '95%' },
+  template16: { top: '85%', left: '84%' },
+  quotation16: { top: '85%', left: '84%' },
+  template17: { top: '87%', left: '87%' },
+  quotation17: { top: '87%', left: '87%' },
   quotation12: { top: '86%', left: '89.2%' },
   quotation13: { top: '84.8%', left: '89.2%' },
   quotation14: { top: '86%', left: '89.2%' },
   quotation15: { top: '86%', left: '89.2%' },
 };
 
+// Signature sits directly above the seal/stamp on every template, so its
+// position is derived from SEAL_POSITIONS at render time (see
+// getSignaturePosition below) rather than duplicated per template here.
+
 // Same "GoodSynk" diagonal watermark used across the generated PDF/preview
 // templates (see the `watermarkContainer`/`watermarkText` styles in
-// Template1-11.jsx, PremiumTemplate.jsx and DocumentTemplate.jsx), rendered
+// Template1-11.jsx and DocumentTemplate.jsx), rendered
 // here as a background image so it scales cleanly with any thumbnail size
 // (small grid cards, the large modal preview, etc.) without distortion.
 const WATERMARK_SVG = encodeURIComponent(
@@ -90,7 +102,15 @@ const WATERMARK_STYLE = {
   pointerEvents: 'none',
 };
 
-export default function TemplatePreview({ src, templateId, logo, seal, alt, style, imageStyle, isFreePlan = true, isQuotation = false }) {
+// The signature image sits just above the seal on every generated PDF, so
+// its preview position is derived from the seal's position rather than
+// tracked separately for each template.
+const getSignaturePosition = (sealPosition) => {
+  const topPct = parseFloat(sealPosition.top) || 0;
+  return { top: `${Math.max(topPct - 7, 2)}%`, left: sealPosition.left };
+};
+
+export default function TemplatePreview({ src, templateId, logo, seal, signature, alt, style, imageStyle, isFreePlan = true, isQuotation = false }) {
   const isQuote = isQuotation || (typeof src === 'string' && src.toLowerCase().includes('quotation'));
   let rawKey = (templateId || '').toLowerCase();
   if (isQuote && !rawKey.startsWith('quotation')) {
@@ -101,6 +121,7 @@ export default function TemplatePreview({ src, templateId, logo, seal, alt, styl
   }
   const logoPosition = LOGO_POSITIONS[rawKey] || LOGO_POSITIONS[(templateId || '').toLowerCase()] || LOGO_POSITIONS.template1;
   const sealPosition = SEAL_POSITIONS[rawKey] || SEAL_POSITIONS[(templateId || '').toLowerCase()] || SEAL_POSITIONS.template1;
+  const signaturePosition = getSignaturePosition(sealPosition);
 
   return (
     <div style={{ position: 'relative', width: '100%', ...style }}>
@@ -118,6 +139,24 @@ export default function TemplatePreview({ src, templateId, logo, seal, alt, styl
             ...logoPosition,
             height: 'auto',
             maxWidth: '10%',
+            objectFit: 'contain',
+            display: 'block',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+      {signature && (
+        <img
+          src={signature}
+          alt="Authorised signature"
+          style={{
+            position: 'absolute',
+            top: signaturePosition.top,
+            left: signaturePosition.left,
+            transform: 'translate(-50%, -100%)',
+            width: '14%',
+            height: 'auto',
+            maxHeight: '5%',
             objectFit: 'contain',
             display: 'block',
             pointerEvents: 'none',

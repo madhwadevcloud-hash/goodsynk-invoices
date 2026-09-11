@@ -180,7 +180,7 @@ export default function Template1({ invoice }) {
               <Text style={s.infoText}>Date of Issue: <Text style={{ fontFamily: B }}>{new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text></Text>
               <Text style={s.infoText}>Due Date: <Text style={{ fontFamily: B }}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US') : 'Upon Receipt'}</Text></Text>
             </View>
-            {isQuotation && (
+            {(
               <View style={s.infoCol}>
                 <Text style={s.infoTitle}>Payment Details</Text>
                 {biz?.bankDetails?.accountNumber ? (
@@ -188,6 +188,7 @@ export default function Template1({ invoice }) {
                     {biz.bankDetails.bankName && <Text style={s.infoText}>Bank: {biz.bankDetails.bankName}</Text>}
                     <Text style={s.infoText}>Account: {biz.bankDetails.accountNumber}</Text>
                     {biz.bankDetails.ifscCode && <Text style={s.infoText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
+                    {biz.bankDetails.branch && <Text style={s.infoText}>Branch: {biz.bankDetails.branch}</Text>}
                   </>
                 ) : (
                   <>
@@ -294,7 +295,7 @@ export default function Template1({ invoice }) {
           <View style={s.footerCenter}>
             <View style={s.poweredByContainer}>
               <Text style={s.poweredByLabel}>Powered By</Text>
-              <Text style={s.poweredByValue}><Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text>GoodSynk</Text>
+              <Text style={s.poweredByValue}>GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text></Text>
             </View>
             <Text style={s.footerTagline}>Simple Invoicing, Billing & Quotations</Text>
             <Text style={[s.footerTagline, { marginTop: 3 }]}>Invoice Banega, Payment Badega.</Text>
@@ -302,12 +303,17 @@ export default function Template1({ invoice }) {
           {/* Right — Trust */}
           <View style={s.footerRight}>
             <Text style={s.footerTrustLine}>Generated securely by</Text>
-            <Text style={s.footerTrustLine}>Goodsynk Invoice.</Text>
+            <Text style={s.footerTrustLine}>GoodSynk<Text style={{ fontSize: 6, fontFamily: 'Helvetica' }}>™</Text>.</Text>
             <Text style={[s.footerTrustLine, { marginTop: 3 }]}>
               <Link style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
             </Text>
           </View>
         </View>
+        <Text
+          style={{ position: 'absolute', bottom: 6, right: 40, fontSize: 7, color: '#666' }}
+          render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`}
+          fixed
+        />
       </Page>
     </Document>
   );

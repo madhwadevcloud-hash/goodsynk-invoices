@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="595" height="842" viewBox="0 0 595 842">
+  <rect width="595" height="842" fill="#fff"/>
+  <rect x="34" y="28" width="527" height="756" fill="none" stroke="#1F4B3F" stroke-width="1.5"/>
+  <line x1="34" y1="120" x2="561" y2="120" stroke="#1F4B3F" stroke-width="1.5"/>
+  <text x="55" y="65" font-family="Arial" font-size="13" font-weight="700" fill="#1F4B3F">ABC SOLUTIONS PVT. LTD.</text>
+  <text x="55" y="82" font-family="Arial" font-size="8.5" fill="#444">GSTIN: 29CXXXX1234F1Z5</text>
+  <text x="55" y="96" font-family="Arial" font-size="8.5" fill="#444">123, MG Road, Bengaluru, Karnataka 560001</text>
+  <rect x="470" y="18" width="90" height="16" fill="#1F4B3F"/>
+  <text x="515" y="29" text-anchor="middle" font-family="Arial" font-size="9" font-weight="700" fill="#fff" letter-spacing="1">TAX INVOICE</text>
+  <text x="540" y="65" text-anchor="end" font-family="Arial" font-size="8.5" fill="#555">Invoice #</text>
+  <text x="540" y="65" text-anchor="start" font-family="Arial" font-size="8.5" font-weight="700" fill="#111" x2="560"></text>
+  <text x="540" y="78" text-anchor="end" font-family="Arial" font-size="8.5" fill="#111" font-weight="700">INV-0016</text>
+  <text x="540" y="92" text-anchor="end" font-family="Arial" font-size="8.5" fill="#111">16 Sep 2026</text>
+  <text x="540" y="106" text-anchor="end" font-family="Arial" font-size="8.5" fill="#111">Place of Supply: 29-KARNATAKA</text>
+  <line x1="297" y1="120" x2="297" y2="230" stroke="#1F4B3F" stroke-width="1"/>
+  <line x1="34" y1="230" x2="561" y2="230" stroke="#1F4B3F" stroke-width="1.5"/>
+  <text x="55" y="145" font-family="Arial" font-size="8" font-weight="700" fill="#1F4B3F" letter-spacing="0.5">BILL TO</text>
+  <text x="55" y="162" font-family="Arial" font-size="10" font-weight="700" fill="#111">Acme Group</text>
+  <text x="55" y="178" font-family="Arial" font-size="8.5" fill="#333">123 ABCD, Karnataka</text>
+  <text x="55" y="192" font-family="Arial" font-size="8.5" fill="#333">Ph: XXXXXXXXXX</text>
+  <text x="315" y="145" font-family="Arial" font-size="8" font-weight="700" fill="#1F4B3F" letter-spacing="0.5">SHIP TO</text>
+  <text x="315" y="162" font-family="Arial" font-size="10" font-weight="700" fill="#111">Acme Group</text>
+  <text x="315" y="178" font-family="Arial" font-size="8.5" fill="#333">Same as billing address</text>
+  <rect x="34" y="230" width="527" height="20" fill="#1F4B3F"/>
+  <text x="45" y="244" font-family="Arial" font-size="7.5" font-weight="700" fill="#fff">#</text>
+  <text x="80" y="244" font-family="Arial" font-size="7.5" font-weight="700" fill="#fff">ITEM</text>
+  <text x="300" y="244" font-family="Arial" font-size="7.5" font-weight="700" fill="#fff">HSN</text>
+  <text x="360" y="244" font-family="Arial" font-size="7.5" font-weight="700" fill="#fff">RATE</text>
+  <text x="420" y="244" font-family="Arial" font-size="7.5" font-weight="700" fill="#fff">TAX</text>
+  <text x="530" y="244" font-family="Arial" font-size="7.5" font-weight="700" fill="#fff">AMOUNT</text>
+  <g fill="#333" font-family="Arial" font-size="8">
+    <text x="45" y="268">1</text><text x="80" y="268">Premium Product Bundle</text><text x="300" y="268">998877</text><text x="355" y="268">4,999.00</text><text x="415" y="268">18%</text><text x="500" y="268">5,899.00</text>
+    <line x1="34" y1="278" x2="561" y2="278" stroke="#E0E0E0"/>
+    <text x="45" y="296">2</text><text x="80" y="296">Onsite Support (Service)</text><text x="300" y="296">—</text><text x="355" y="296">2,000.00</text><text x="415" y="296">18%</text><text x="500" y="296">2,360.00</text>
+    <line x1="34" y1="306" x2="561" y2="306" stroke="#E0E0E0"/>
+  </g>
+  <rect x="34" y="330" width="527" height="18" fill="#F0F5F2"/>
+  <line x1="34" y1="330" x2="561" y2="330" stroke="#1F4B3F"/>
+  <line x1="34" y1="348" x2="561" y2="348" stroke="#1F4B3F"/>
+  <text x="45" y="342" font-family="Arial" font-size="7.5" fill="#333">Total Items / Qty : 2 / 3</text>
+  <text x="330" y="342" font-family="Arial" font-size="7.5" fill="#333">Amount in Words: INR Eight Thousand Two Hundred Fifty Nine Only</text>
+  <text x="370" y="372" font-family="Arial" font-size="8" fill="#333">Taxable Amount</text><text x="555" y="372" text-anchor="end" font-family="Arial" font-size="8" font-weight="700" fill="#111">6,999.00</text>
+  <text x="370" y="386" font-family="Arial" font-size="8" fill="#333">CGST + SGST</text><text x="555" y="386" text-anchor="end" font-family="Arial" font-size="8" font-weight="700" fill="#111">1,260.00</text>
+  <rect x="370" y="396" width="191" height="20" fill="#1F4B3F"/>
+  <text x="380" y="410" font-family="Arial" font-size="9.5" font-weight="700" fill="#fff">Total</text>
+  <text x="551" y="410" text-anchor="end" font-family="Arial" font-size="9.5" font-weight="700" fill="#fff">INR 8,259.00</text>
+  <rect x="470" y="422" width="91" height="14" rx="3" fill="#E8F5EC"/>
+  <text x="515" y="432" text-anchor="middle" font-family="Arial" font-size="6.5" font-weight="700" fill="#2E7D46">AMOUNT PAID</text>
+  <line x1="34" y1="470" x2="561" y2="470" stroke="#1F4B3F" stroke-width="1.5"/>
+  <line x1="380" y1="470" x2="380" y2="600" stroke="#1F4B3F"/>
+  <text x="45" y="486" font-family="Arial" font-size="7.5" font-weight="700" fill="#1F4B3F">BANK DETAILS</text>
+  <text x="45" y="500" font-family="Arial" font-size="7.5" fill="#333">Bank: YES BANK</text>
+  <text x="45" y="512" font-family="Arial" font-size="7.5" fill="#333">Account #: 66789999222445</text>
+  <text x="45" y="524" font-family="Arial" font-size="7.5" fill="#333">IFSC: YESB0IN4567</text>
+  <text x="45" y="536" font-family="Arial" font-size="7.5" fill="#333">Branch: Kodihalli</text>
+  <text x="460" y="486" text-anchor="middle" font-family="Arial" font-size="7.5" fill="#555">For ABC Solutions Pvt. Ltd.</text>
+  <line x1="410" y1="548" x2="510" y2="548" stroke="#999"/>
+  <text x="460" y="558" text-anchor="middle" font-family="Arial" font-size="7" fill="#333">Authorised Signatory</text>
+  <circle cx="460" cy="520" r="24" fill="none" stroke="#bbb" stroke-dasharray="2,2"/>
+
+  <text x="298" y="822" text-anchor="middle" font-family="Arial" font-size="8" fill="#66717d">Powered by GoodSynk™</text>
+</svg>

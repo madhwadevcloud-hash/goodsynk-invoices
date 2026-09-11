@@ -4,4 +4,6 @@
     <text x="120" y="785" fill="#cbd5e1" font-family="Arial" font-size="10" >Valid 14 days. Prices exclude tax.</text>
     <rect x="360" y="765" width="120" height="1" fill="#fff"/>
     <text x="360" y="780" fill="#cbd5e1" font-family="Arial" font-size="10" >Authorised Signature</text><circle cx="450" cy="780" r="16" fill="none" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="2,2"/><text x="450" y="782" text-anchor="middle" font-family="Arial" font-size="6" font-weight="700" fill="#cbd5e1">SEAL</text>
-</g></svg>
+</g>
+  <text x="300" y="820" text-anchor="middle" font-family="Arial" font-size="8" fill="#66717d">Powered by GoodSynk™</text>
+</svg>

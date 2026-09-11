@@ -169,7 +169,7 @@ export default function Template10({ invoice }) {
                </View>
              )}
              
-             {isQuotation && biz?.bankDetails?.accountNumber && (
+             {biz?.bankDetails?.accountNumber && (
               <View style={{ marginTop: 10 }}>
                 <Text style={[s.cardHeader, { marginBottom: 4 }]}>Payment Info</Text>
                 {biz.bankDetails.bankName && <Text style={s.clientText}>Bank: {biz.bankDetails.bankName}</Text>}
@@ -267,9 +267,14 @@ export default function Template10({ invoice }) {
 
         <View style={s.footer} fixed>
           <Text style={s.footerText}>
-            {bizName} | Powered by <Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text><Link style={s.footerLink} src="https://invoice.goodsynk.com">GoodSynk</Link>
+            {bizName} | Powered by <Link style={s.footerLink} src="https://invoice.goodsynk.com">GoodSynk</Link><Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text>
           </Text>
         </View>
+        <Text
+          style={{ position: 'absolute', bottom: 6, right: 40, fontSize: 7, color: '#666' }}
+          render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`}
+          fixed
+        />
       </Page>
     </Document>
   );

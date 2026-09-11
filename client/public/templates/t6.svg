@@ -47,8 +47,8 @@
 <text x="55" y="522" font-family="Arial" font-size="9" font-weight="700">Thank you for your business</text>
 <rect x="0" y="768" width="595" height="50" fill="#1C2541"/>
 <text x="297" y="790" text-anchor="middle" font-family="Arial" font-size="8.5" fill="#fff">Phone: 0000000000<tspan dx="18">Email: testuser@example.com</tspan></text>
-<text x="297" y="806" text-anchor="middle" font-family="Arial" font-size="8" font-weight="700" fill="#E8662B">Goodsynk Billing | Simple Invoicing, Billing &amp; Quotations | Visit invoice.goodsynk.com</text>
+<text x="297" y="806" text-anchor="middle" font-family="Arial" font-size="8" font-weight="700" fill="#E8662B">GoodSynk™ Billing | Simple Invoicing, Billing &amp; Quotations | Visit invoice.goodsynk.com</text>
 <polygon points="450,818 595,818 595,842 480,842" fill="#E8662B"/>
 <text x="565" y="832" text-anchor="middle" font-family="Arial" font-size="6.5" fill="#ffe4d1">Powered By</text>
-<text x="565" y="841" text-anchor="middle" font-family="Arial" font-size="7.5" font-weight="700" fill="#fff">GoodSynk</text>
+<text x="565" y="841" text-anchor="middle" font-family="Arial" font-size="7.5" font-weight="700" fill="#fff">GoodSynk™</text>
 </svg>

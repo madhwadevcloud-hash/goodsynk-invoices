@@ -3,11 +3,12 @@ import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { quotationAPI, invoiceAPI } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
-import { Plus, Pencil, Trash2, Eye, Send, Mail, MessageCircle, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, Send, Mail, MessageCircle, Loader2, Settings } from 'lucide-react';
 import { DEFAULT_COLORS, resolveTemplateColors } from '../invoices/InvoiceForm';
 import { isProfileComplete, getMissingProfileField } from '../../utils/profileValidation';
 import { getQuotationMessage } from '../../utils/whatsappTemplates';
 import EmailComposeModal from '../../components/EmailComposeModal';
+import DocumentSettingsPanel from '../../components/DocumentSettingsPanel';
 
 const fmtCurrency = (n, currency = 'INR') =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 2 }).format(n || 0);
@@ -23,6 +24,7 @@ const normalizeBankAccounts = (user) => {
 };
 
 export default function QuotationList() {
+  const [showDocSettings, setShowDocSettings] = useState(false);
   const { user } = useAuth();
   const { setShowProfilePrompt } = useOutletContext();
   const [quotations, setQuotations] = useState([]);
@@ -225,10 +227,22 @@ export default function QuotationList() {
           <h1 className="page-title">Quotations</h1>
           <p className="page-subtitle">Manage all your quotations</p>
         </div>
-        <Link to="/quotations/new" className="btn btn-primary" onClick={handleCreate}>
-          <Plus size={16} /> New Quotation
-        </Link>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => setShowDocSettings((s) => !s)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, color: 'var(--text-secondary)' }}
+          >
+            <Settings size={16} /> Document Settings
+          </button>
+          <Link to="/quotations/new" className="btn btn-primary" onClick={handleCreate}>
+            <Plus size={16} /> New Quotation
+          </Link>
+        </div>
       </div>
+
+      {showDocSettings && <DocumentSettingsPanel onClose={() => setShowDocSettings(false)} />}
 
       <div className="card" style={{ padding: 0 }}>
         <div

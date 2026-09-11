@@ -309,7 +309,7 @@ export default function Template7({ invoice }) {
 
         <View style={s.bottomRow}>
           <View style={s.bankCol}>
-            {(isQuotation && biz?.bankDetails?.accountNumber) && (
+            {(biz?.bankDetails?.accountNumber) && (
               <>
                 <Text style={s.bankLabel}>Bank Details:</Text>
                 {biz.bankDetails.bankName && (
@@ -352,7 +352,7 @@ export default function Template7({ invoice }) {
           </View>
           <View style={s.poweredByContainer}>
             <Text style={s.poweredByLabel}>Powered By</Text>
-            <Text style={s.poweredByValue}><Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text>GoodSynk</Text>
+            <Text style={s.poweredByValue}>GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text></Text>
             <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
           </View>
         </View>

@@ -302,7 +302,7 @@ export default function Template7({ invoice }) {
 
         <View style={s.bottomRow}>
           <View style={s.bankCol}>
-            {(isQuotation && biz?.bankDetails?.accountNumber) && (
+            {(biz?.bankDetails?.accountNumber) && (
               <>
                 <Text style={s.bankLabel}>Bank Details:</Text>
                 {biz.bankDetails.bankName && (
@@ -338,7 +338,7 @@ export default function Template7({ invoice }) {
             {biz?.email && <Text>E: {biz.email}</Text>}
             {(biz?.phone || biz?.email) && <Text style={s.footerDot}> • </Text>}
             
-            Powered By <Text style={s.footerBold}><Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text>GoodSynk</Text>
+            Powered By <Text style={s.footerBold}>GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text></Text>
             <Text style={s.footerDot}> • </Text>
             <Link src="https://invoice.goodsynk.com" style={s.footerLink}>invoice.goodsynk.com</Link>
             

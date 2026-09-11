@@ -3,11 +3,12 @@ import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { invoiceAPI } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
-import { Plus, Pencil, Trash2, Eye, Send, Mail, MessageCircle, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, Send, Mail, MessageCircle, Loader2, Settings } from 'lucide-react';
 import { DEFAULT_COLORS, resolveTemplateColors } from './InvoiceForm';
 import { isProfileComplete, getMissingProfileField } from '../../utils/profileValidation';
 import { getInvoiceMessage } from '../../utils/whatsappTemplates';
 import EmailComposeModal from '../../components/EmailComposeModal';
+import DocumentSettingsPanel from '../../components/DocumentSettingsPanel';
 
 const fmtCurrency = (n, currency = 'INR') =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 2 }).format(n || 0);
@@ -19,6 +20,7 @@ export default function InvoiceList() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [showDocSettings, setShowDocSettings] = useState(false);
   const [shareOpenId, setShareOpenId] = useState(null);
   const [shareDropdownPos, setShareDropdownPos] = useState(null);
   const [sendingId, setSendingId] = useState(null);
@@ -218,10 +220,22 @@ export default function InvoiceList() {
           <h1 className="page-title">Invoices</h1>
           <p className="page-subtitle">Manage all your invoices</p>
         </div>
-        <Link to="/invoices/new" className="btn btn-primary" onClick={handleCreate}>
-          <Plus size={16} /> New Invoice
-        </Link>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => setShowDocSettings((s) => !s)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, color: 'var(--text-secondary)' }}
+          >
+            <Settings size={16} /> Document Settings
+          </button>
+          <Link to="/invoices/new" className="btn btn-primary" onClick={handleCreate}>
+            <Plus size={16} /> New Invoice
+          </Link>
+        </div>
       </div>
+
+      {showDocSettings && <DocumentSettingsPanel onClose={() => setShowDocSettings(false)} />}
 
       <div className="card" style={{ padding: 0 }}>
         <div

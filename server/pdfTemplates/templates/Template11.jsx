@@ -216,7 +216,7 @@ export default function Template11({ invoice }) {
         </View>
 
         <View style={s.bottomFlex}>
-          {isQuotation && biz?.bankDetails?.accountNumber && (
+          {biz?.bankDetails?.accountNumber && (
             <View style={s.notesWrap}>
               <Text style={s.sectionTitle}>Payment Details</Text>
               {biz.bankDetails.bankName && <Text style={s.notesText}>{biz.bankDetails.bankName}</Text>}
@@ -266,10 +266,15 @@ export default function Template11({ invoice }) {
               {biz?.email && `E: ${biz.email}`}
             </Text>
             <Text style={s.footerText}>
-              Generated securely • Powered by <Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text><Link style={s.footerLink} src="https://invoice.goodsynk.com">GoodSynk</Link>
+              Generated securely • Powered by <Link style={s.footerLink} src="https://invoice.goodsynk.com">GoodSynk</Link><Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text>
             </Text>
           </View>
         </View>
+        <Text
+          style={{ position: 'absolute', bottom: 6, right: 40, fontSize: 7, color: '#666' }}
+          render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`}
+          fixed
+        />
       </Page>
     </Document>
   );
