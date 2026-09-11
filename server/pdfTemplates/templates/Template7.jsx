@@ -155,7 +155,7 @@ export default function Template7({ invoice }) {
 
     // Footer - Minimalist Single Line
     footerBox: { position: 'absolute', bottom: 15, left: 40, right: 40, paddingTop: 10, borderTop: '0.5pt solid #E0E0E0', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-    footerSingleLine: { fontSize: 7, color: '#666', textAlign: 'center' },
+    footerTrustLine: { fontSize: 6.5, color: '#333333', textAlign: 'center' },
     footerDot: { fontSize: 7, color: '#CCC', marginHorizontal: 6 },
     footerBold: { fontFamily: B, color: PRIMARY },
     footerLink: { fontFamily: B, color: PRIMARY, textDecoration: 'none' },

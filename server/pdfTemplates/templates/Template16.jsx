@@ -136,7 +136,7 @@ export default function Template16({ invoice }) {
     footerNoteText: { fontSize: 6.3, color: '#888' },
     footerBar: { position: 'absolute', bottom: 20, left: 34, right: 34, borderTopWidth: 0.5, borderTopColor: '#DDD', paddingTop: 6, flexDirection: 'row', justifyContent: 'space-between' },
     footerBrand: { fontSize: 6.8, fontFamily: B, color: PRIMARY },
-    footerTrust: { fontSize: 6.3, color: '#888' },
+    footerTrust: { fontSize: 6.5, color: '#333333' },
   });
 
   const currency = invoice._currency || invoice.currency || 'INR';

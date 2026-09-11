@@ -308,14 +308,10 @@ export default function Template4({ invoice }) {
               <Text style={s.footerTrustLine}>Generated securely by GoodSynk<Text style={{ fontSize: 6, fontFamily: 'Helvetica' }}>™</Text>.</Text>
               <Text style={s.footerTrustLine}>This is a digitally signed document.</Text>
               <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
+              <Text style={{ fontSize: 6.5, color: '#FFFFFF', marginTop: 2, textAlign: 'right' }} render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
             </View>
           </View>
         </View>
-        <Text
-          style={{ position: 'absolute', bottom: 6, right: 40, fontSize: 7, color: '#666' }}
-          render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`}
-          fixed
-        />
       </Page>
     </Document>
   );

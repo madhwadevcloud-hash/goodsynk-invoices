@@ -46,35 +46,42 @@ const SEAL_POSITIONS = {
   template3: { top: '72.6%', left: '19.2%' },
   template4: { top: '72.9%', left: '76.8%' },
   template5: { top: '73.8%', left: '79.2%' },
-  template6: { top: '66.2%', left: '78.7%' },
-  template7: { top: '62%', left: '85%' },
-  template8: { top: '89.1%', left: '80%' },
-  template9: { top: '85.7%', left: '79.5%' },
-  template10: { top: '85.7%', left: '78.7%' },
-  template11: { top: '97.6%', left: '79.8%' },
-  invoice12: { top: '90.7%', left: '85%' },
-  invoice13: { top: '90.7%', left: '85%' },
-  invoice14: { top: '90.7%', left: '85%' },
-  invoice15: { top: '90.7%', left: '85%' },
+  template6: { top: '66.2%', left: '79.3%' },
+  template7: { top: '61.8%', left: '84%' },
+  template8: { top: '90.0%', left: '23.1%' },
+  template9: { top: '85.5%', left: '77.3%' },
+  template10: { top: '85.5%', left: '77.3%' },
+  template11: { top: '95.0%', left: '77.3%' },
+  invoice12: { top: '80.7%', left: '85.0%' },
+  invoice13: { top: '80.7%', left: '85.0%' },
+  invoice14: { top: '80.7%', left: '85.0%' },
+  invoice15: { top: '80.7%', left: '85.0%' },
+  // These quotationN values are matched exactly to the dashed "SEAL"
+  // placeholder circle baked into the corresponding quotationN.svg artwork
+  // (see client/public/templates/quotationN.svg, the <circle> inside
+  // #custom-footer next to the "Authorised Signature" label). Keeping them
+  // in sync means the dynamically-overlaid seal/signature lands directly on
+  // top of, and visually replaces, that placeholder instead of floating in
+  // a second, disconnected spot on the page.
   quotation1: { top: '92.3%', left: '50.8%' },
   quotation2: { top: '92.3%', left: '81.7%' },
   quotation3: { top: '92.6%', left: '83.3%' },
   quotation4: { top: '90.5%', left: '81.7%' },
   quotation5: { top: '90.5%', left: '88.3%' },
   quotation6: { top: '92.3%', left: '76.7%' },
-  quotation7: { top: '95.2%', left: '70%' },
+  quotation7: { top: '95.2%', left: '70.0%' },
   quotation8: { top: '92.6%', left: '89.2%' },
-  quotation9: { top: '92.9%', left: '95%' },
-  quotation10: { top: '92.9%', left: '75%' },
-  quotation11: { top: '93.1%', left: '95%' },
-  template16: { top: '85%', left: '84%' },
-  quotation16: { top: '85%', left: '84%' },
-  template17: { top: '87%', left: '87%' },
-  quotation17: { top: '87%', left: '87%' },
-  quotation12: { top: '86%', left: '89.2%' },
+  quotation9: { top: '92.9%', left: '95.0%' },
+  quotation10: { top: '92.9%', left: '75.0%' },
+  quotation11: { top: '93.1%', left: '95.0%' },
+  template16: { top: '61.8%', left: '77.3%' },
+  quotation16: { top: '61.8%', left: '77.3%' },
+  template17: { top: '60.8%', left: '77.3%' },
+  quotation17: { top: '60.8%', left: '77.3%' },
+  quotation12: { top: '86.0%', left: '89.2%' },
   quotation13: { top: '84.8%', left: '89.2%' },
-  quotation14: { top: '86%', left: '89.2%' },
-  quotation15: { top: '86%', left: '89.2%' },
+  quotation14: { top: '86.0%', left: '89.2%' },
+  quotation15: { top: '86.0%', left: '89.2%' },
 };
 
 // Signature sits directly above the seal/stamp on every template, so its
@@ -107,7 +114,7 @@ const WATERMARK_STYLE = {
 // tracked separately for each template.
 const getSignaturePosition = (sealPosition) => {
   const topPct = parseFloat(sealPosition.top) || 0;
-  return { top: `${Math.max(topPct - 7, 2)}%`, left: sealPosition.left };
+  return { top: `${Math.max(topPct - 3, 2)}%`, left: sealPosition.left };
 };
 
 export default function TemplatePreview({ src, templateId, logo, seal, signature, alt, style, imageStyle, isFreePlan = true, isQuotation = false }) {
