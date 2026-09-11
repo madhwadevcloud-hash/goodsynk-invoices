@@ -10,6 +10,8 @@ import Template8 from './Template8';
 import Template9 from './Template9';
 import Template10 from './Template10';
 import Template11 from './Template11';
+import Template16 from './Template16';
+import Template17 from './Template17';
 import DocumentTemplate from './DocumentTemplate';
 
 // Central registry — every selectable template must be listed here.
@@ -25,6 +27,8 @@ const TEMPLATE_MAP = {
     template9: Template9,
     template10: Template10,
     template11: Template11,
+    template16: Template16,
+    template17: Template17,
     invoice12: (props) => <DocumentTemplate {...props} variant="invoice12" />,
     invoice13: (props) => <DocumentTemplate {...props} variant="invoice13" />,
     invoice14: (props) => <DocumentTemplate {...props} variant="invoice14" />,

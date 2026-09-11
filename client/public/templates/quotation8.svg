@@ -5,4 +5,6 @@
     <rect x="350" y="770" width="150" height="1" fill="#111"/>
     <text x="350" y="785" fill="#111" font-family="Arial" font-size="10" font-weight="700">AUTHORISED SIGNATURE</text>
     <circle cx="535" cy="778" r="14" fill="none" stroke="#111" stroke-width="1" stroke-dasharray="2,2"/><text x="535" y="780" text-anchor="middle" font-family="Arial" font-size="6" font-weight="700" fill="#111">SEAL</text>
-</g></svg>
+</g>
+  <text x="300" y="820" text-anchor="middle" font-family="Arial" font-size="8" fill="#66717d">Powered by GoodSynk™</text>
+</svg>

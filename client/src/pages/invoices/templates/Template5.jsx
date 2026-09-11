@@ -181,7 +181,7 @@ export default function Template5({ invoice }) {
             </Text>
           </View>
 
-          {isQuotation && (
+          {(
             <View style={s.metaCol}>
               <Text style={s.metaLabel}>Payment Information</Text>
               {biz?.bankDetails?.accountNumber ? (
@@ -189,7 +189,8 @@ export default function Template5({ invoice }) {
                   {biz.bankDetails.bankName && `Bank: ${biz.bankDetails.bankName}\n`}
                   Account Name: {biz.bankDetails.accountName}{'\n'}
                   Account No.: {biz.bankDetails.accountNumber}{'\n'}
-                  {biz.bankDetails.ifscCode && `IFSC: ${biz.bankDetails.ifscCode}`}
+                  {biz.bankDetails.ifscCode && `IFSC: ${biz.bankDetails.ifscCode}\n`}
+                  {biz.bankDetails.branch && `Branch: ${biz.bankDetails.branch}`}
                 </Text>
               ) : invoice.paymentInfo ? (
                 <Text style={s.metaVal}>{invoice.paymentInfo}</Text>
@@ -289,7 +290,7 @@ export default function Template5({ invoice }) {
           <View style={s.footerSegmentB}>
             <View style={s.poweredByContainer}>
               <Text style={s.poweredByLabel}>Powered By</Text>
-              <Text style={s.poweredByValue}><Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text>GoodSynk</Text>
+              <Text style={s.poweredByValue}>GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text></Text>
             </View>
             <Text style={s.footerBrandLine}>Goodsynk Invoice • Simple Invoicing & Quotations</Text>
             <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
@@ -299,11 +300,16 @@ export default function Template5({ invoice }) {
           <View style={s.footerSegmentC}>
             <Text style={s.footerSectionTitle}>Verified</Text>
             <Text style={s.footerTrustLine}>Generated securely by</Text>
-            <Text style={s.footerTrustLine}>Goodsynk Invoice.</Text>
+            <Text style={s.footerTrustLine}>GoodSynk<Text style={{ fontSize: 6, fontFamily: 'Helvetica' }}>™</Text>.</Text>
             <Text style={s.footerTrustLine}>Digitally signed document.</Text>
             <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
           </View>
         </View>
+        <Text
+          style={{ position: 'absolute', bottom: 6, right: 40, fontSize: 7, color: '#666' }}
+          render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`}
+          fixed
+        />
       </Page>
     </Document>
   );

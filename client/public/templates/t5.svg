@@ -50,9 +50,9 @@
 <text x="55" y="815" font-family="Arial" font-size="7.5" fill="#e6eefb">0000000000</text>
 <text x="55" y="827" font-family="Arial" font-size="7.5" fill="#e6eefb">testuser@example.com</text>
 <text x="297" y="802" text-anchor="middle" font-family="Arial" font-size="7.5" fill="#cfe0f7">Powered By</text>
-<text x="297" y="815" text-anchor="middle" font-family="Arial" font-size="9" font-weight="700" fill="#fff">GoodSynk</text>
-<text x="297" y="828" text-anchor="middle" font-family="Arial" font-size="7" fill="#cfe0f7">Goodsynk Billing • Simple Invoicing &amp; Quotations</text>
+<text x="297" y="815" text-anchor="middle" font-family="Arial" font-size="9" font-weight="700" fill="#fff">GoodSynk™</text>
+<text x="297" y="828" text-anchor="middle" font-family="Arial" font-size="7" fill="#cfe0f7">GoodSynk™ Billing • Simple Invoicing &amp; Quotations</text>
 <text x="540" y="802" text-anchor="end" font-family="Arial" font-size="7.5" fill="#cfe0f7">VERIFIED</text>
-<text x="540" y="815" text-anchor="end" font-family="Arial" font-size="7.5" fill="#e6eefb">Generated securely by Goodsynk.</text>
+<text x="540" y="815" text-anchor="end" font-family="Arial" font-size="7.5" fill="#e6eefb">Generated securely by GoodSynk™.</text>
 <text x="540" y="827" text-anchor="end" font-family="Arial" font-size="7.5" font-weight="700" fill="#ffe08a">invoice.goodsynk.com</text>
 </svg>

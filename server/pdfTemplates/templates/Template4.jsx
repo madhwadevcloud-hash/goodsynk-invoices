@@ -166,7 +166,7 @@ export default function Template4({ invoice }) {
           </View>
 
           <View style={s.infoCol}>
-            {isQuotation && (
+            {(
               <>
                 <Text style={s.infoLabel}>Payment Info</Text>
                 {biz?.bankDetails?.accountNumber ? (
@@ -175,6 +175,7 @@ export default function Template4({ invoice }) {
                     <Text style={s.infoText}>Account Name: {biz.bankDetails.accountName}</Text>
                     <Text style={s.infoText}>Account No.: {biz.bankDetails.accountNumber}</Text>
                     {biz.bankDetails.ifscCode && <Text style={s.infoText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
+                    {biz.bankDetails.branch && <Text style={s.infoText}>Branch: {biz.bankDetails.branch}</Text>}
                   </>
                 ) : invoice.paymentInfo ? (
                   <Text style={s.infoText}>{invoice.paymentInfo}</Text>
@@ -285,7 +286,7 @@ export default function Template4({ invoice }) {
             </View>
             <View style={s.footerPoweredCol}>
               <Text style={s.footerPoweredLabel}>POWERED BY</Text>
-              <Text style={s.footerPoweredValue}><Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text>GOODSYNK</Text>
+              <Text style={s.footerPoweredValue}>GOODSYNK<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text></Text>
             </View>
             <View style={s.footerTrustCol}>
               <Text style={s.footerTrustLine}>Digitally signed document</Text>
@@ -293,6 +294,11 @@ export default function Template4({ invoice }) {
             </View>
           </View>
         </View>
+        <Text
+          style={{ position: 'absolute', bottom: 6, right: 40, fontSize: 7, color: '#666' }}
+          render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`}
+          fixed
+        />
       </Page>
     </Document>
   );

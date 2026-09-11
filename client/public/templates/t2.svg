@@ -42,8 +42,8 @@
 <text x="480" y="484" text-anchor="middle" font-family="Arial" font-size="8.5" font-weight="700">Authorised Signature</text><circle cx="480" cy="526" r="20" fill="none" stroke="#111" stroke-width="1.2" stroke-dasharray="3,2"/><text x="480" y="528.5" text-anchor="middle" font-family="Arial" font-size="6.5" font-weight="700" fill="#111">SEAL</text>
 <line x1="55" y1="782" x2="540" y2="782" stroke="#ddd"/>
 <rect x="55" y="796" width="4" height="34" fill="#111"/>
-<text x="70" y="808" font-family="Arial" font-size="10" font-weight="700">GoodSynk</text>
-<text x="70" y="820" font-family="Arial" font-size="7.5" fill="#666">Goodsynk Billing  •  Simple Invoicing &amp; Quotations</text>
+<text x="70" y="808" font-family="Arial" font-size="10" font-weight="700">GoodSynk™</text>
+<text x="70" y="820" font-family="Arial" font-size="7.5" fill="#666">GoodSynk™ Billing  •  Simple Invoicing &amp; Quotations</text>
 <text x="70" y="831" font-family="Arial" font-size="7.5" fill="#666">Invoice Banega, Payment Badega.</text>
 <text x="540" y="808" text-anchor="end" font-family="Arial" font-size="8" font-weight="700">CONTACT US</text>
 <text x="540" y="820" text-anchor="end" font-family="Arial" font-size="7.5" fill="#666">Phone: 0000000000</text>

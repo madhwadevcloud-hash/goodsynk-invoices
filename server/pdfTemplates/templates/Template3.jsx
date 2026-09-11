@@ -192,7 +192,7 @@ export default function Template3({ invoice }) {
           </View>
 
           <View style={s.metaColumn}>
-            {isQuotation && (
+            {(
               <>
                 <Text style={s.metaLabel}>Payment Details</Text>
                 {biz?.bankDetails?.accountNumber ? (
@@ -201,6 +201,7 @@ export default function Template3({ invoice }) {
                     <Text style={s.billToText}>A/C Name: {biz.bankDetails.accountName}</Text>
                     <Text style={s.billToText}>A/C Number: {biz.bankDetails.accountNumber}</Text>
                     {biz.bankDetails.ifscCode && <Text style={s.billToText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
+                    {biz.bankDetails.branch && <Text style={s.billToText}>Branch: {biz.bankDetails.branch}</Text>}
                   </View>
                 ) : (
                   <Text style={s.billToText}>{invoice.paymentInfo || '—'}</Text>
@@ -311,10 +312,15 @@ export default function Template3({ invoice }) {
             </View>
             
             <Text style={s.footerPoweredLine}>
-              Powered By <Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text>GoodSynk — Digitally signed document
+              Powered By GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text> — Digitally signed document
             </Text>
           </View>
         </View>
+        <Text
+          style={{ position: 'absolute', bottom: 6, right: 40, fontSize: 7, color: '#666' }}
+          render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`}
+          fixed
+        />
       </Page>
     </Document>
   );

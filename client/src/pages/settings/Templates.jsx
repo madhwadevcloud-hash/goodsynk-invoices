@@ -17,6 +17,8 @@ const TEMPLATES = [
   { id: 'template9', name: 'Split Sidebar Modern', desc: 'An asymmetrical 35% sidebar that changes the reading flow.', img: '/templates/t9.svg' },
   { id: 'template10', name: 'Soft Corporate Cards', desc: 'A headerless layout with rounded business and client cards.', img: '/templates/t10.svg' },
   { id: 'template11', name: 'Ultra-Minimalist Editorial', desc: 'Borderless tables and generous spacing inspired by boutique letterhead.', img: '/templates/t11.svg' },
+  { id: 'template16', name: 'Formal Tax Invoice', desc: 'A fully-boxed GST tax invoice with bill-to/ship-to, place of supply and an amount-paid badge.', img: '/templates/t16.svg' },
+  { id: 'template17', name: 'Modern Retail', desc: 'A clean, borderless retail-style invoice with a bold total chip and status badge.', img: '/templates/t17.svg' },
   { id: 'invoice12', type: 'invoice', name: 'Ledger Gold', desc: 'A structured finance layout with a strong ledger header and gold totals.', img: '/templates/invoice12.svg' },
   { id: 'invoice13', type: 'invoice', name: 'Coral Band', desc: 'A bold horizontal business header with clear payment details.', img: '/templates/invoice13.svg' },
   { id: 'invoice14', type: 'invoice', name: 'Green Columns', desc: 'A calm two-column invoice for service businesses and consultants.', img: '/templates/invoice14.svg' },
@@ -38,6 +40,8 @@ const DEFAULT_COLORS = {
   template9: { primary: '#C2410C' },
   template10: { primary: '#334155', secondary: '#CBD5E1' },
   template11: { primary: '#0F766E', secondary: '#F59E0B' },
+  template16: { primary: '#1F4B3F', secondary: '#D9A441' },
+  template17: { primary: '#111820', secondary: '#3B82F6' },
   invoice12: { primary: '#123B5D', secondary: '#D9A441' }, invoice13: { primary: '#243B53', secondary: '#E07A5F' },
   invoice14: { primary: '#174A3A', secondary: '#B7D7C5' }, invoice15: { primary: '#202124', secondary: '#F4B942' },
   quotation12: { primary: '#6B2D5C', secondary: '#F2C14E' }, quotation13: { primary: '#1D3557', secondary: '#A8DADC' },
@@ -51,6 +55,7 @@ const QUOTATION_PREVIEWS = {
   template7: '/templates/quotation7.svg', template8: '/templates/quotation8.svg',
   template9: '/templates/quotation9.svg', template10: '/templates/quotation10.svg',
   template11: '/templates/quotation11.svg',
+  template16: '/templates/quotation16.svg', template17: '/templates/quotation17.svg',
 };
 
 export default function Templates() {
@@ -163,6 +168,7 @@ export default function Templates() {
                   templateId={tmpl.id}
                   logo={user?.businessLogo}
                   seal={user?.businessSeal}
+                  signature={user?.businessSignature}
                   alt={tmpl.name}
                   style={{ height: '100%' }}
                   imageStyle={{ height: '100%' }}
@@ -241,6 +247,7 @@ export default function Templates() {
                     templateId={previewTemplate.id}
                     logo={user?.businessLogo}
                     seal={user?.businessSeal}
+                    signature={user?.businessSignature}
                     alt={previewTemplate.name}
                     style={{ width: '100%', boxShadow: 'var(--shadow-lg)', borderRadius: '8px' }}
                     imageStyle={{ height: 'auto' }}

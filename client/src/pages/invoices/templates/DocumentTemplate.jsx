@@ -6,10 +6,12 @@ const themes = {
   invoice13: { ink: '#243B53', accent: '#E07A5F', soft: '#FFF4F0', mode: 'band', title: 'INVOICE' },
   invoice14: { ink: '#174A3A', accent: '#B7D7C5', soft: '#F1F8F4', mode: 'columns', title: 'INVOICE' },
   invoice15: { ink: '#202124', accent: '#F4B942', soft: '#FFF9E8', mode: 'receipt', title: 'INVOICE' },
-  quotation12: { ink: '#6B2D5C', accent: '#F2C14E', soft: '#FFF8E5', mode: 'proposal', title: 'QUOTATION' },
-  quotation13: { ink: '#1D3557', accent: '#A8DADC', soft: '#EFFBFC', mode: 'roadmap', title: 'QUOTATION' },
-  quotation14: { ink: '#7F5539', accent: '#EDE0D4', soft: '#FBF7F2', mode: 'portfolio', title: 'QUOTATION' },
-  quotation15: { ink: '#3D405B', accent: '#81B29A', soft: '#F1F7F2', mode: 'contract', title: 'QUOTATION' },
+  // Quotation themes mirror their invoice counterpart exactly (same ink/accent/soft/mode)
+  // so the two documents are visually identical apart from the heading and doc-specific copy.
+  quotation12: { ink: '#123B5D', accent: '#D9A441', soft: '#F2F5F7', mode: 'ledger', title: 'QUOTATION' },
+  quotation13: { ink: '#243B53', accent: '#E07A5F', soft: '#FFF4F0', mode: 'band', title: 'QUOTATION' },
+  quotation14: { ink: '#174A3A', accent: '#B7D7C5', soft: '#F1F8F4', mode: 'columns', title: 'QUOTATION' },
+  quotation15: { ink: '#202124', accent: '#F4B942', soft: '#FFF9E8', mode: 'receipt', title: 'QUOTATION' },
 };
 
 const money = (value, currency) => `${currency === 'INR' ? 'Rs. ' : `${currency} `}${Number(value || 0).toFixed(2)}`;
@@ -100,10 +102,15 @@ export default function DocumentTemplate({ invoice, variant }) {
           {items.map((item, index) => <View key={index} style={[styles.row, index % 2 ? styles.alt : {}]}><View style={styles.desc}><Text style={styles.itemName}>{item.name || 'Item'}</Text><Text style={styles.itemSub}>{item.description || ''}{item.hsn ? ` | HSN ${item.hsn}` : ''}</Text></View><Text style={styles.qty}>{item.quantity || 0} {item.unit || ''}</Text><Text style={styles.price}>{money(item.price, currency)}</Text><Text style={styles.tax}>{Number(item.cgstRate || 0) + Number(item.sgstRate || 0) + Number(item.igstRate || 0) + Number(item.vatRate || 0)}%</Text><Text style={styles.total}>{money(item.total ?? (item.price || 0) * (item.quantity || 0), currency)}</Text></View>)}
         </View>
         <View style={styles.lower}>
-          <View style={styles.notes}><Text style={styles.sectionLabel}>{isQuotation ? 'Scope and terms' : 'Notes and payment details'}</Text><Text>{invoice.notes || 'Thank you for your business.'}</Text><Text style={{ marginTop: 8 }}>{invoice.termsAndConditions || ''}</Text>{biz.bankDetails?.bankName && <Text style={{ marginTop: 8 }}>Bank: {biz.bankDetails.bankName}{biz.bankDetails.accountNumber ? ` | A/C ${biz.bankDetails.accountNumber}` : ''}</Text>}</View>
+          <View style={styles.notes}><Text style={styles.sectionLabel}>{isQuotation ? 'Scope and terms' : 'Notes and payment details'}</Text><Text>{invoice.notes || 'Thank you for your business.'}</Text><Text style={{ marginTop: 8 }}>{invoice.termsAndConditions || ''}</Text>{biz.bankDetails?.bankName && <Text style={{ marginTop: 8 }}>Bank: {biz.bankDetails.bankName}{biz.bankDetails.accountNumber ? ` | A/C ${biz.bankDetails.accountNumber}` : ''}{biz.bankDetails.ifscCode ? ` | IFSC ${biz.bankDetails.ifscCode}` : ''}{biz.bankDetails.branch ? ` | Branch ${biz.bankDetails.branch}` : ''}</Text>}</View>
           <View style={styles.totals}><View style={styles.totalLine}><Text>Subtotal</Text><Text>{money(invoice.subtotal, currency)}</Text></View><View style={styles.totalLine}><Text>Discount</Text><Text>- {money(invoice.discountAmount, currency)}</Text></View><View style={styles.totalLine}><Text>Tax</Text><Text>{money(invoice.taxTotal, currency)}</Text></View><View style={styles.grand}><Text>{isQuotation ? 'Estimated total' : 'Amount due'}</Text><Text>{money(invoice.total, currency)}</Text></View></View>
         </View>
-        <View style={styles.footer}><Text style={styles.muted}>Powered by <Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text>Goodsynk Invoices | {biz.email || 'invoice.goodsynk.com'}</Text><View style={styles.signature}>{biz.businessSignature && <Image src={biz.businessSignature} style={styles.signatureImage} />}<Text>Authorised signature</Text>{biz.businessSeal && <Image src={biz.businessSeal} style={{ height: 40, width: 40, objectFit: 'contain', marginTop: 2 }} />}</View></View>
+        <View style={styles.footer}><Text style={styles.muted}>Powered by GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text> | {biz.email || 'invoice.goodsynk.com'}</Text><View style={styles.signature}>{biz.businessSignature && <Image src={biz.businessSignature} style={styles.signatureImage} />}<Text>Authorised signature</Text>{biz.businessSeal && <Image src={biz.businessSeal} style={{ height: 40, width: 40, objectFit: 'contain', marginTop: 2 }} me={1} />}</View></View>
+        <Text
+          style={{ position: 'absolute', bottom: 12, right: 34, fontSize: 7, color: '#66717D' }}
+          render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`}
+          fixed
+        />
       </Page>
     </Document>
   );

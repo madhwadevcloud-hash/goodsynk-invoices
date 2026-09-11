@@ -2,9 +2,11 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { invoiceAPI, clientAPI, productAPI, quotationAPI } from '../../api/services';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, Save, Download, Loader2, X, ChevronDown, Percent, Tag, Lock, Landmark, ArrowLeft, Eye } from 'lucide-react';
+import { Plus, Trash2, Save, Download, Loader2, X, ChevronDown, Percent, Tag, Lock, Landmark, ArrowLeft, Eye, Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import TemplatePreview from '../../components/TemplatePreview';
+import DocumentSettingsPanel from '../../components/DocumentSettingsPanel';
+import { getDocumentSettings } from '../../utils/documentSettings';
 
 const defaultItem = () => ({
   productId: null, itemType: 'Product', name: '', description: '', hsn: '', quantity: 1, unit: 'pcs',
@@ -69,6 +71,8 @@ export const DEFAULT_COLORS = {
   quotation13: { primary: '#1D3557', secondary: '#A8DADC' },
   quotation14: { primary: '#7F5539', secondary: '#EDE0D4' },
   quotation15: { primary: '#3D405B', secondary: '#81B29A' },
+  template16: { primary: '#1F4B3F', secondary: '#D9A441' },
+  template17: { primary: '#111820', secondary: '#3B82F6' },
 };
 
 
@@ -120,6 +124,8 @@ export default function InvoiceForm() {
   const [newItemDiscValue, setNewItemDiscValue] = useState('0');
   const [previewTemplate, setPreviewTemplate] = useState(null);
   const [showBankDetails, setShowBankDetails] = useState(false);
+  const [isCustomNumber, setIsCustomNumber] = useState(false);
+  const [customNumberInput, setCustomNumberInput] = useState('');
 
   const updateNewItemDiscount = (val, mode, price, quantity) => {
     const rawVal = val === '' ? 0 : parseFloat(val) || 0;
@@ -219,11 +225,20 @@ export default function InvoiceForm() {
   // ── Configure Discount modal state
   const [discModal, setDiscModal] = useState(false);
   const [discConfig, setDiscConfig] = useState(() => {
-    const fallback = { mode: 'item', lines: [{ name: 'Discount', type: 'percent', value: 0 }] };
+    const docSettings = getDocumentSettings();
+    const defaultMode = (!docSettings.hideDiscount && docSettings.showDiscountColumn) ? 'item' : 'none';
+    const fallback = { mode: defaultMode, lines: [{ name: 'Discount', type: 'percent', value: 0 }] };
     if (isEdit) return fallback;
     try {
       const saved = localStorage.getItem(DRAFT_DISCOUNT_KEY);
-      return saved ? JSON.parse(saved) : fallback;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (docSettings.hideDiscount || !docSettings.showDiscountColumn) {
+          parsed.mode = 'none';
+        }
+        return parsed;
+      }
+      return fallback;
     } catch (err) {
       return fallback;
     }
@@ -237,6 +252,21 @@ export default function InvoiceForm() {
   const addDiscLine = () => setDiscDraft(d => ({ ...d, lines: [...d.lines, { name: 'Discount', type: 'percent', value: 0 }] }));
   const removeDiscLine = (i) => setDiscDraft(d => ({ ...d, lines: d.lines.filter((_, idx) => idx !== i) }));
   const setDiscLine = (i, key, val) => setDiscDraft(d => ({ ...d, lines: d.lines.map((l, idx) => idx === i ? { ...l, [key]: val } : l) }));
+
+  const [docSettings, setDocSettings] = useState(getDocumentSettings());
+  const [showDocSettings, setShowDocSettings] = useState(false);
+
+  useEffect(() => {
+    const handleDocSettingsSync = (e) => {
+      const settings = e?.detail || getDocumentSettings();
+      setDocSettings(settings);
+    };
+    handleDocSettingsSync();
+    window.addEventListener('documentSettingsChanged', handleDocSettingsSync);
+    return () => window.removeEventListener('documentSettingsChanged', handleDocSettingsSync);
+  }, []);
+
+  const isDiscColumnVisible = !docSettings.hideDiscount && docSettings.showDiscountColumn;
 
   const openTaxModal = () => {
     setTaxDraft({
@@ -409,6 +439,10 @@ export default function InvoiceForm() {
           templateColors: inv.template ? resolveTemplateColors(loadedTpt, inv.templateColors) : (inv.templateColors || null),
           items: inv.items?.length ? inv.items : [defaultItem()],
         });
+        if (inv.invoiceNumber) {
+          setIsCustomNumber(true);
+          setCustomNumberInput(inv.invoiceNumber);
+        }
         setClientQuery(inv.client?.name || '');
       }).catch(() => toast.error('Failed to load invoice'))
         .finally(() => setLoading(false));
@@ -530,10 +564,10 @@ export default function InvoiceForm() {
     setItem(idx, 'discount', percent);
   };
 
-  // Compute line total based on taxType and discountMode
-  const computeLine = (item, isInterstate, taxType = 'gst_india', discountMode = 'item') => {
+  // Compute line total based on taxType
+  const computeLine = (item, isInterstate, taxType = 'gst_india') => {
     const lineSubtotal = (item.price || 0) * (item.quantity || 0);
-    const discAmt = discountMode === 'item' ? (lineSubtotal * (item.discount || 0)) / 100 : 0;
+    const discAmt = isDiscColumnVisible ? (lineSubtotal * (item.discount || 0)) / 100 : 0;
     const taxable = lineSubtotal - discAmt;
     if (taxType === 'none') return { taxable, cgst: 0, sgst: 0, igst: 0, vat: 0, total: taxable };
     if (taxType === 'vat') {
@@ -552,12 +586,12 @@ export default function InvoiceForm() {
   const totals = (() => {
     const base = form.items.reduce(
       (acc, item) => {
-        const c = computeLine(item, form.isInterstate, form.taxType, discConfig.mode);
+        const c = computeLine(item, form.isInterstate, form.taxType);
         return { subtotal: acc.subtotal + (item.price || 0) * (item.quantity || 0), itemDiscount: acc.itemDiscount + ((item.price || 0) * (item.quantity || 0) * (item.discount || 0)) / 100, tax: acc.tax + c.cgst + c.sgst + c.igst + c.vat, taxableTotal: acc.taxableTotal + c.taxable };
       },
       { subtotal: 0, itemDiscount: 0, tax: 0, taxableTotal: 0 }
     );
-    const afterItemDisc = discConfig.mode === 'item' ? base.subtotal - base.itemDiscount : base.subtotal;
+    const afterItemDisc = isDiscColumnVisible ? base.subtotal - base.itemDiscount : base.subtotal;
     let overallDiscTotal = 0;
     if (discConfig.mode === 'overall') {
       let running = base.subtotal;
@@ -833,15 +867,74 @@ export default function InvoiceForm() {
             )}
           </div>
           <div className="form-group">
-            <label className="form-label">{docLabel} #</label>
-            <input
-              className="form-control"
-              placeholder="Auto-generated on save"
-              value={form.invoiceNumber}
-              disabled
-              readOnly
-              style={{ opacity: 0.7, cursor: 'not-allowed' }}
-            />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <label className="form-label" style={{ marginBottom: 0 }}>{docLabel} #</label>
+              {isQuotation && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Custom No.</span>
+                  <label style={{ position: 'relative', display: 'inline-block', width: 34, height: 18, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={isCustomNumber}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setIsCustomNumber(checked);
+                        if (!checked) {
+                          setCustomNumberInput('');
+                          setField('invoiceNumber', '');
+                        }
+                      }}
+                      style={{ opacity: 0, width: 0, height: 0 }}
+                    />
+                    <span style={{
+                      position: 'absolute', inset: 0,
+                      backgroundColor: isCustomNumber ? 'var(--primary)' : 'var(--border)',
+                      borderRadius: 18, transition: '0.2s',
+                    }}>
+                      <span style={{
+                        position: 'absolute', content: '""', height: 14, width: 14, left: isCustomNumber ? 17 : 2, bottom: 2,
+                        backgroundColor: '#fff', borderRadius: '50%', transition: '0.2s',
+                      }} />
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {isQuotation && isCustomNumber ? (
+              <div style={{ display: 'flex', gap: 6 }}>
+                <input
+                  className="form-control"
+                  placeholder="Enter quotation no. (e.g. QT-2026-001)"
+                  value={customNumberInput}
+                  onChange={(e) => setCustomNumberInput(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  style={{ padding: '0 14px', whiteSpace: 'nowrap' }}
+                  onClick={() => {
+                    if (!customNumberInput.trim()) {
+                      toast.error('Please enter a quotation number');
+                      return;
+                    }
+                    setField('invoiceNumber', customNumberInput.trim());
+                    toast.success(`Quotation number set to ${customNumberInput.trim()}`);
+                  }}
+                >
+                  OK
+                </button>
+              </div>
+            ) : (
+              <input
+                className="form-control"
+                placeholder="Auto-generated on save"
+                value={form.invoiceNumber}
+                disabled
+                readOnly
+                style={{ opacity: 0.7, cursor: 'not-allowed' }}
+              />
+            )}
           </div>
           <div className="form-group">
             <label className="form-label">Currency *</label>
@@ -899,8 +992,26 @@ export default function InvoiceForm() {
             </span>
           </button>
 
+          <button
+            type="button"
+            onClick={() => setShowDocSettings((prev) => !prev)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              padding: '7px 14px', borderRadius: 8,
+              border: '1.5px solid var(--border)', background: 'var(--bg-elevated)',
+              color: 'var(--text-primary)', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            <Settings size={14} style={{ color: 'var(--primary-light)' }} />
+            Document Settings
+          </button>
+
         </div>
       </div>
+
+      {showDocSettings && (
+        <DocumentSettingsPanel onClose={() => setShowDocSettings(false)} />
+      )}
 
       {/* Line Items */}
       <div className="card mb-4">
@@ -1038,7 +1149,7 @@ export default function InvoiceForm() {
                 }} 
               />
               <input className="form-control" placeholder={newItemType === 'Service' ? 'SAC' : 'HSN'} value={newItemDraft.hsn} onChange={(e) => setNewItemDraft((d) => ({ ...d, hsn: e.target.value }))} />
-              {discConfig.mode === 'item' && (
+              {isDiscColumnVisible && (
                 <div style={{ display: 'flex', width: '100%', gap: 0 }}>
                   <input
                     type="number"
@@ -1103,7 +1214,7 @@ export default function InvoiceForm() {
                 <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Qty</th>
                 <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Unit</th>
                 <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Price</th>
-                {discConfig.mode === 'item' && (
+                {isDiscColumnVisible && (
                   <>
                     <th style={{ padding: '8px 6px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>Disc</th>
                   </>
@@ -1206,7 +1317,7 @@ export default function InvoiceForm() {
                         onChange={(e) => setItem(idx, 'price', e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
                       />
                     </td>
-                    {discConfig.mode === 'item' && (
+                    {isDiscColumnVisible && (
                       <td style={{ padding: '6px 4px' }}>
                         <div style={{ display: 'flex', width: 130 }}>
                           <input
@@ -1282,9 +1393,9 @@ export default function InvoiceForm() {
               <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Subtotal</span>
               <span>{fmt(totals.subtotal)}</span>
             </div>
-            {discConfig.mode === 'item' && totals.itemDiscount > 0 && (
+            {isDiscColumnVisible && totals.itemDiscount > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Item Discount</span>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Discount</span>
                 <span style={{ color: 'var(--danger)' }}>- {fmt(totals.itemDiscount)}</span>
               </div>
             )}
@@ -1486,6 +1597,8 @@ export default function InvoiceForm() {
               template9: isQuotation ? '/templates/quotation9.svg' : '/templates/t9.svg',
               template10: isQuotation ? '/templates/quotation10.svg' : '/templates/t10.svg',
               template11: isQuotation ? '/templates/quotation11.svg' : '/templates/t11.svg',
+              template16: isQuotation ? '/templates/quotation16.svg' : '/templates/t16.svg',
+              template17: isQuotation ? '/templates/quotation17.svg' : '/templates/t17.svg',
               invoice12: '/templates/invoice12.svg', invoice13: '/templates/invoice13.svg',
               invoice14: '/templates/invoice14.svg', invoice15: '/templates/invoice15.svg',
               quotation12: '/templates/quotation12.svg', quotation13: '/templates/quotation13.svg',
@@ -1506,6 +1619,8 @@ export default function InvoiceForm() {
               { id: 'template9', name: 'Split Sidebar Modern', img: TEMPLATE_IMGS.template9 },
               { id: 'template10', name: 'Soft Corporate Cards', img: TEMPLATE_IMGS.template10 },
               { id: 'template11', name: 'Ultra-Minimalist Editorial', img: TEMPLATE_IMGS.template11 },
+              { id: 'template16', name: 'Formal Tax Invoice', img: TEMPLATE_IMGS.template16 },
+              { id: 'template17', name: 'Modern Retail', img: TEMPLATE_IMGS.template17 },
               ...(isQuotation ? [
                 { id: 'quotation12', name: 'Golden Proposal', img: '/templates/quotation12.svg' },
                 { id: 'quotation13', name: 'Blue Roadmap', img: '/templates/quotation13.svg' },
@@ -1555,6 +1670,7 @@ export default function InvoiceForm() {
                           templateId={t.id || defaultKey}
                           logo={currentUser?.businessLogo}
                           seal={currentUser?.businessSeal}
+                          signature={currentUser?.businessSignature}
                           alt={t.name}
                           style={{ aspectRatio: '5/7' }}
                           imageStyle={{ aspectRatio: '5/7' }}
@@ -1648,6 +1764,7 @@ export default function InvoiceForm() {
                     templateId={(previewTemplate.id || ((isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) || 'template1')).toLowerCase()}
                     logo={currentUser?.businessLogo}
                     seal={currentUser?.businessSeal}
+                    signature={currentUser?.businessSignature}
                     alt={previewTemplate.name}
                     style={{ width: '900px', maxWidth: 'none', height: 'auto', margin: '0 auto', borderRadius: 8, boxShadow: 'var(--shadow-lg)' }}
                     imageStyle={{ height: 'auto' }}

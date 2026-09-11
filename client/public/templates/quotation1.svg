@@ -11,4 +11,6 @@
     <rect x="398" y="740" width="150" height="40" fill="#f8fafc"/>
     <text x="408" y="755" fill="#4A72D4" font-family="Arial" font-size="10" font-weight="700">THANK YOU</text>
     <text x="408" y="770" fill="#53606c" font-family="Arial" font-size="10" >For your business</text>
-</g></svg>
+</g>
+  <text x="300" y="820" text-anchor="middle" font-family="Arial" font-size="8" fill="#66717d">Powered by GoodSynk™</text>
+</svg>

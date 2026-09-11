@@ -203,7 +203,7 @@ export default function Template6({ invoice }) {
           </View>
 
           <View style={s.paymentInfoBlock}>
-            {isQuotation ? (
+            {(
               biz?.bankDetails?.accountNumber ? (
                 <>
                   <Text style={s.paymentTitle}>Payment Info :</Text>
@@ -211,6 +211,7 @@ export default function Template6({ invoice }) {
                   <View style={s.payRow}><Text style={s.payLabel}>A/C Name</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.accountName}</Text></View>
                   {biz.bankDetails.bankName && <View style={s.payRow}><Text style={s.payLabel}>Bank Name</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.bankName}</Text></View>}
                   {biz.bankDetails.ifscCode && <View style={s.payRow}><Text style={s.payLabel}>IFSC Code</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.ifscCode}</Text></View>}
+                  {biz.bankDetails.branch && <View style={s.payRow}><Text style={s.payLabel}>Branch</Text><Text style={s.payColon}>:</Text><Text style={s.payVal}>{biz.bankDetails.branch}</Text></View>}
                 </>
               ) : invoice.paymentInfo ? (
                 <>
@@ -218,7 +219,7 @@ export default function Template6({ invoice }) {
                   <Text style={s.payVal}>{invoice.paymentInfo}</Text>
                 </>
               ) : null
-            ) : null}
+            )}
           </View>
         </View>
 
@@ -320,14 +321,18 @@ export default function Template6({ invoice }) {
           </Svg>
         </View>
 
-        {/* Powered By + Tagline, sitting inside the orange corner of the decor */}
         <View style={s.poweredByOnOrange} fixed>
           <Text style={s.poweredByLabelOnOrange}>Powered By</Text>
-          <Text style={s.poweredByValueOnOrange}><Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text>GoodSynk</Text>
+          <Text style={s.poweredByValueOnOrange}>GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text></Text>
           <Text style={s.footerTaglineOnOrange}>Invoice Banega, Payment Badega.</Text>
         </View>
 
 
+        <Text
+          style={{ position: 'absolute', bottom: 6, right: 40, fontSize: 7, color: '#666' }}
+          render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`}
+          fixed
+        />
       </Page>
     </Document>
   );
