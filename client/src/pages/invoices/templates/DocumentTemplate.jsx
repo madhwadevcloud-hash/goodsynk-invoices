@@ -107,7 +107,7 @@ export default function DocumentTemplate({ invoice, variant }) {
         </View>
         <View style={styles.footer}><Text style={styles.muted}>Powered by GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text> | {biz.email || 'invoice.goodsynk.com'}</Text><View style={styles.signature}>{biz.businessSignature && <Image src={biz.businessSignature} style={styles.signatureImage} />}<Text>Authorised signature</Text>{biz.businessSeal && <Image src={biz.businessSeal} style={{ height: 40, width: 40, objectFit: 'contain', marginTop: 2 }} me={1} />}</View></View>
         <Text
-          style={{ position: 'absolute', bottom: 12, right: 34, fontSize: 7, color: '#66717D' }}
+          style={{ position: 'absolute', bottom: 12, right: 34, fontSize: 7.5, color: '#333333' }}
           render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`}
           fixed
         />

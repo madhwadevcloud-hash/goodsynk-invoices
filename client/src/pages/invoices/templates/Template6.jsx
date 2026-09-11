@@ -346,7 +346,7 @@ export default function Template6({ invoice }) {
 
 
         <Text
-          style={{ position: 'absolute', bottom: 6, right: 40, fontSize: 7, color: '#666' }}
+          style={{ position: 'absolute', bottom: 8, left: 24, fontSize: 7.5, color: '#FFFFFF' }}
           render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`}
           fixed
         />

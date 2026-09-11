@@ -869,43 +869,41 @@ export default function InvoiceForm() {
           <div className="form-group">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
               <label className="form-label" style={{ marginBottom: 0 }}>{docLabel} #</label>
-              {isQuotation && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Custom No.</span>
-                  <label style={{ position: 'relative', display: 'inline-block', width: 34, height: 18, cursor: 'pointer' }}>
-                    <input
-                      type="checkbox"
-                      checked={isCustomNumber}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setIsCustomNumber(checked);
-                        if (!checked) {
-                          setCustomNumberInput('');
-                          setField('invoiceNumber', '');
-                        }
-                      }}
-                      style={{ opacity: 0, width: 0, height: 0 }}
-                    />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Custom No.</span>
+                <label style={{ position: 'relative', display: 'inline-block', width: 34, height: 18, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={isCustomNumber}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setIsCustomNumber(checked);
+                      if (!checked) {
+                        setCustomNumberInput('');
+                        setField('invoiceNumber', '');
+                      }
+                    }}
+                    style={{ opacity: 0, width: 0, height: 0 }}
+                  />
+                  <span style={{
+                    position: 'absolute', inset: 0,
+                    backgroundColor: isCustomNumber ? 'var(--primary)' : 'var(--border)',
+                    borderRadius: 18, transition: '0.2s',
+                  }}>
                     <span style={{
-                      position: 'absolute', inset: 0,
-                      backgroundColor: isCustomNumber ? 'var(--primary)' : 'var(--border)',
-                      borderRadius: 18, transition: '0.2s',
-                    }}>
-                      <span style={{
-                        position: 'absolute', content: '""', height: 14, width: 14, left: isCustomNumber ? 17 : 2, bottom: 2,
-                        backgroundColor: '#fff', borderRadius: '50%', transition: '0.2s',
-                      }} />
-                    </span>
-                  </label>
-                </div>
-              )}
+                      position: 'absolute', content: '""', height: 14, width: 14, left: isCustomNumber ? 17 : 2, bottom: 2,
+                      backgroundColor: '#fff', borderRadius: '50%', transition: '0.2s',
+                    }} />
+                  </span>
+                </label>
+              </div>
             </div>
 
-            {isQuotation && isCustomNumber ? (
+            {isCustomNumber ? (
               <div style={{ display: 'flex', gap: 6 }}>
                 <input
                   className="form-control"
-                  placeholder="Enter quotation no. (e.g. QT-2026-001)"
+                  placeholder={`Enter ${docLabel.toLowerCase()} no. (e.g. ${isQuotation ? 'QT' : 'INV'}-2026-001)`}
                   value={customNumberInput}
                   onChange={(e) => setCustomNumberInput(e.target.value)}
                 />
@@ -915,11 +913,11 @@ export default function InvoiceForm() {
                   style={{ padding: '0 14px', whiteSpace: 'nowrap' }}
                   onClick={() => {
                     if (!customNumberInput.trim()) {
-                      toast.error('Please enter a quotation number');
+                      toast.error(`Please enter a ${docLabel.toLowerCase()} number`);
                       return;
                     }
                     setField('invoiceNumber', customNumberInput.trim());
-                    toast.success(`Quotation number set to ${customNumberInput.trim()}`);
+                    toast.success(`${docLabel} number set to ${customNumberInput.trim()}`);
                   }}
                 >
                   OK

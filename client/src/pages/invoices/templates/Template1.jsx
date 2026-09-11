@@ -310,7 +310,7 @@ export default function Template1({ invoice }) {
           </View>
         </View>
         <Text
-          style={{ position: 'absolute', bottom: 6, right: 40, fontSize: 7, color: '#666' }}
+          style={{ position: 'absolute', bottom: 4, right: 40, fontSize: 7.5, color: '#333333' }}
           render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`}
           fixed
         />

@@ -159,7 +159,7 @@ export default function Template7({ invoice }) {
     footerLeft: { flexDirection: 'column' },
     footerBrandLine: { fontSize: 7, fontFamily: B, color: PRIMARY, letterSpacing: 0.2, marginBottom: 3 },
     footerLink: { fontFamily: B, color: PRIMARY, textDecoration: 'underline' },
-    footerTrustLine: { fontSize: 6, color: '#888' },
+    footerTrustLine: { fontSize: 6.5, color: '#333333' },
     poweredByContainer: { alignItems: 'flex-end' },
     poweredByLabel: { fontSize: 6, color: '#888', letterSpacing: 0.3 },
     poweredByValue: { fontSize: 9.5, fontFamily: B, color: '#000', letterSpacing: 0.3, marginTop: 1 },

@@ -25,10 +25,10 @@ export default function Template11({ invoice }) {
   const s = StyleSheet.create({
     watermarkContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: -100 },
     watermarkText: { fontSize: 60, fontFamily: B, color: hexToRgba(PRIMARY, 0.08), transform: 'rotate(-45deg)', letterSpacing: 5 },
-    page: { paddingTop: 60, paddingBottom: 80, paddingHorizontal: 60, fontFamily: 'Inter', color: '#111', backgroundColor: '#FFF' },
+    page: { paddingTop: 40, paddingBottom: 45, paddingHorizontal: 45, fontFamily: 'Inter', color: '#111', backgroundColor: '#FFF' },
     
     // Minimalist Header
-    headerWrap: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 50 },
+    headerWrap: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 },
     bizBox: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'flex-start' },
     brandText: { width: 230, flexShrink: 1 },
     topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
@@ -42,13 +42,13 @@ export default function Template11({ invoice }) {
     docMetaVal: { fontSize: 8.5, fontFamily: B, color: '#111' },
 
     // Billed To Section
-    billToWrap: { marginBottom: 40 },
+    billToWrap: { marginBottom: 20 },
     billToLabel: { fontSize: 8, color: '#999', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 10 },
     clientName: { fontFamily: B, fontSize: 18, color: '#111', marginBottom: 6 },
     clientText: { fontSize: 9, color: '#555', lineHeight: 1.6 },
 
     // Borderless Table
-    table: { width: '100%', marginBottom: 40 },
+    table: { width: '100%', marginBottom: 20 },
     tHead: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#000', paddingBottom: 10, marginBottom: 15 },
     tRow: { flexDirection: 'row', paddingVertical: 8 },
     th: { fontSize: 7.5, color: '#777', textTransform: 'uppercase', letterSpacing: 1 },
@@ -74,18 +74,18 @@ export default function Template11({ invoice }) {
     grandTotVal: { fontSize: 11, fontFamily: B, color: PRIMARY, textAlign: 'right' },
 
     // Bottom Area
-    bottomFlex: { marginTop: 50 },
-    notesWrap: { marginBottom: 30 },
+    bottomFlex: { marginTop: 15 },
+    notesWrap: { marginBottom: 15 },
     sectionTitle: { fontSize: 8, color: '#999', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 8 },
     notesText: { fontSize: 8.5, color: '#444', lineHeight: 1.6, maxWidth: '80%' },
     
-    sigWrap: { alignItems: 'flex-end', marginTop: 20 },
+    sigWrap: { alignItems: 'flex-end', marginTop: 10 },
     sigImg: { width: 140, height: 50, objectFit: 'contain', marginBottom: 10 },
     sigLine: { width: 160, height: 1, backgroundColor: '#DDD', marginBottom: 6 },
     sigText: { fontSize: 8, color: '#777', textTransform: 'uppercase', letterSpacing: 1 },
 
     // Footer: Asymmetric Split Border
-    footerBox: { position: 'absolute', bottom: 30, left: 60, right: 60 },
+    footerBox: { position: 'absolute', bottom: 20, left: 45, right: 45 },
     footerBorderRow: { flexDirection: 'row', width: '100%', marginBottom: 15 },
     footerBorderLeft: { height: 2, width: '30%', backgroundColor: PRIMARY },
     footerBorderRight: { height: 1, width: '70%', backgroundColor: '#DDD' },
@@ -262,16 +262,12 @@ export default function Template11({ invoice }) {
           </View>
           <View style={s.footerContentRow}>
             <Text style={s.footerText}>
-              {biz?.phone && `P: ${biz.phone}  |  `}
-              {biz?.email && `E: ${biz.email}`}
-            </Text>
-            <Text style={s.footerText}>
               Generated securely • Powered by <Link style={s.footerLink} src="https://invoice.goodsynk.com">GoodSynk</Link><Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text>
             </Text>
           </View>
         </View>
         <Text
-          style={{ position: 'absolute', bottom: 6, right: 40, fontSize: 7, color: '#666' }}
+          style={{ position: 'absolute', bottom: 6, right: 40, fontSize: 7.5, color: '#333333' }}
           render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`}
           fixed
         />

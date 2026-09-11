@@ -127,7 +127,7 @@ export default function Template17({ invoice }) {
     footerBar: { position: 'absolute', bottom: 22, left: 42, right: 42, borderTopWidth: 0.6, borderTopColor: '#DDD', paddingTop: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     footerBrand: { fontSize: 7, fontFamily: B, color: PRIMARY, letterSpacing: 0.3 },
     footerTagline: { fontSize: 6.3, color: '#888', marginTop: 1 },
-    footerTrust: { fontSize: 6.5, color: '#888' },
+    footerTrust: { fontSize: 6.5, color: '#333333' },
   });
 
   const currency = invoice._currency || invoice.currency || 'INR';
