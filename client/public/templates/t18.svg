@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="595" height="842" viewBox="0 0 595 842">
+  <rect width="595" height="842" fill="#ffffff"/>
+  
+  <!-- Header Branding Section -->
+  <text x="80" y="42" font-family="Arial" font-size="14" font-weight="700" fill="#111827">Company Name</text>
+  <text x="80" y="55" font-family="Arial" font-size="7.5" font-weight="700" fill="#374151">GSTIN 36AABCS2942R1ZR</text>
+  <text x="80" y="66" font-family="Arial" font-size="7" fill="#6B7280">Mobile 9999999999 | Email team@gmail.com</text>
+  <text x="80" y="76" font-family="Arial" font-size="7" fill="#6B7280">Website www.company.com</text>
+
+  <!-- Document Meta Top Right -->
+  <text x="565" y="38" text-anchor="end" font-family="Arial" font-size="12" font-weight="700" fill="#111827">TAX INVOICE</text>
+  <text x="565" y="49" text-anchor="end" font-family="Arial" font-size="7" font-weight="700" fill="#4B5563">ORIGINAL FOR RECIPIENT</text>
+  <text x="565" y="62" text-anchor="end" font-family="Arial" font-size="7.5" fill="#374151">Invoice #: <tspan font-weight="700">INV-1</tspan></text>
+  <text x="565" y="73" text-anchor="end" font-family="Arial" font-size="7.5" fill="#374151">Invoice Date: <tspan font-weight="700">13 Jul 2023</tspan></text>
+  <text x="565" y="84" text-anchor="end" font-family="Arial" font-size="7.5" fill="#374151">Due Date: <tspan font-weight="700">13 Jul 2023</tspan></text>
+
+  <!-- Address Grid (Bill From / Bill To) -->
+  <text x="25" y="105" font-family="Arial" font-size="7.5" font-weight="700" fill="#111827">Bill From:</text>
+  <text x="25" y="116" font-family="Arial" font-size="7.5" font-weight="700" fill="#374151">Company Name</text>
+  <text x="25" y="126" font-family="Arial" font-size="7" fill="#4B5563">64, Whitefield Main Rd, Palm Meadows</text>
+  <text x="25" y="135" font-family="Arial" font-size="7" fill="#4B5563">Whitefield, Bengaluru, KARNATAKA, 560066</text>
+
+  <text x="310" y="105" font-family="Arial" font-size="7.5" font-weight="700" fill="#111827">Bill To:</text>
+  <text x="310" y="116" font-family="Arial" font-size="7.5" font-weight="700" fill="#374151">Kalyan Krishnamurthy</text>
+  <text x="310" y="126" font-family="Arial" font-size="7" fill="#4B5563">37/2, opp secunderabad metro station</text>
+  <text x="310" y="135" font-family="Arial" font-size="7" fill="#4B5563">Vijayapuri Colony, Tamaka, Hyderabad, TELANGANA, 500017</text>
+
+  <!-- Address Grid (Ship From / Ship To) -->
+  <text x="25" y="152" font-family="Arial" font-size="7.5" font-weight="700" fill="#111827">Ship From:</text>
+  <text x="25" y="162" font-family="Arial" font-size="7" fill="#4B5563">Prakasham Salai, opposite SBI, Mannadi Branch</text>
+  <text x="25" y="171" font-family="Arial" font-size="7" fill="#4B5563">Chennai, TAMILNADU, 600108</text>
+
+  <text x="310" y="152" font-family="Arial" font-size="7.5" font-weight="700" fill="#111827">Ship To:</text>
+  <text x="310" y="162" font-family="Arial" font-size="7" fill="#4B5563">R City Mall, Lal Bahadur Shastri Marg, Ghatkopar West</text>
+  <text x="310" y="171" font-family="Arial" font-size="7" fill="#4B5563">Mumbai, MAHARASHTRA, 400086</text>
+  <text x="310" y="181" font-family="Arial" font-size="7" fill="#4B5563">Ph: 9999999999</text>
+
+  <text x="25" y="195" font-family="Arial" font-size="7.5" font-weight="700" fill="#111827">Place of Supply: <tspan font-weight="400">36-TELANGANA</tspan></text>
+
+  <!-- Line Item Grid Table -->
+  <rect x="25" y="210" width="545" height="205" fill="none" stroke="#9CA3AF" stroke-width="0.75"/>
+  <line x1="25" y1="226" x2="570" y2="226" stroke="#9CA3AF" stroke-width="0.75"/>
+  <line x1="45" y1="210" x2="45" y2="415" stroke="#9CA3AF" stroke-width="0.75"/>
+  <line x1="235" y1="210" x2="235" y2="415" stroke="#9CA3AF" stroke-width="0.75"/>
+  <line x1="295" y1="210" x2="295" y2="415" stroke="#9CA3AF" stroke-width="0.75"/>
+  <line x1="365" y1="210" x2="365" y2="415" stroke="#9CA3AF" stroke-width="0.75"/>
+  <line x1="395" y1="210" x2="395" y2="415" stroke="#9CA3AF" stroke-width="0.75"/>
+  <line x1="465" y1="210" x2="465" y2="415" stroke="#9CA3AF" stroke-width="0.75"/>
+  <line x1="515" y1="210" x2="515" y2="415" stroke="#9CA3AF" stroke-width="0.75"/>
+
+  <!-- Table Headers -->
+  <text x="35" y="221" text-anchor="middle" font-family="Arial" font-size="6.5" font-weight="700" fill="#111827">#</text>
+  <text x="50" y="221" font-family="Arial" font-size="6.5" font-weight="700" fill="#111827">Item</text>
+  <text x="265" y="221" text-anchor="middle" font-family="Arial" font-size="6.5" font-weight="700" fill="#111827">HSN/SAC</text>
+  <text x="330" y="221" text-anchor="middle" font-family="Arial" font-size="6.5" font-weight="700" fill="#111827">Listed Rate</text>
+  <text x="380" y="221" text-anchor="middle" font-family="Arial" font-size="6.5" font-weight="700" fill="#111827">Qty</text>
+  <text x="430" y="221" text-anchor="middle" font-family="Arial" font-size="6.5" font-weight="700" fill="#111827">Taxable Value</text>
+  <text x="490" y="221" text-anchor="middle" font-family="Arial" font-size="6.5" font-weight="700" fill="#111827">Tax Amount</text>
+  <text x="542" y="221" text-anchor="middle" font-family="Arial" font-size="6.5" font-weight="700" fill="#111827">Amount</text>
+
+  <!-- Table Rows -->
+  <g font-family="Arial" font-size="6.5" fill="#1F2937">
+    <text x="35" y="238" text-anchor="middle">1</text>
+    <text x="50" y="238" font-weight="700">OnePlus 10R 5G</text>
+    <text x="50" y="246" fill="#6B7280">(Sierra Black, 8GB RAM, 128GB Storage)</text>
+    <text x="265" y="238" text-anchor="middle">22021000</text>
+    <text x="360" y="238" text-anchor="end">27,965.25</text>
+    <text x="380" y="238" text-anchor="middle">1</text>
+    <text x="460" y="238" text-anchor="end">27,965.25</text>
+    <text x="510" y="238" text-anchor="end">5,033.75 (18%)</text>
+    <text x="565" y="238" text-anchor="end">32,999.00</text>
+    <line x1="25" y1="252" x2="570" y2="252" stroke="#E5E7EB"/>
+
+    <text x="35" y="264" text-anchor="middle">2</text>
+    <text x="50" y="264" font-weight="700">OnePlus Nord Buds 2</text>
+    <text x="265" y="264" text-anchor="middle">85183000</text>
+    <text x="360" y="264" text-anchor="end">2,541.53</text>
+    <text x="380" y="264" text-anchor="middle">1</text>
+    <text x="460" y="264" text-anchor="end">2,541.53</text>
+    <text x="510" y="264" text-anchor="end">457.47 (18%)</text>
+    <text x="565" y="264" text-anchor="end">2,999.00</text>
+  </g>
+
+  <!-- Lower Section -->
+  <text x="25" y="435" font-family="Arial" font-size="7.5" font-weight="700" fill="#111827">Bank Details:</text>
+  <text x="25" y="447" font-family="Arial" font-size="7" fill="#4B5563">Bank: <tspan font-weight="700" fill="#111827">ICICI</tspan></text>
+  <text x="25" y="458" font-family="Arial" font-size="7" fill="#4B5563">Account #: <tspan font-weight="700" fill="#111827">66789999022445</tspan></text>
+  <text x="25" y="469" font-family="Arial" font-size="7" fill="#4B5563">IFSC: <tspan font-weight="700" fill="#111827">ICIC00016</tspan></text>
+
+  <text x="310" y="435" text-anchor="middle" font-family="Arial" font-size="7" font-weight="700" fill="#111827">Pay using UPI</text>
+  <rect x="285" y="442" width="50" height="50" fill="#F3F4F6" stroke="#9CA3AF" stroke-width="0.5"/>
+
+  <text x="490" y="437" text-anchor="end" font-family="Arial" font-size="7.5" fill="#374151">Taxable Amount</text>
+  <text x="570" y="437" text-anchor="end" font-family="Arial" font-size="7.5" font-weight="700" fill="#111827">₹33,046.77</text>
+  <rect x="380" y="460" width="190" height="18" fill="none" stroke="#111827" stroke-width="1"/>
+  <text x="430" y="472" font-family="Arial" font-size="8.5" font-weight="700" fill="#111827">Total</text>
+  <text x="565" y="472" text-anchor="end" font-family="Arial" font-size="8.5" font-weight="700" fill="#111827">₹38,994.00</text>
+
+  <text x="25" y="555" font-family="Arial" font-size="7.5" font-weight="700" fill="#111827">Terms and Conditions:</text>
+  <text x="25" y="567" font-family="Arial" font-size="6.5" fill="#4B5563">1. Goods once sold cannot be taken back or exchanged.</text>
+
+  <text x="565" y="585" text-anchor="end" font-family="Arial" font-size="7.5" fill="#6B7280">For Company Name</text>
+  <line x1="25" y1="800" x2="570" y2="800" stroke="#E5E7EB"/>
+  <text x="297" y="814" text-anchor="middle" font-family="Arial" font-size="7" fill="#9CA3AF">Page 1/1 - This is a digitally signed document</text>
+</svg>

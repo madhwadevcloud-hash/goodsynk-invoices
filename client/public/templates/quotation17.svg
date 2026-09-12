@@ -5,10 +5,10 @@
   <text x="42" y="88" font-family="Arial" font-size="8.5" fill="#666">9999999999  •  hello@abcsolutions.com</text>
   <text x="42" y="102" font-family="Arial" font-size="8.5" fill="#666">GSTIN 29CXXXX1234F1Z5</text>
   <text x="553" y="46" text-anchor="end" font-family="Arial" font-size="7" font-weight="700" fill="#111820" letter-spacing="2">ORIGINAL FOR RECIPIENT</text>
-  <text x="553" y="66" text-anchor="end" font-family="Arial" font-size="22" font-weight="700" fill="#000">Quotation</text>
-  <text x="553" y="82" text-anchor="end" font-family="Arial" font-size="8.5" fill="#555">#QUO-0017</text>
+  <text x="553" y="66" text-anchor="end" font-family="Arial" font-size="22" font-weight="700" fill="#000">QUOTATION</text>
+  <text x="553" y="82" text-anchor="end" font-family="Arial" font-size="8.5" fill="#555">#INV-0017</text>
   <text x="553" y="96" text-anchor="end" font-family="Arial" font-size="8.5" fill="#555">Date: 16 Sep 2026</text>
-  <text x="553" y="110" text-anchor="end" font-family="Arial" font-size="8.5" fill="#555">Valid until: 23 Sep 2026</text>
+  <text x="553" y="110" text-anchor="end" font-family="Arial" font-size="8.5" fill="#555">Due date: 23 Sep 2026</text>
   <rect x="42" y="122" width="511" height="2" fill="#111820"/>
   <text x="42" y="150" font-family="Arial" font-size="7" font-weight="700" fill="#8A8F98" letter-spacing="0.6">BILL TO</text>
   <text x="42" y="164" font-family="Arial" font-size="9" font-weight="700" fill="#000">Kalyan Krishnamurthy</text>
@@ -36,8 +36,8 @@
   <rect x="333" y="350" width="220" height="26" rx="6" fill="#111820"/>
   <text x="345" y="367" font-family="Arial" font-size="10" font-weight="700" fill="#fff">Total</text>
   <text x="545" y="367" text-anchor="end" font-family="Arial" font-size="12" font-weight="700" fill="#fff">INR 35,998.00</text>
-  <rect x="440" y="384" width="113" height="14" rx="7" fill="#EEF2FF"/>
-  <text x="497" y="394" text-anchor="middle" font-family="Arial" font-size="6.5" font-weight="700" fill="#3B4CCA">ESTIMATED TOTAL</text>
+  <rect x="440" y="384" width="113" height="14" rx="7" fill="#FDECEC"/>
+  <text x="497" y="394" text-anchor="middle" font-family="Arial" font-size="6.5" font-weight="700" fill="#C43D3D">BALANCE DUE 35,998.00</text>
   <line x1="42" y1="420" x2="553" y2="420" stroke="#EBEBEB"/>
   <text x="42" y="436" font-family="Arial" font-size="7" font-weight="700" fill="#8A8F98" letter-spacing="0.6">AMOUNT IN WORDS</text>
   <text x="42" y="450" font-family="Arial" font-size="8" fill="#333">INR Thirty Five Thousand Nine Hundred Ninety Eight Only</text>

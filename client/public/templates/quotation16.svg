@@ -7,9 +7,9 @@
   <text x="55" y="96" font-family="Arial" font-size="8.5" fill="#444">123, MG Road, Bengaluru, Karnataka 560001</text>
   <rect x="470" y="18" width="90" height="16" fill="#1F4B3F"/>
   <text x="515" y="29" text-anchor="middle" font-family="Arial" font-size="9" font-weight="700" fill="#fff" letter-spacing="1">QUOTATION</text>
-  <text x="540" y="65" text-anchor="end" font-family="Arial" font-size="8.5" fill="#555">Invoice #</text>
+  <text x="540" y="65" text-anchor="end" font-family="Arial" font-size="8.5" fill="#555">Quotation #</text>
   <text x="540" y="65" text-anchor="start" font-family="Arial" font-size="8.5" font-weight="700" fill="#111" x2="560"></text>
-  <text x="540" y="78" text-anchor="end" font-family="Arial" font-size="8.5" fill="#111" font-weight="700">QUO-0016</text>
+  <text x="540" y="78" text-anchor="end" font-family="Arial" font-size="8.5" fill="#111" font-weight="700">INV-0016</text>
   <text x="540" y="92" text-anchor="end" font-family="Arial" font-size="8.5" fill="#111">16 Sep 2026</text>
   <text x="540" y="106" text-anchor="end" font-family="Arial" font-size="8.5" fill="#111">Place of Supply: 29-KARNATAKA</text>
   <line x1="297" y1="120" x2="297" y2="230" stroke="#1F4B3F" stroke-width="1"/>
