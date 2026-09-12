@@ -1,6 +1,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
+import { getAddressStreet, getFullAddress } from './addressUtils';
 
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-Bold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYMZhrib2Bg-4.ttf' });
@@ -18,7 +19,13 @@ const hexToRgba = (hex, alpha) => {
   return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
 };
 
-const isRasterImage = (url) => typeof url === 'string' && url.trim().length > 0 && !url.trim().startsWith('data:image/svg') && !url.includes('OFFICIAL WATERMARK');
+// Caps out inline data-URL images (logo/signature/seal/watermark). Without this,
+// an oversized base64 image (e.g. an uncompressed photo used as a watermark)
+// can make @react-pdf/renderer fail to produce a PDF at all instead of just
+// looking bad -- so we treat anything absurdly large as "no image" rather than
+// letting it take down the whole document.
+const MAX_INLINE_IMAGE_LENGTH = 2_000_000;
+const isRasterImage = (url) => typeof url === 'string' && url.trim().length > 0 && url.trim().length <= MAX_INLINE_IMAGE_LENGTH && !url.trim().startsWith('data:image/svg') && !url.includes('OFFICIAL WATERMARK');
 
 function numberToWords(num) {
   if (!num) return 'Zero';
@@ -107,15 +114,15 @@ export default function Template19({ invoice }) {
 
     table: { marginHorizontal: 12, borderWidth: 1, borderColor: '#111827', marginBottom: 10 },
     tHead: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#111827', backgroundColor: '#F9FAFB', paddingVertical: 5 },
-    thDesc: { width: '75%', paddingLeft: 8, fontSize: 8.5, fontFamily: B, color: '#111827' },
+    thDesc: { width: '75%', paddingLeft: 8, fontSize: 8.5, fontFamily: B, color: '#111827', borderRightWidth: 1, borderRightColor: '#111827' },
     thAmount: { width: '25%', paddingRight: 8, fontSize: 8.5, fontFamily: B, color: '#111827', textAlign: 'right' },
 
     tRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#E5E7EB', paddingVertical: 6, minHeight: 20 },
-    tdDesc: { width: '75%', paddingLeft: 8, fontSize: 8, color: '#111827' },
+    tdDesc: { width: '75%', paddingLeft: 8, fontSize: 8, color: '#111827', borderRightWidth: 1, borderRightColor: '#111827' },
     tdAmount: { width: '25%', paddingRight: 8, fontSize: 8, color: '#111827', textAlign: 'right' },
 
     sumRow: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#111827', paddingVertical: 6, paddingHorizontal: 8, backgroundColor: '#F9FAFB' },
-    sumText: { width: '75%', fontSize: 8, fontFamily: B, color: '#111827' },
+    sumText: { width: '75%', fontSize: 8, fontFamily: B, color: '#111827', borderRightWidth: 1, borderRightColor: '#111827' },
     sumVal: { width: '25%', fontSize: 8, fontFamily: B, color: '#111827', textAlign: 'right' },
 
     reverseChargeBlock: { marginHorizontal: 12, flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
@@ -139,7 +146,7 @@ export default function Template19({ invoice }) {
     sigBox: { borderWidth: 1, borderColor: '#111827', padding: 6 },
     sigLabel: { fontSize: 7.5, fontFamily: B, color: '#111827', marginBottom: 2 },
 
-    pageFooter: { position: 'absolute', bottom: 15, left: 30, right: 30, textAlign: 'center' },
+    pageFooter: { position: 'absolute', bottom: 15, left: 30, right: 30, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     footerPageNum: { fontSize: 8, color: '#111827' },
   });
 
@@ -160,7 +167,7 @@ export default function Template19({ invoice }) {
           <View style={s.topHeaderRow}>
             <View style={s.headerCol1}>
               <View style={s.logoRow}>
-                {isRasterImage(biz?.logo) ? <Image src={biz.logo} style={s.logoImg} /> : null}
+                {isRasterImage(biz?.businessLogo) ? <Image src={biz.businessLogo} style={s.logoImg} /> : null}
                 <Text style={s.brandName}>{bizName}</Text>
               </View>
             </View>
@@ -168,8 +175,8 @@ export default function Template19({ invoice }) {
             <View style={s.headerCol2}>
               <Text style={s.officeTitle}>Registered office</Text>
               <Text style={s.officeText}>{bizName}</Text>
-              <Text style={s.officeText}>{biz?.address || 'AA302, Alpine Block, Golden Grand'}</Text>
-              <Text style={s.officeText}>{biz?.city ? `${biz.city}- ${biz.pincode || ''}` : 'Yeshwantpur, Bengaluru- 560022'}</Text>
+              <Text style={s.officeText}>{getAddressStreet(biz?.address) || 'AA302, Alpine Block, Golden Grand'}</Text>
+              <Text style={s.officeText}>{biz?.address?.city ? `${biz.address.city}- ${biz.address.pincode || ''}` : 'Yeshwantpur, Bengaluru- 560022'}</Text>
             </View>
 
             <View style={s.headerCol3}>
@@ -196,7 +203,7 @@ export default function Template19({ invoice }) {
               <Text style={{ fontSize: 7.5, color: '#111827' }}>To,</Text>
               <Text style={{ fontSize: 8, fontFamily: B, color: '#111827' }}>{client?.name || client?.clientName || 'Name of the client company'}</Text>
               {client?.gstin ? <Text style={{ fontSize: 7.5, color: '#111827' }}>(GST: {client.gstin})</Text> : null}
-              <Text style={{ fontSize: 7.5, color: '#111827' }}>{client?.address || 'Address'}</Text>
+              <Text style={{ fontSize: 7.5, color: '#111827' }}>{getFullAddress(client?.address) || 'Address'}</Text>
             </View>
 
             <View style={s.metaCol2}>
@@ -255,9 +262,10 @@ export default function Template19({ invoice }) {
               <Text style={s.payTitle}>Payment Details:</Text>
               <Text style={s.payRow}>You may please make the payment either by online transfer to bank</Text>
               <Text style={s.payRow}><Text style={{ fontFamily: B }}>Beneficiary Name:</Text> {bizName}</Text>
-              <Text style={s.payRow}><Text style={{ fontFamily: B }}>Bank:</Text> {biz?.bankName || 'HDFC Bank Ltd'}</Text>
-              <Text style={s.payRow}><Text style={{ fontFamily: B }}>Account Number:</Text> {biz?.accountNumber || '50200119422741'}</Text>
-              <Text style={s.payRow}><Text style={{ fontFamily: B }}>IFSC Code:</Text> {biz?.ifscCode || 'HDFC0010299'}</Text>
+              <Text style={s.payRow}><Text style={{ fontFamily: B }}>Bank:</Text> {biz?.bankDetails?.bankName || 'HDFC Bank Ltd'}</Text>
+              <Text style={s.payRow}><Text style={{ fontFamily: B }}>Account Number:</Text> {biz?.bankDetails?.accountNumber || '50200119422741'}</Text>
+              <Text style={s.payRow}><Text style={{ fontFamily: B }}>IFSC Code:</Text> {biz?.bankDetails?.ifscCode || 'HDFC0010299'}</Text>
+              <Text style={s.payRow}><Text style={{ fontFamily: B }}>Branch:</Text> {biz?.bankDetails?.branch || 'Yeshwantpur'}</Text>
               <Text style={s.payRow}><Text style={{ fontFamily: B }}>PAN:</Text> {biz?.pan || 'AFLFS8718P'}</Text>
               <Text style={s.payRow}><Text style={{ fontFamily: B }}>Payment Terms:</Text> 15 days from date of document</Text>
             </View>
@@ -266,10 +274,13 @@ export default function Template19({ invoice }) {
               <Text style={s.certText}>Certified that the particulars given above are true and correct.</Text>
               <View style={s.sigBox}>
                 <Text style={s.sigLabel}>Authorised Signatory</Text>
+                {isRasterImage(biz?.businessSignature) ? (
+                  <Image src={biz.businessSignature} style={{ width: 60, height: 22, objectFit: 'contain', marginTop: 2 }} />
+                ) : null}
                 <Text style={{ fontSize: 7.5, color: '#111827' }}>Name: {biz?.signatoryName || 'Ananth Sripadarao'}</Text>
                 <Text style={{ fontSize: 7, color: '#4B5563' }}>Designation: {biz?.designation || 'Head – Brand Protection & Litigation'}</Text>
-                {isRasterImage(biz?.seal) ? (
-                  <Image src={biz.seal} style={{ width: 45, height: 45, marginTop: 4, objectFit: 'contain' }} />
+                {isRasterImage(biz?.businessSeal) ? (
+                  <Image src={biz.businessSeal} style={{ width: 45, height: 45, marginTop: 4, objectFit: 'contain' }} />
                 ) : (
                   <Text style={{ fontSize: 6.5, color: '#6B7280', marginTop: 10 }}>[ Seal Placeholder ]</Text>
                 )}
@@ -280,6 +291,7 @@ export default function Template19({ invoice }) {
 
         <View style={s.pageFooter} fixed>
           <Text style={s.footerPageNum}>Page 1 of 1</Text>
+          <Text style={{ fontSize: 7, color: '#4B5563' }}>Powered by GoodSynk<Text style={{ fontSize: 5.5, fontFamily: 'Helvetica' }}>™</Text></Text>
         </View>
       </Page>
     </Document>

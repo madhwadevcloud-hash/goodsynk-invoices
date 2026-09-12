@@ -1,6 +1,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image, Link } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
+import { isRasterImage } from './watermarkUtils';
 
 const B = 'Inter-Bold';
 const M = 'Inter-SemiBold';
@@ -26,6 +27,7 @@ export default function Template10({ invoice }) {
 
   const s = StyleSheet.create({
     watermarkContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: -100 },
+    watermarkImg: { width: 250, height: 250, objectFit: 'contain', opacity: 0.12 },
     watermarkText: { fontSize: 60, fontFamily: B, color: hexToRgba(PRIMARY, 0.08), transform: 'rotate(-45deg)', letterSpacing: 5 },
     page: { paddingTop: 40, paddingBottom: 60, paddingHorizontal: 40, fontFamily: 'Inter', color: '#1F2937' },
     
@@ -122,11 +124,15 @@ export default function Template10({ invoice }) {
       <Page size="A4" style={s.page}>
 
         {/* Watermark */}
-        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
+        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') ? (
           <View style={s.watermarkContainer} pointerEvents="none" fixed>
             <Text style={s.watermarkText}>GoodSynk</Text>
           </View>
-        )}
+        ) : isRasterImage(invoice.watermarkImage || biz.watermarkImage) ? (
+          <View style={s.watermarkContainer} pointerEvents="none" fixed>
+            <Image src={invoice.watermarkImage || biz.watermarkImage} style={s.watermarkImg} />
+          </View>
+        ) : null}
         
         <View style={s.topFlex}>
           <View style={s.bizBox}>

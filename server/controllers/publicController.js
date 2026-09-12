@@ -10,6 +10,36 @@ const buildInvoiceForPDF = (doc, docLabel) => ({
     _taxType: doc.taxType,
 });
 
+// Mirrors client/src/pages/invoices/templates/TemplateResolver.jsx, which applies
+// the owner's documentSettings (watermark + discount-column visibility) to an
+// invoice before handing it to a template. That resolver reads from the
+// browser's localStorage, which this server process has no access to — so for
+// the public share-link PDF (the only server-side render path in this app) we
+// apply the same settings here, sourced from the owner's account instead.
+const applyDocumentSettings = (invoiceForPDF, documentSettings) => {
+    const settings = documentSettings || {};
+    const isDiscColumnVisible = !settings.hideDiscount && settings.showDiscountColumn !== false;
+
+    let processed = {
+        ...invoiceForPDF,
+        watermarkImage: invoiceForPDF.watermarkImage || settings.watermarkImage || undefined,
+    };
+
+    if (!isDiscColumnVisible) {
+        processed = {
+            ...processed,
+            discountAmount: 0,
+            itemDiscount: 0,
+            overallDiscTotal: 0,
+            hideDiscount: true,
+            hideDiscountColumn: true,
+            items: processed.items?.map((item) => ({ ...item, discount: 0 })),
+        };
+    }
+
+    return processed;
+};
+
 // Helper: collect a readable stream into a Buffer
 const streamToBuffer = (stream) =>
     new Promise((resolve, reject) => {
@@ -24,11 +54,11 @@ const streamDocumentPdf = async (req, res, { Model, docLabel, numberField }) => 
     try {
         const doc = await Model.findOne({ shareToken: req.params.token, isDeleted: { $ne: true } })
             .populate('client')
-            .populate('user', 'name email businessName businessLogo businessSignature businessSeal address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan');
+            .populate('user', 'name email businessName businessLogo businessSignature businessSeal address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan documentSettings');
 
         if (!doc) return res.status(404).send('Document not found or link expired');
 
-        const invoiceForPDF = buildInvoiceForPDF(doc, docLabel);
+        const invoiceForPDF = applyDocumentSettings(buildInvoiceForPDF(doc, docLabel), doc.user?.documentSettings);
         // In @react-pdf/renderer v4, toBuffer() returns a readable stream — collect it into a Buffer
         const pdfStream = await pdf(React.createElement(TemplateResolver, { invoice: invoiceForPDF })).toBuffer();
         const buffer = await streamToBuffer(pdfStream);

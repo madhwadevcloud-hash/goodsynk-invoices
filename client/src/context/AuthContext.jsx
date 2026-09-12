@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../api/services';
+import { hydrateDocumentSettingsFromUser } from '../utils/documentSettings';
 
 const AuthContext = createContext(null);
 
@@ -20,7 +21,10 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       authAPI
         .getMe()
-        .then((res) => setUser(res.data.user))
+        .then((res) => {
+          setUser(res.data.user);
+          hydrateDocumentSettingsFromUser(res.data.user);
+        })
         .catch(() => {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
@@ -37,6 +41,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     setUser(data.user);
+    hydrateDocumentSettingsFromUser(data.user);
     return data;
   };
 
@@ -45,6 +50,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     setUser(data.user);
+    hydrateDocumentSettingsFromUser(data.user);
     return data;
   };
 
@@ -53,6 +59,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     setUser(data.user);
+    hydrateDocumentSettingsFromUser(data.user);
     return data;
   };
 

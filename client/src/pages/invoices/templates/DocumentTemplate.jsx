@@ -1,5 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
+import { isRasterImage } from './watermarkUtils';
 
 const themes = {
   invoice12: { ink: '#123B5D', accent: '#D9A441', soft: '#F2F5F7', mode: 'ledger', title: 'INVOICE' },
@@ -68,6 +69,7 @@ export default function DocumentTemplate({ invoice, variant }) {
     band: { backgroundColor: theme.ink, color: '#FFFFFF', marginHorizontal: -34, padding: '18px 34px', flexDirection: 'row', justifyContent: 'space-between' },
     callout: { marginTop: 18, padding: 14, borderWidth: 1, borderColor: theme.accent, backgroundColor: theme.soft },
     watermarkContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: -100 },
+    watermarkImg: { width: 250, height: 250, objectFit: 'contain', opacity: 0.12 },
     watermarkText: { fontSize: 60, fontFamily: 'Helvetica-Bold', color: hexToRgba(theme.ink, 0.08), transform: 'rotate(-45deg)', letterSpacing: 5 },
   });
 
@@ -76,11 +78,15 @@ export default function DocumentTemplate({ invoice, variant }) {
       <Page size="A4" style={styles.page}>
 
         {/* Watermark */}
-        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
+        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') ? (
           <View style={styles.watermarkContainer} pointerEvents="none" fixed>
             <Text style={styles.watermarkText}>GoodSynk</Text>
           </View>
-        )}
+        ) : isRasterImage(invoice.watermarkImage || biz.watermarkImage) ? (
+          <View style={styles.watermarkContainer} pointerEvents="none" fixed>
+            <Image src={invoice.watermarkImage || biz.watermarkImage} style={styles.watermarkImg} />
+          </View>
+        ) : null}
         {theme.mode === 'band' ? (
           <View style={styles.band}>
             <View style={styles.brand}>{biz.businessLogo ? <Image src={biz.businessLogo} style={styles.logo} /> : <Text style={styles.logoFallback}>G</Text>}<View><Text style={{ ...styles.bizName, color: '#FFFFFF' }}>{biz.businessName || biz.name || 'Your Business'}</Text><Text style={{ color: '#DCE5ED', marginTop: 3 }}>Tax invoice and payment record</Text></View></View>

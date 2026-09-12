@@ -1,5 +1,6 @@
 import React from 'react';
 import { getDocumentSettings } from '../utils/documentSettings';
+import { isRasterImage } from '../pages/invoices/templates/watermarkUtils';
 
 // The preview artwork is static, so the user's profile photo is layered at
 // runtime. Each template has its own logo slot so the photo never obscures
@@ -39,8 +40,8 @@ const LOGO_POSITIONS = {
   quotation18: { top: '3%', left: '4.5%', width: '7.5%', maxHeight: '5%' },
   template19: { top: '5.5%', left: '8%', width: '5.5%', maxHeight: '4%' },
   quotation19: { top: '5.5%', left: '8%', width: '5.5%', maxHeight: '4%' },
-  template20: { top: '3.5%', left: '5%', width: '8%', maxHeight: '5%' },
-  quotation20: { top: '3.5%', left: '5%', width: '8%', maxHeight: '5%' },
+  template20: { top: '6.5%', left: '6.5%', width: '6%', maxHeight: '4.5%' },
+  quotation20: { top: '6.5%', left: '6.5%', width: '6%', maxHeight: '4.5%' },
   quotation12: { top: '1.5%', left: '6%', width: '9%', maxHeight: '6%' },
   quotation13: { top: '1.5%', right: '6%', width: '9%', maxHeight: '6%' },
   quotation14: { top: '1.5%', left: '6%', width: '9%', maxHeight: '6%' },
@@ -71,8 +72,8 @@ const SEAL_POSITIONS = {
   quotation18: { top: '72%', left: '88%' },
   template19: { top: '88%', left: '81%' },
   quotation19: { top: '88%', left: '81%' },
-  template20: { top: '87%', left: '84%' },
-  quotation20: { top: '87%', left: '84%' },
+  template20: { top: '60.5%', left: '77%' },
+  quotation20: { top: '60.5%', left: '77%' },
   quotation12: { top: '86.0%', left: '89.2%' },
   quotation13: { top: '84.8%', left: '89.2%' },
   quotation14: { top: '86.0%', left: '89.2%' },
@@ -115,7 +116,17 @@ const getSignaturePosition = (sealPosition) => {
 export default function TemplatePreview({ src, templateId, logo, seal, signature, watermarkImage, alt, style, imageStyle, isFreePlan = true, isQuotation = false }) {
   const docSettings = getDocumentSettings();
   const activeWatermark = watermarkImage || docSettings?.watermarkImage;
-  const hasCustomWatermark = activeWatermark && typeof activeWatermark === 'string' && !activeWatermark.includes('OFFICIAL WATERMARK');
+  // Was: `!activeWatermark.includes('OFFICIAL WATERMARK')`. That literal-text
+  // search never matched because DEFAULT_WATERMARK_SVG is URL-encoded before
+  // being stored (encodeURIComponent turns the space into "%20"), so the
+  // substring "OFFICIAL WATERMARK" never actually appears in the string --
+  // `hasCustomWatermark` was always true, and every upgraded-plan user saw
+  // the default placeholder watermark in previews even with nothing uploaded.
+  // `isRasterImage` (already used by every PDF template to make this same
+  // "is this the built-in default, or a real upload" call) checks the SVG
+  // data-URI prefix instead of matching against the SVG's text content, so
+  // it isn't sensitive to how that text happens to be encoded.
+  const hasCustomWatermark = isRasterImage(activeWatermark);
   const isQuote = isQuotation || (typeof src === 'string' && src.toLowerCase().includes('quotation'));
   let rawKey = (templateId || '').toLowerCase();
   if (isQuote && !rawKey.startsWith('quotation')) {

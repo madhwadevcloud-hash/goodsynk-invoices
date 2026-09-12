@@ -1,6 +1,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
+import { getAddressStreet, getAddressCityLine, getFullAddress } from './addressUtils';
 
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-Bold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYMZhrib2Bg-4.ttf' });
@@ -18,7 +19,13 @@ const hexToRgba = (hex, alpha) => {
   return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
 };
 
-const isRasterImage = (url) => typeof url === 'string' && url.trim().length > 0 && !url.trim().startsWith('data:image/svg') && !url.includes('OFFICIAL WATERMARK');
+// Caps out inline data-URL images (logo/signature/seal/watermark). Without this,
+// an oversized base64 image (e.g. an uncompressed photo used as a watermark)
+// can make @react-pdf/renderer fail to produce a PDF at all instead of just
+// looking bad -- so we treat anything absurdly large as "no image" rather than
+// letting it take down the whole document.
+const MAX_INLINE_IMAGE_LENGTH = 2_000_000;
+const isRasterImage = (url) => typeof url === 'string' && url.trim().length > 0 && url.trim().length <= MAX_INLINE_IMAGE_LENGTH && !url.trim().startsWith('data:image/svg') && !url.includes('OFFICIAL WATERMARK');
 
 function numberToWords(num) {
   if (!num) return 'Zero';
@@ -104,13 +111,13 @@ export default function Template18({ invoice }) {
     table: { borderWidth: 0.75, borderColor: '#9CA3AF', marginBottom: 10 },
     tHead: { flexDirection: 'row', borderBottomWidth: 0.75, borderBottomColor: '#9CA3AF', backgroundColor: '#F9FAFB', paddingVertical: 4 },
     th: { fontSize: 6.5, fontFamily: B, color: '#111827', textAlign: 'center' },
-    colNo: { width: '5%' },
-    colItem: { width: '33%', textAlign: 'left', paddingLeft: 4 },
-    colHsn: { width: '12%' },
-    colRate: { width: '12%', textAlign: 'right' },
-    colQty: { width: '7%' },
-    colTaxable: { width: '12%', textAlign: 'right' },
-    colTax: { width: '9%', textAlign: 'right' },
+    colNo: { width: '5%', borderRightWidth: 0.75, borderRightColor: '#9CA3AF' },
+    colItem: { width: '33%', textAlign: 'left', paddingLeft: 4, paddingRight: 4, borderRightWidth: 0.75, borderRightColor: '#9CA3AF' },
+    colHsn: { width: '12%', borderRightWidth: 0.75, borderRightColor: '#9CA3AF' },
+    colRate: { width: '12%', textAlign: 'right', paddingRight: 4, borderRightWidth: 0.75, borderRightColor: '#9CA3AF' },
+    colQty: { width: '7%', borderRightWidth: 0.75, borderRightColor: '#9CA3AF' },
+    colTaxable: { width: '12%', textAlign: 'right', paddingRight: 4, borderRightWidth: 0.75, borderRightColor: '#9CA3AF' },
+    colTax: { width: '9%', textAlign: 'right', paddingRight: 4, borderRightWidth: 0.75, borderRightColor: '#9CA3AF' },
     colAmount: { width: '10%', textAlign: 'right', paddingRight: 4 },
 
     tRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#E5E7EB', paddingVertical: 4, minHeight: 18 },
@@ -153,6 +160,7 @@ export default function Template18({ invoice }) {
     sigCol: { width: '35%', alignItems: 'flex-end' },
     sigFor: { fontSize: 7.5, color: '#6B7280', marginBottom: 15 },
     sigImg: { width: 70, height: 25, objectFit: 'contain' },
+    sealImg: { width: 45, height: 45, objectFit: 'contain', marginTop: 4 },
     sigName: { fontSize: 8, fontFamily: B, color: '#111827' },
 
     pageFooter: { position: 'absolute', bottom: 15, left: 30, right: 30, borderTopWidth: 0.5, borderTopColor: '#E5E7EB', paddingTop: 4, flexDirection: 'row', justifyContent: 'space-between' },
@@ -174,8 +182,8 @@ export default function Template18({ invoice }) {
 
         <View style={s.topHeader}>
           <View style={s.brandBlock}>
-            {isRasterImage(biz?.logo) ? (
-              <Image src={biz.logo} style={s.logoImg} />
+            {isRasterImage(biz?.businessLogo) ? (
+              <Image src={biz.businessLogo} style={s.logoImg} />
             ) : null}
             <View>
               <Text style={s.bizTitle}>{bizName}</Text>
@@ -200,14 +208,14 @@ export default function Template18({ invoice }) {
             <View style={s.addressCol}>
               <Text style={s.addrLabel}>Bill From:</Text>
               <Text style={s.addrName}>{bizName}</Text>
-              <Text style={s.addrText}>{biz?.address || ''}</Text>
-              <Text style={s.addrText}>{biz?.city ? `${biz.city}, ${biz.state || ''} ${biz.pincode || ''}` : ''}</Text>
+              <Text style={s.addrText}>{getAddressStreet(biz?.address)}</Text>
+              <Text style={s.addrText}>{getAddressCityLine(biz?.address)}</Text>
             </View>
             <View style={s.addressCol}>
               <Text style={s.addrLabel}>Bill To:</Text>
               <Text style={s.addrName}>{client?.name || client?.clientName || 'Client Name'}</Text>
-              <Text style={s.addrText}>{client?.address || ''}</Text>
-              <Text style={s.addrText}>{client?.city ? `${client.city}, ${client.state || ''} ${client.pincode || ''}` : ''}</Text>
+              <Text style={s.addrText}>{getAddressStreet(client?.address)}</Text>
+              <Text style={s.addrText}>{getAddressCityLine(client?.address)}</Text>
               {client?.gstin ? <Text style={s.addrText}>GSTIN: {client.gstin}</Text> : null}
             </View>
           </View>
@@ -215,18 +223,18 @@ export default function Template18({ invoice }) {
           <View style={s.addressRow}>
             <View style={s.addressCol}>
               <Text style={s.addrLabel}>Ship From:</Text>
-              <Text style={s.addrText}>{biz?.shipAddress || biz?.address || 'Same as billing address'}</Text>
+              <Text style={s.addrText}>{biz?.shipAddress || getFullAddress(biz?.address) || 'Same as billing address'}</Text>
             </View>
             <View style={s.addressCol}>
               <Text style={s.addrLabel}>Ship To:</Text>
-              <Text style={s.addrText}>{client?.shipAddress || client?.address || 'Same as billing address'}</Text>
+              <Text style={s.addrText}>{client?.shipAddress || getFullAddress(client?.address) || 'Same as billing address'}</Text>
               {client?.phone ? <Text style={s.addrText}>Ph: {client.phone}</Text> : null}
             </View>
           </View>
         </View>
 
-        {(inv.placeOfSupply || client?.state) ? (
-          <Text style={s.placeSupply}>Place of Supply: {inv.placeOfSupply || client?.state}</Text>
+        {(inv.placeOfSupply || client?.address?.state) ? (
+          <Text style={s.placeSupply}>Place of Supply: {inv.placeOfSupply || client?.address?.state}</Text>
         ) : null}
 
         <View style={s.table}>
@@ -269,10 +277,10 @@ export default function Template18({ invoice }) {
         <View style={s.summaryGrid}>
           <View style={s.bankCol}>
             <Text style={s.bankTitle}>Bank Details:</Text>
-            {biz?.bankName ? <View style={s.bankRow}><Text style={s.bankKey}>Bank:</Text><Text style={s.bankVal}>{biz.bankName}</Text></View> : null}
-            {biz?.accountNumber ? <View style={s.bankRow}><Text style={s.bankKey}>Account #:</Text><Text style={s.bankVal}>{biz.accountNumber}</Text></View> : null}
-            {biz?.ifscCode ? <View style={s.bankRow}><Text style={s.bankKey}>IFSC:</Text><Text style={s.bankVal}>{biz.ifscCode}</Text></View> : null}
-            {biz?.bankBranch ? <View style={s.bankRow}><Text style={s.bankKey}>Branch:</Text><Text style={s.bankVal}>{biz.bankBranch}</Text></View> : null}
+            {biz?.bankDetails?.bankName ? <View style={s.bankRow}><Text style={s.bankKey}>Bank:</Text><Text style={s.bankVal}>{biz.bankDetails.bankName}</Text></View> : null}
+            {biz?.bankDetails?.accountNumber ? <View style={s.bankRow}><Text style={s.bankKey}>Account #:</Text><Text style={s.bankVal}>{biz.bankDetails.accountNumber}</Text></View> : null}
+            {biz?.bankDetails?.ifscCode ? <View style={s.bankRow}><Text style={s.bankKey}>IFSC:</Text><Text style={s.bankVal}>{biz.bankDetails.ifscCode}</Text></View> : null}
+            {biz?.bankDetails?.branch ? <View style={s.bankRow}><Text style={s.bankKey}>Branch:</Text><Text style={s.bankVal}>{biz.bankDetails.branch}</Text></View> : null}
           </View>
 
           <View style={s.qrCol}>
@@ -322,17 +330,21 @@ export default function Template18({ invoice }) {
 
           <View style={s.sigCol}>
             <Text style={s.sigFor}>For {bizName}</Text>
-            {isRasterImage(biz?.signature) ? (
-              <Image src={biz.signature} style={s.sigImg} />
+            {isRasterImage(biz?.businessSignature) ? (
+              <Image src={biz.businessSignature} style={s.sigImg} />
             ) : (
               <View style={{ height: 25 }} />
             )}
+            {isRasterImage(biz?.businessSeal) ? (
+              <Image src={biz.businessSeal} style={s.sealImg} />
+            ) : null}
             <Text style={s.sigName}>{biz?.signatoryName || 'Authorised Signatory'}</Text>
           </View>
         </View>
 
         <View style={s.pageFooter} fixed>
           <Text style={s.footerText}>Page 1/1</Text>
+          <Text style={s.footerText}>Powered by GoodSynk<Text style={{ fontSize: 5.5, fontFamily: 'Helvetica' }}>™</Text></Text>
           <Text style={s.footerText}>This is a digitally signed document</Text>
         </View>
       </Page>

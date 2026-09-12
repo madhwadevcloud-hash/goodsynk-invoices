@@ -1,6 +1,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image, Link } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
+import { isRasterImage } from './watermarkUtils';
 // Register fonts (same as before)
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-SemiBold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
@@ -78,6 +79,26 @@ export default function Template1({ invoice }) {
     infoTitle: { fontFamily: B, fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, paddingBottom: 5, borderBottom: `1pt solid ${PRIMARY}` },
     infoText: { fontSize: 8.5, color: '#333', marginBottom: 3, lineHeight: 1.5 },
 
+    watermarkContainer: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: -100,
+    },
+    watermarkImg: { width: 250, height: 250, objectFit: 'contain', opacity: 0.12 },
+    watermarkText: {
+      fontSize: 60,
+      fontFamily: B,
+      color: hexToRgba(PRIMARY, 0.08),
+      transform: 'rotate(-45deg)',
+      letterSpacing: 5,
+    },
+
     footerBox: { position: 'absolute', bottom: 20, left: 40, right: 40, borderTopWidth: 2, borderTopColor: PRIMARY, flexDirection: 'row', justifyContent: 'space-between', paddingTop: 12 },
     footerColLeft: { width: '30%' },
     footerColCenter: { width: '35%', alignItems: 'center' },
@@ -109,11 +130,15 @@ export default function Template1({ invoice }) {
     <Document>
       <Page size="A4" style={s.page}>
         {/* Watermark */}
-        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
+        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') ? (
           <View style={s.watermarkContainer} pointerEvents="none" fixed>
             <Text style={s.watermarkText}>GoodSynk</Text>
           </View>
-        )}
+        ) : isRasterImage(invoice.watermarkImage || biz.watermarkImage) ? (
+          <View style={s.watermarkContainer} pointerEvents="none" fixed>
+            <Image src={invoice.watermarkImage || biz.watermarkImage} style={s.watermarkImg} />
+          </View>
+        ) : null}
 
         <View style={s.topSection}>
           <View style={s.titleCol}>

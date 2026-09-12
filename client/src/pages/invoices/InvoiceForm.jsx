@@ -73,6 +73,9 @@ export const DEFAULT_COLORS = {
   quotation15: { primary: '#3D405B', secondary: '#81B29A' },
   template16: { primary: '#1F4B3F', secondary: '#D9A441' },
   template17: { primary: '#111820', secondary: '#3B82F6' },
+  template18: { primary: '#FFE500', secondary: '#2874F0' },
+  template19: { primary: '#991B1B', secondary: '#DDD6FE' },
+  template20: { primary: '#0F172A', secondary: '#38BDF8' },
 };
 
 
