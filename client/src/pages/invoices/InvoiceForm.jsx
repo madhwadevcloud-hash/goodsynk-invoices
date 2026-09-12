@@ -89,7 +89,7 @@ export function resolveTemplateColors(templateKey, storedColors) {
 
 
 // Templates available on the free plan — everything else shows an "Upgrade" lock
-const FREE_TEMPLATES = ['template1', 'template2', 'template3'];
+const FREE_TEMPLATES = ['template1', 'template2', 'template5'];
 
 export default function InvoiceForm() {
   const { id } = useParams();
@@ -1586,21 +1586,17 @@ export default function InvoiceForm() {
             const TEMPLATE_IMGS = {
               template1: isQuotation ? '/templates/quotation1.svg' : '/templates/t1.svg',
               template2: isQuotation ? '/templates/quotation2.svg' : '/templates/t2.svg',
-              template3: isQuotation ? '/templates/quotation3.svg' : '/templates/t3.svg',
-              template4: isQuotation ? '/templates/quotation4.svg' : '/templates/t4.svg',
               template5: isQuotation ? '/templates/quotation5.svg' : '/templates/t5.svg',
               template6: isQuotation ? '/templates/quotation6.svg' : '/templates/t6.svg',
               template7: isQuotation ? '/templates/quotation7.svg' : '/templates/t7.png',
-              template8: isQuotation ? '/templates/quotation8.svg' : '/templates/t8.svg',
-              template9: isQuotation ? '/templates/quotation9.svg' : '/templates/t9.svg',
               template10: isQuotation ? '/templates/quotation10.svg' : '/templates/t10.svg',
-              template11: isQuotation ? '/templates/quotation11.svg' : '/templates/t11.svg',
               template16: isQuotation ? '/templates/quotation16.svg' : '/templates/t16.svg',
               template17: isQuotation ? '/templates/quotation17.svg' : '/templates/t17.svg',
-              invoice12: '/templates/invoice12.svg', invoice13: '/templates/invoice13.svg',
-              invoice14: '/templates/invoice14.svg', invoice15: '/templates/invoice15.svg',
-              quotation12: '/templates/quotation12.svg', quotation13: '/templates/quotation13.svg',
-              quotation14: '/templates/quotation14.svg', quotation15: '/templates/quotation15.svg',
+              template18: isQuotation ? '/templates/quotation18.svg' : '/templates/t18.svg',
+              template19: isQuotation ? '/templates/quotation19.svg' : '/templates/t19.svg',
+              template20: isQuotation ? '/templates/quotation20.svg' : '/templates/t20.svg',
+              invoice12: isQuotation ? '/templates/quotation12.svg' : '/templates/invoice12.svg',
+              invoice14: isQuotation ? '/templates/quotation14.svg' : '/templates/invoice14.svg',
             };
             const defaultKey = ((isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) || 'template1').toLowerCase();
             const defaultImg = TEMPLATE_IMGS[defaultKey] || '/templates/t1.svg';
@@ -1608,28 +1604,17 @@ export default function InvoiceForm() {
               { id: '', name: 'Account Default', img: defaultImg },
               { id: 'template1', name: 'Classic Blue', img: TEMPLATE_IMGS.template1 },
               { id: 'template2', name: 'Minimalist', img: TEMPLATE_IMGS.template2 },
-              { id: 'template3', name: 'Modern Wave', img: TEMPLATE_IMGS.template3 },
-              { id: 'template4', name: 'Elegant Navy', img: TEMPLATE_IMGS.template4 },
               { id: 'template5', name: 'Corporate Bright', img: TEMPLATE_IMGS.template5 },
               { id: 'template6', name: 'Angular Orange', img: TEMPLATE_IMGS.template6 },
               { id: 'template7', name: 'Standard Layout', img: TEMPLATE_IMGS.template7 },
-              { id: 'template8', name: 'Monochrome Casual', img: TEMPLATE_IMGS.template8 },
-              { id: 'template9', name: 'Split Sidebar Modern', img: TEMPLATE_IMGS.template9 },
               { id: 'template10', name: 'Soft Corporate Cards', img: TEMPLATE_IMGS.template10 },
-              { id: 'template11', name: 'Ultra-Minimalist Editorial', img: TEMPLATE_IMGS.template11 },
               { id: 'template16', name: 'Formal Tax Invoice', img: TEMPLATE_IMGS.template16 },
               { id: 'template17', name: 'Modern Retail', img: TEMPLATE_IMGS.template17 },
-              ...(isQuotation ? [
-                { id: 'quotation12', name: 'Golden Proposal', img: '/templates/quotation12.svg' },
-                { id: 'quotation13', name: 'Blue Roadmap', img: '/templates/quotation13.svg' },
-                { id: 'quotation14', name: 'Studio Portfolio', img: '/templates/quotation14.svg' },
-                { id: 'quotation15', name: 'Green Contract', img: '/templates/quotation15.svg' },
-              ] : [
-                { id: 'invoice12', name: 'Ledger Gold', img: '/templates/invoice12.svg' },
-                { id: 'invoice13', name: 'Coral Band', img: '/templates/invoice13.svg' },
-                { id: 'invoice14', name: 'Green Columns', img: '/templates/invoice14.svg' },
-                { id: 'invoice15', name: 'Receipt Grid', img: '/templates/invoice15.svg' },
-              ]),
+              { id: 'template18', name: 'E-Commerce Tax Invoice', img: TEMPLATE_IMGS.template18 },
+              { id: 'template19', name: 'Legal Services Boxed', img: TEMPLATE_IMGS.template19 },
+              { id: 'template20', name: 'Corporate Matrix', img: TEMPLATE_IMGS.template20 },
+              { id: 'invoice12', name: 'Ledger Gold', img: TEMPLATE_IMGS.invoice12 },
+              { id: 'invoice14', name: 'Green Columns', img: TEMPLATE_IMGS.invoice14 },
             ];
             return (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '10px', marginTop: 8 }}>

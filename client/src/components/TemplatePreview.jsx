@@ -1,4 +1,5 @@
 import React from 'react';
+import { getDocumentSettings } from '../utils/documentSettings';
 
 // The preview artwork is static, so the user's profile photo is layered at
 // runtime. Each template has its own logo slot so the photo never obscures
@@ -34,6 +35,12 @@ const LOGO_POSITIONS = {
   quotation16: { top: '3.2%', left: '6.5%', width: '8%', maxHeight: '5%' },
   template17: { top: '3%', left: '6%', width: '8%', maxHeight: '5%' },
   quotation17: { top: '3%', left: '6%', width: '8%', maxHeight: '5%' },
+  template18: { top: '3%', left: '4.5%', width: '7.5%', maxHeight: '5%' },
+  quotation18: { top: '3%', left: '4.5%', width: '7.5%', maxHeight: '5%' },
+  template19: { top: '5.5%', left: '8%', width: '5.5%', maxHeight: '4%' },
+  quotation19: { top: '5.5%', left: '8%', width: '5.5%', maxHeight: '4%' },
+  template20: { top: '3.5%', left: '5%', width: '8%', maxHeight: '5%' },
+  quotation20: { top: '3.5%', left: '5%', width: '8%', maxHeight: '5%' },
   quotation12: { top: '1.5%', left: '6%', width: '9%', maxHeight: '6%' },
   quotation13: { top: '1.5%', right: '6%', width: '9%', maxHeight: '6%' },
   quotation14: { top: '1.5%', left: '6%', width: '9%', maxHeight: '6%' },
@@ -56,28 +63,16 @@ const SEAL_POSITIONS = {
   invoice13: { top: '80.7%', left: '85.0%' },
   invoice14: { top: '80.7%', left: '85.0%' },
   invoice15: { top: '80.7%', left: '85.0%' },
-  // These quotationN values are matched exactly to the dashed "SEAL"
-  // placeholder circle baked into the corresponding quotationN.svg artwork
-  // (see client/public/templates/quotationN.svg, the <circle> inside
-  // #custom-footer next to the "Authorised Signature" label). Keeping them
-  // in sync means the dynamically-overlaid seal/signature lands directly on
-  // top of, and visually replaces, that placeholder instead of floating in
-  // a second, disconnected spot on the page.
-  quotation1: { top: '92.3%', left: '50.8%' },
-  quotation2: { top: '92.3%', left: '81.7%' },
-  quotation3: { top: '92.6%', left: '83.3%' },
-  quotation4: { top: '90.5%', left: '81.7%' },
-  quotation5: { top: '90.5%', left: '88.3%' },
-  quotation6: { top: '92.3%', left: '76.7%' },
-  quotation7: { top: '95.2%', left: '70.0%' },
-  quotation8: { top: '92.6%', left: '89.2%' },
-  quotation9: { top: '92.9%', left: '95.0%' },
-  quotation10: { top: '92.9%', left: '75.0%' },
-  quotation11: { top: '93.1%', left: '95.0%' },
   template16: { top: '61.8%', left: '77.3%' },
   quotation16: { top: '61.8%', left: '77.3%' },
   template17: { top: '60.8%', left: '77.3%' },
   quotation17: { top: '60.8%', left: '77.3%' },
+  template18: { top: '72%', left: '88%' },
+  quotation18: { top: '72%', left: '88%' },
+  template19: { top: '88%', left: '81%' },
+  quotation19: { top: '88%', left: '81%' },
+  template20: { top: '87%', left: '84%' },
+  quotation20: { top: '87%', left: '84%' },
   quotation12: { top: '86.0%', left: '89.2%' },
   quotation13: { top: '84.8%', left: '89.2%' },
   quotation14: { top: '86.0%', left: '89.2%' },
@@ -117,7 +112,10 @@ const getSignaturePosition = (sealPosition) => {
   return { top: `${Math.max(topPct - 3, 2)}%`, left: sealPosition.left };
 };
 
-export default function TemplatePreview({ src, templateId, logo, seal, signature, alt, style, imageStyle, isFreePlan = true, isQuotation = false }) {
+export default function TemplatePreview({ src, templateId, logo, seal, signature, watermarkImage, alt, style, imageStyle, isFreePlan = true, isQuotation = false }) {
+  const docSettings = getDocumentSettings();
+  const activeWatermark = watermarkImage || docSettings?.watermarkImage;
+  const hasCustomWatermark = activeWatermark && typeof activeWatermark === 'string' && !activeWatermark.includes('OFFICIAL WATERMARK');
   const isQuote = isQuotation || (typeof src === 'string' && src.toLowerCase().includes('quotation'));
   let rawKey = (templateId || '').toLowerCase();
   if (isQuote && !rawKey.startsWith('quotation')) {
@@ -225,7 +223,33 @@ export default function TemplatePreview({ src, templateId, logo, seal, signature
           SEAL
         </div>
       )}
-      {isFreePlan && <div aria-hidden="true" style={WATERMARK_STYLE} />}
+      {isFreePlan ? (
+        <div aria-hidden="true" style={WATERMARK_STYLE} />
+      ) : hasCustomWatermark ? (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'none',
+            zIndex: 5,
+          }}
+        >
+          <img
+            src={activeWatermark}
+            alt="Watermark"
+            style={{
+              maxWidth: '55%',
+              maxHeight: '55%',
+              objectFit: 'contain',
+              opacity: 0.25,
+            }}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

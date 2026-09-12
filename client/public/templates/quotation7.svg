@@ -1,10 +1,95 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 840"><rect width="600" height="840" fill="#fff"/><rect x="1" y="1" width="598" height="838" fill="#fff" stroke="#b565d8" stroke-width="2"/><text x="70" y="88" fill="#b565d8" font-family="Arial" font-size="23" font-weight="700">QUOTATION</text><path d="M70 146h436" stroke="#b565d8" stroke-width="4"/><text x="70" y="184" fill="#27313b" font-family="Arial" font-size="10">Quote No: QT-0026</text><text x="390" y="184" fill="#27313b" font-family="Arial" font-size="10">Valid until: 25 Apr 2025</text><rect x="70" y="220" width="436" height="24" fill="#b565d8"/><text x="84" y="237" fill="#fff" font-family="Arial" font-size="9" font-weight="700">DESCRIPTION                   QTY       PRICE       AMOUNT</text><path d="M70 284h436M70 324h436M70 364h436" stroke="#d9e1e8"/><text x="84" y="274" fill="#27313b" font-family="Arial" font-size="10">HVAC system inspection        1       150.00       150.00</text><text x="84" y="314" fill="#27313b" font-family="Arial" font-size="10">Replacement air filters       2        25.00        50.00</text><text x="84" y="354" fill="#27313b" font-family="Arial" font-size="10">Installation service          1       120.00       120.00</text><rect x="340" y="428" width="166" height="40" fill="#ead8f0"/><text x="355" y="453" fill="#7b3d99" font-family="Arial" font-size="12" font-weight="700">TOTAL  320.00</text><text x="70" y="540" fill="#b565d8" font-family="Arial" font-size="11" font-weight="700">PROJECT NOTES</text><text x="70" y="562" fill="#53606c" font-family="Arial" font-size="10">Work begins after written acceptance of this quotation.</text><text x="70" y="740" fill="#53606c" font-family="Arial" font-size="10">Goodsynk Invoices</text><g id="custom-footer"><rect x="24" y="670" width="552" height="146" fill="#fff"/>
-    <rect x="150" y="740" width="300" height="2" fill="#B565D8"/>
-    <text x="250" y="760" fill="#111" font-family="Arial" font-size="10" font-weight="700">Terms &amp; Conditions</text>
-    <text x="180" y="775" fill="#555" font-family="Arial" font-size="10" >Payment due upon receipt. Quote valid for 14 days.</text>
-    <rect x="250" y="800" width="100" height="1" fill="#000"/>
-    <text x="250" y="815" fill="#555" font-family="Arial" font-size="10">Signature</text>
-    <circle cx="420" cy="800" r="14" fill="none" stroke="#B565D8" stroke-width="1" stroke-dasharray="2,2"/><text x="420" y="802" text-anchor="middle" font-family="Arial" font-size="6" font-weight="700" fill="#B565D8">SEAL</text>
-</g>
-  <text x="300" y="820" text-anchor="middle" font-family="Arial" font-size="8" fill="#66717d">Powered by GoodSynk™</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="595" height="842" viewBox="0 0 595 842">
+  <rect width="595" height="842" fill="#ffffff"/>
+  
+  <!-- Header Title -->
+  <text x="40" y="55" font-family="Arial" font-size="24" font-weight="700" fill="#B565D8" letter-spacing="1.5">QUOTATION</text>
+  
+  <!-- Business Info -->
+  <text x="40" y="75" font-family="Arial" font-size="11" font-weight="700" fill="#000000">ABC SOLUTIONS PVT. LTD.</text>
+  <text x="40" y="89" font-family="Arial" font-size="7.5" fill="#444444">GSTIN: 29CXXXX1234F1Z5</text>
+  <text x="40" y="101" font-family="Arial" font-size="7.5" fill="#444444">123, MG Road</text>
+  <text x="40" y="113" font-family="Arial" font-size="7.5" fill="#444444">Bengaluru, Karnataka, 560001</text>
+  <text x="40" y="125" font-family="Arial" font-size="7.5" fill="#444444"><tspan font-weight="700">Mobile:</tspan> 0000000000  <tspan font-weight="700">Email:</tspan> testuser@example.com</text>
+  
+  <!-- Logo Badge -->
+  <rect x="515" y="40" width="40" height="40" rx="6" fill="#f3f4f6" stroke="#e5e7eb"/>
+  <text x="535" y="64" text-anchor="middle" font-family="Arial" font-size="12" font-weight="700" fill="#B565D8">NS</text>
+  
+  <!-- Document & Meta Grid -->
+  <text x="40" y="152" font-family="Arial" font-size="8.5"><tspan font-weight="700">Quotation #:</tspan> QT-0011</text>
+  <text x="240" y="152" font-family="Arial" font-size="8.5"><tspan font-weight="700">Quotation Date:</tspan> 16 Jul 2026</text>
+  <text x="440" y="152" font-family="Arial" font-size="8.5"><tspan font-weight="700">Due Date:</tspan> 19 Jul 2026</text>
+  
+  <!-- Addresses Side by Side -->
+  <text x="40" y="174" font-family="Arial" font-size="7.5" font-weight="700" fill="#444444">Customer Details:</text>
+  <text x="40" y="186" font-family="Arial" font-size="8" font-weight="700" fill="#000000">Acme group</text>
+  <text x="40" y="197" font-family="Arial" font-size="7.5" fill="#444444">Ph: XXXXXXXXX</text>
+  <text x="40" y="208" font-family="Arial" font-size="7.5" fill="#444444">client@gmail.com</text>
+  
+  <text x="240" y="174" font-family="Arial" font-size="7.5" font-weight="700" fill="#444444">Billing Address:</text>
+  <text x="240" y="186" font-family="Arial" font-size="7.5" fill="#444444">123</text>
+  <text x="240" y="197" font-family="Arial" font-size="7.5" fill="#444444">ABCD, Karnataka</text>
+  <text x="240" y="208" font-family="Arial" font-size="7.5" fill="#444444">XXXXXX</text>
+  
+  <text x="40" y="226" font-family="Arial" font-size="7.5"><tspan font-weight="700">Place of Supply:</tspan></text>
+  <text x="40" y="238" font-family="Arial" font-size="8" font-weight="700">Karnataka</text>
+  
+  <!-- Items Table Header -->
+  <line x1="40" y1="250" x2="555" y2="250" stroke="#B565D8" stroke-width="1.5"/>
+  <text x="45" y="263" font-family="Arial" font-size="7.5" font-weight="700">#</text>
+  <text x="70" y="263" font-family="Arial" font-size="7.5" font-weight="700">Item</text>
+  <text x="280" y="263" text-anchor="end" font-family="Arial" font-size="7.5" font-weight="700">Rate / Item</text>
+  <text x="330" y="263" text-anchor="middle" font-family="Arial" font-size="7.5" font-weight="700">Qty</text>
+  <text x="400" y="263" text-anchor="end" font-family="Arial" font-size="7.5" font-weight="700">Taxable Value</text>
+  <text x="475" y="263" text-anchor="end" font-family="Arial" font-size="7.5" font-weight="700">Tax Amount</text>
+  <text x="550" y="263" text-anchor="end" font-family="Arial" font-size="7.5" font-weight="700">Amount</text>
+  <line x1="40" y1="270" x2="555" y2="270" stroke="#B565D8" stroke-width="1.5"/>
+  
+  <!-- Row 1 -->
+  <text x="45" y="286" font-family="Arial" font-size="7.5">1</text>
+  <text x="70" y="286" font-family="Arial" font-size="7.5" font-weight="700">App</text>
+  <text x="280" y="286" text-anchor="end" font-family="Arial" font-size="7.5">10,000.00</text>
+  <text x="330" y="286" text-anchor="middle" font-family="Arial" font-size="7.5">1</text>
+  <text x="400" y="286" text-anchor="end" font-family="Arial" font-size="7.5">10,000.00</text>
+  <text x="475" y="286" text-anchor="end" font-family="Arial" font-size="7.5">400.00 (4%)</text>
+  <text x="550" y="286" text-anchor="end" font-family="Arial" font-size="7.5">10,400.00</text>
+  <line x1="40" y1="298" x2="555" y2="298" stroke="#e5e7eb" stroke-width="0.5"/>
+  
+  <!-- Totals Section -->
+  <text x="440" y="318" text-anchor="end" font-family="Arial" font-size="7.5" font-weight="700">Taxable Amount</text>
+  <text x="550" y="318" text-anchor="end" font-family="Arial" font-size="7.5" font-weight="700">₹10,000.00</text>
+  
+  <text x="440" y="330" text-anchor="end" font-family="Arial" font-size="7.5">CGST 2%</text>
+  <text x="550" y="330" text-anchor="end" font-family="Arial" font-size="7.5">₹200.00</text>
+  
+  <text x="440" y="342" text-anchor="end" font-family="Arial" font-size="7.5">SGST 2%</text>
+  <text x="550" y="342" text-anchor="end" font-family="Arial" font-size="7.5">₹200.00</text>
+  
+  <text x="440" y="360" text-anchor="end" font-family="Arial" font-size="11" font-weight="700">Total</text>
+  <text x="550" y="360" text-anchor="end" font-family="Arial" font-size="11" font-weight="700" fill="#000000">₹10,400.00</text>
+  
+  <!-- Info Summary Bar -->
+  <line x1="40" y1="375" x2="555" y2="375" stroke="#B565D8" stroke-width="0.75"/>
+  <text x="40" y="386" font-family="Arial" font-size="7" fill="#444444">Total Items / Qty : 1 / 1</text>
+  <text x="320" y="386" font-family="Arial" font-size="7" fill="#444444">Total Amount (in words): INR Ten Thousand Four Hundred Rupees Only</text>
+  <line x1="40" y1="392" x2="555" y2="392" stroke="#B565D8" stroke-width="0.75"/>
+  
+  <!-- Signature Block -->
+  <text x="480" y="440" text-anchor="middle" font-family="Arial" font-size="7" fill="#444444">For ABC Solutions Pvt. Ltd.</text>
+  <!-- Signature Scribble -->
+  <path d="M 450 465 Q 465 450 475 460 T 495 455 T 510 460" stroke="#111827" stroke-width="1.2" fill="none"/>
+  <text x="480" y="478" text-anchor="middle" font-family="Arial" font-size="7" font-weight="700">Authorised Signatory</text>
+  
+  <!-- Seal Badge -->
+  <rect x="455" y="490" width="50" height="18" fill="#ffffff" stroke="#94a3b8" stroke-dasharray="2,2" rx="3"/>
+  <text x="480" y="502" text-anchor="middle" font-family="Arial" font-size="6.5" font-weight="700" fill="#64748b">SAMPLE</text>
+  
+  <!-- Page Footer -->
+  <line x1="40" y1="780" x2="555" y2="780" stroke="#B565D8" stroke-width="0.75"/>
+  <text x="40" y="794" font-family="Arial" font-size="7" fill="#B565D8">Goodsynk Billing | Simple Invoicing, Billing &amp; Quotations | Visit: <tspan fill="#B565D8" font-weight="700">invoice.goodsynk.com</tspan></text>
+  <text x="40" y="805" font-family="Arial" font-size="6.5" fill="#888888">Page 1/1 • This is a digitally signed document</text>
+  
+  <text x="555" y="792" text-anchor="end" font-family="Arial" font-size="6.5" fill="#888888">Powered By</text>
+  <text x="555" y="802" text-anchor="end" font-family="Arial" font-size="8" font-weight="700" fill="#000000">GoodSynk</text>
+  <text x="555" y="812" text-anchor="end" font-family="Arial" font-size="6.5" fill="#B565D8">Invoice.Receipt.Payment Receipts</text>
 </svg>
