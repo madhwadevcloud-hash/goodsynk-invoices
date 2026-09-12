@@ -102,6 +102,21 @@ const userSchema = new mongoose.Schema(
       type: Object,
       default: null,
     },
+    // Mirrors the client's localStorage-only `documentSettings` (see
+    // client/src/utils/documentSettings.js). Persisting it on the account lets
+    // the server-side PDF renderer used for public share links (publicController.js)
+    // apply the same watermark/discount-column choices the owner picked in-app —
+    // previously that renderer had no access to this at all, since it lived only
+    // in the requesting browser's localStorage.
+    documentSettings: {
+      hideDiscount: { type: Boolean, default: false },
+      showDiscountColumn: { type: Boolean, default: true },
+      pdfAccentColor: { type: String, default: '#276EF1' },
+      // Empty string means "use the app's built-in default watermark" — the
+      // default SVG itself is a client-side constant (DEFAULT_WATERMARK_SVG)
+      // and intentionally isn't duplicated into every user document.
+      watermarkImage: { type: String, default: '' },
+    },
     plan: {
       type: String,
       enum: ['free', 'growth', 'growth_yearly', 'enterprise', 'enterprise_yearly'],

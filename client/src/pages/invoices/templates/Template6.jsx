@@ -1,6 +1,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image, Svg, Polygon } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
+import { isRasterImage } from './watermarkUtils';
 
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-SemiBold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
@@ -129,6 +130,7 @@ export default function Template6({ invoice }) {
       justifyContent: 'center',
       zIndex: -100,
     },
+        watermarkImg: { width: 250, height: 250, objectFit: 'contain', opacity: 0.12 },
     watermarkText: {
       fontSize: 60,
       fontFamily: B,
@@ -155,11 +157,15 @@ export default function Template6({ invoice }) {
     <Document>
       <Page size="A4" style={s.page}>
         {/* Watermark */}
-        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
+        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') ? (
           <View style={s.watermarkContainer} fixed pointerEvents="none">
             <Text style={s.watermarkText}>GoodSynk</Text>
           </View>
-        )}
+        ) : isRasterImage(invoice.watermarkImage || biz.watermarkImage) ? (
+          <View style={s.watermarkContainer} fixed pointerEvents="none">
+            <Image src={invoice.watermarkImage || biz.watermarkImage} style={s.watermarkImg} />
+          </View>
+        ) : null}
 
         {/* Header with SVG Angles */}
         <View style={s.headerContainer}>

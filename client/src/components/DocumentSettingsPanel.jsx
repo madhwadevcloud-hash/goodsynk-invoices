@@ -5,6 +5,60 @@ import toast from 'react-hot-toast';
 import { Lock, Upload, X, Check } from 'lucide-react';
 import { getDocumentSettings, saveDocumentSettings, DEFAULT_WATERMARK_SVG } from '../utils/documentSettings';
 
+// Watermarks are embedded directly into the generated PDF (see Template18/19/20),
+// and the settings object is cached in localStorage — both have practical size
+// limits. Uploading a raw photo straight from a phone/camera (often several MB)
+// used to get saved as-is: it would render fine in this panel's own <img> preview
+// (driven by React state) but could silently fail to persist to localStorage
+// (quota exceeded) and/or make the PDF fail to generate. Downscaling + compressing
+// on upload keeps things small and reliable in both places.
+const MAX_WATERMARK_DIMENSION = 512;
+const MAX_WATERMARK_SOURCE_BYTES = 15 * 1024 * 1024; // sanity cap before we even try to decode it
+const MAX_WATERMARK_OUTPUT_BYTES = 700 * 1024; // fall back to JPEG if PNG still comes out large
+
+function compressWatermarkImage(file) {
+  return new Promise((resolve, reject) => {
+    if (!file.type || !file.type.startsWith('image/')) {
+      reject(new Error('not-an-image'));
+      return;
+    }
+    if (file.size > MAX_WATERMARK_SOURCE_BYTES) {
+      reject(new Error('file-too-large'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('read-failed'));
+    reader.onload = (evt) => {
+      const img = new window.Image();
+      img.onerror = () => reject(new Error('decode-failed'));
+      img.onload = () => {
+        try {
+          const scale = Math.min(1, MAX_WATERMARK_DIMENSION / Math.max(img.width, img.height));
+          const width = Math.max(1, Math.round(img.width * scale));
+          const height = Math.max(1, Math.round(img.height * scale));
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // PNG keeps transparency, which matters for a watermark laid over content.
+          let dataUrl = canvas.toDataURL('image/png');
+          if (dataUrl.length > MAX_WATERMARK_OUTPUT_BYTES) {
+            dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          }
+          resolve(dataUrl);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      img.src = evt.target?.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function DocumentSettingsPanel({ onClose }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -16,10 +70,25 @@ export default function DocumentSettingsPanel({ onClose }) {
     const handleSync = (e) => {
       if (e.detail) setSettings(e.detail);
     };
+    const handleSyncFailed = () => {
+      // Distinct, softer wording from the local-save error above: the change
+      // is safely saved in this browser, it just hasn't reached the account
+      // yet — which matters because the public share-link PDF (rendered
+      // server-side) and any other device read from the account, not from
+      // this browser's storage. No auto-retry exists yet, so don't imply one —
+      // the next successful save of any setting will also resend this value.
+      toast('Saved on this device, but couldn\'t sync to your account — shared invoice links may not show this change yet.', { icon: '⚠️' });
+    };
     window.addEventListener('documentSettingsChanged', handleSync);
-    return () => window.removeEventListener('documentSettingsChanged', handleSync);
+    window.addEventListener('documentSettingsSyncFailed', handleSyncFailed);
+    return () => {
+      window.removeEventListener('documentSettingsChanged', handleSync);
+      window.removeEventListener('documentSettingsSyncFailed', handleSyncFailed);
+    };
   }, []);
 
+  // Returns { ok, reason } so callers (e.g. the watermark upload handler) can
+  // decide what to tell the user instead of assuming every update persisted.
   const updateSetting = (key, value) => {
     let nextSettings = { ...settings, [key]: value };
     if (key === 'hideDiscount' && value === true) {
@@ -27,11 +96,22 @@ export default function DocumentSettingsPanel({ onClose }) {
     } else if (key === 'showDiscountColumn' && value === true) {
       nextSettings.hideDiscount = false;
     }
-    setSettings(nextSettings);
-    saveDocumentSettings(nextSettings);
+    const { ok, settings: persisted, reason } = saveDocumentSettings(nextSettings);
+    // Always reflect what's actually persisted — never leave the panel showing
+    // a value that didn't make it to storage (that mismatch is exactly what
+    // made the watermark look fine "in preview" but not appear in the PDF).
+    setSettings(persisted);
+    if (!ok) {
+      toast.error(
+        reason === 'quota'
+          ? 'Could not save — that image is too large for your browser storage.'
+          : 'Failed to save document settings.'
+      );
+    }
+    return { ok, reason };
   };
 
-  const handleWatermarkUpload = (e) => {
+  const handleWatermarkUpload = async (e) => {
     if (isFreePlan) {
       toast('Upgrade your plan to unlock Watermark customization', { icon: '🔒' });
       navigate('/upgrade');
@@ -39,16 +119,34 @@ export default function DocumentSettingsPanel({ onClose }) {
     }
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      updateSetting('watermarkImage', evt.target?.result);
-      toast.success('Watermark updated');
-    };
-    reader.readAsDataURL(file);
+    try {
+      const dataUrl = await compressWatermarkImage(file);
+      const { ok } = updateSetting('watermarkImage', dataUrl);
+      if (ok) toast.success('Watermark updated');
+    } catch (err) {
+      if (err?.message === 'file-too-large') {
+        toast.error('That image is too large. Please choose a file under 15MB.');
+      } else if (err?.message === 'not-an-image') {
+        toast.error('Please upload a PNG or JPEG image.');
+      } else {
+        toast.error('Failed to process that image. Please try a different file.');
+      }
+    } finally {
+      e.target.value = '';
+    }
   };
 
   const handleSave = () => {
-    saveDocumentSettings(settings);
+    const { ok, settings: persisted, reason } = saveDocumentSettings(settings);
+    setSettings(persisted);
+    if (!ok) {
+      toast.error(
+        reason === 'quota'
+          ? 'Could not save — that image is too large for your browser storage.'
+          : 'Failed to save document settings.'
+      );
+      return;
+    }
     toast.success('Document settings saved successfully');
     if (onClose) onClose();
   };

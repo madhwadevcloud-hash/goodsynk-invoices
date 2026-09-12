@@ -1,6 +1,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
+import { isRasterImage } from './watermarkUtils';
 
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-SemiBold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
@@ -64,6 +65,7 @@ export default function Template17({ invoice }) {
   const s = StyleSheet.create({
     page: { paddingTop: 36, paddingBottom: 60, paddingHorizontal: 42, fontFamily: 'Inter', color: '#111', fontSize: 8.5 },
     watermarkContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: -100 },
+    watermarkImg: { width: 250, height: 250, objectFit: 'contain', opacity: 0.12 },
     watermarkText: { fontSize: 60, fontFamily: B, color: hexToRgba(PRIMARY, 0.07), transform: 'rotate(-45deg)', letterSpacing: 5 },
 
     topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
@@ -145,11 +147,15 @@ export default function Template17({ invoice }) {
   return (
     <Document>
       <Page size="A4" style={s.page}>
-        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
+        {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') ? (
           <View style={s.watermarkContainer} pointerEvents="none" fixed>
             <Text style={s.watermarkText}>GoodSynk</Text>
           </View>
-        )}
+        ) : isRasterImage(invoice.watermarkImage || biz.watermarkImage) ? (
+          <View style={s.watermarkContainer} pointerEvents="none" fixed>
+            <Image src={invoice.watermarkImage || biz.watermarkImage} style={s.watermarkImg} />
+          </View>
+        ) : null}
 
         <View style={s.topRow}>
           <View style={s.brandRow}>

@@ -35,6 +35,7 @@ const register = async (req, res) => {
         businessName: user.businessName,
         currency: user.currency,
         plan: user.plan,
+        documentSettings: user.documentSettings,
       },
     });
   } catch (err) {
@@ -81,6 +82,7 @@ const login = async (req, res) => {
         bankDetails: user.bankDetails,
         bankAccounts: user.bankAccounts,
         plan: user.plan,
+        documentSettings: user.documentSettings,
       },
     });
   } catch (err) {
@@ -98,6 +100,12 @@ const getMe = async (req, res) => {
 // @desc    Update user profile
 // @route   PUT /api/auth/me
 // @access  Private
+// Same ceiling the PDF templates themselves enforce on inline data-URL images
+// (see isRasterImage in server/pdfTemplates/templates/Template18/19/20.jsx) —
+// reject an oversized watermark here rather than silently storing something
+// the renderer will later just drop.
+const MAX_DOCUMENT_WATERMARK_LENGTH = 2_000_000;
+
 const normalizeBankAccounts = (bankAccounts = []) => {
   let primaryIndex = -1;
   for (let i = 0; i < bankAccounts.length; i++) {
@@ -179,6 +187,20 @@ const updateMe = async (req, res) => {
       }
     }
 
+    // Handled separately from simpleFields because it's a partial update we
+    // merge onto the existing sub-document (the client only ever sends the
+    // keys that changed) and because the watermark image needs a size check.
+    if (req.body.documentSettings !== undefined && req.body.documentSettings !== null) {
+      const existing = user.documentSettings ? user.documentSettings.toObject() : {};
+      const merged = { ...existing, ...req.body.documentSettings };
+
+      if (typeof merged.watermarkImage === 'string' && merged.watermarkImage.length > MAX_DOCUMENT_WATERMARK_LENGTH) {
+        return res.status(400).json({ success: false, message: 'Watermark image is too large to save. Please use a smaller image.' });
+      }
+
+      user.documentSettings = merged;
+    }
+
     const updatedUser = await user.save();
     res.json({ success: true, user: updatedUser });
   } catch (err) {
@@ -258,6 +280,7 @@ const googleLogin = async (req, res) => {
         bankDetails: user.bankDetails,
         bankAccounts: user.bankAccounts,
         plan: user.plan,
+        documentSettings: user.documentSettings,
       },
     });
   } catch (err) {
