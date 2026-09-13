@@ -1,22 +1,12 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const Invoice = require('../models/Invoice');
 const Quotation = require('../models/Quotation');
 const { generateShareToken } = require('../utils/shareToken');
 const { buildDocumentEmailHTML, CURRENCY_SYMBOLS } = require('../utils/emailTemplates');
 
-const transporter = process.env.EMAIL_SERVICE
-    ? nodemailer.createTransport({
-        service: process.env.EMAIL_SERVICE,
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    })
-    : nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT) || 587,
-        secure: Number(process.env.SMTP_PORT) === 465,
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    });
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-const FROM_EMAIL = process.env.SMTP_USER;
+const FROM_EMAIL = 'no-reply@goodsynk.com';
 
 const sendDocumentEmail = async (req, res, { Model, docLabel, numberField, dueDateField, dueDateLabel }) => {
     try {
@@ -59,17 +49,27 @@ const sendDocumentEmail = async (req, res, { Model, docLabel, numberField, dueDa
             body,
         });
 
-        await transporter.sendMail({
+        const { data, error } = await resend.emails.send({
             from: `${businessName} <${FROM_EMAIL}>`,
-            to,
+            to: Array.isArray(to) ? to : [to],
             cc: cc !== undefined ? cc : req.user.email,
-            replyTo: req.user.email,
+            // No reply_to set — this keeps the address strictly one-way (no-reply).
+            // Any reply attempt from the client will bounce rather than reach req.user.email.
             subject: subject || `${docLabel} #${docNumber} from ${businessName}`,
             html,
-            attachments: [{ filename: pdfFile.originalname, content: pdfFile.buffer }],
+            attachments: [
+                {
+                    filename: pdfFile.originalname,
+                    content: pdfFile.buffer.toString('base64'),
+                },
+            ],
         });
 
-        res.json({ success: true, message: 'Email sent successfully' });
+        if (error) {
+            throw new Error(error.message || 'Resend failed to send email');
+        }
+
+        res.json({ success: true, message: 'Email sent successfully', id: data?.id });
     } catch (err) {
         console.error(`send${docLabel}Email error:`, err);
         res.status(500).json({ success: false, message: err.message || 'Failed to send email' });
