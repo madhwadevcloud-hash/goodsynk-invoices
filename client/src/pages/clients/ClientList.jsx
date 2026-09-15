@@ -50,6 +50,18 @@ export default function ClientList() {
 
   return (
     <div>
+      {/* Mobile-only styles */}
+      <style>{`
+        .mobile-client-list { display: none; }
+        @media (max-width: 768px) {
+          .desktop-client-table { display: none !important; }
+          .mobile-client-list { display: block; }
+          .page-header { flex-direction: column; align-items: flex-start !important; gap: 12px; }
+          .page-header .btn { width: 100%; justify-content: center; }
+          .client-search-row input { width: 100% !important; }
+        }
+      `}</style>
+
       <div className="page-header">
         <div>
           <h1 className="page-title">Clients</h1>
@@ -60,6 +72,7 @@ export default function ClientList() {
 
       <div className="card" style={{ padding: 0 }}>
         <div
+          className="client-search-row"
           style={{
             padding: '16px',
             display: 'flex',
@@ -90,30 +103,114 @@ export default function ClientList() {
             <Link to="/clients/new" onClick={handleAddClient} className="btn btn-primary"><Plus size={15} /> Add Client</Link>
           </div>
         ) : (
-          <div className="table-wrapper" style={{ border: 'none', borderRadius: 'var(--radius-lg)' }}>
-            <table>
-              <thead>
-                <tr><th>Name</th><th>Email</th><th>Phone</th><th>GSTIN</th><th>City</th><th>Actions</th></tr>
-              </thead>
-              <tbody>
-                {filteredClients.map((c) => (
-                  <tr key={c._id}>
-                    <td style={{ fontWeight: 600 }}>{c.name}</td>
-                    <td className="text-muted">{c.email || '—'}</td>
-                    <td className="text-muted">{c.phone || '—'}</td>
-                    <td className="text-muted">{c.gstin || '—'}</td>
-                    <td className="text-muted">{c.address?.city || '—'}</td>
-                    <td>
-                      <div className="flex gap-2">
-                        <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/clients/${c._id}/edit`)}><Pencil size={14} /></button>
-                        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(c._id)}><Trash2 size={14} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {/* Desktop table view */}
+            <div className="table-wrapper desktop-client-table" style={{ border: 'none', borderRadius: 'var(--radius-lg)' }}>
+              <table>
+                <thead>
+                  <tr><th>Name</th><th>Email</th><th>Phone</th><th>GSTIN</th><th>City</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                  {filteredClients.map((c) => (
+                    <tr key={c._id}>
+                      <td style={{ fontWeight: 600 }}>{c.name}</td>
+                      <td className="text-muted">{c.email || '—'}</td>
+                      <td className="text-muted">{c.phone || '—'}</td>
+                      <td className="text-muted">{c.gstin || '—'}</td>
+                      <td className="text-muted">{c.address?.city || '—'}</td>
+                      <td>
+                        <div className="flex gap-2">
+                          <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/clients/${c._id}/edit`)}><Pencil size={14} /></button>
+                          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(c._id)}><Trash2 size={14} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile card view */}
+            <div className="mobile-client-list">
+              {filteredClients.map((c) => (
+                <div
+                  key={c._id}
+                  style={{
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '16px',
+                    margin: '12px',
+                    background: 'var(--bg-card)',
+                    boxShadow: 'var(--shadow-sm)',
+                  }}
+                >
+                  {/* Top row: name */}
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                      {c.name}
+                    </div>
+                  </div>
+
+                  {/* Details */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    fontSize: '0.82rem',
+                    marginBottom: 14,
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Email</span>
+                      <span style={{ fontWeight: 500, color: 'var(--text-primary)', textAlign: 'right', wordBreak: 'break-all' }}>
+                        {c.email || '—'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Phone</span>
+                      <span style={{ fontWeight: 500, color: 'var(--text-primary)', textAlign: 'right' }}>
+                        {c.phone || '—'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>GSTIN</span>
+                      <span style={{ fontWeight: 500, color: 'var(--text-primary)', textAlign: 'right', wordBreak: 'break-all' }}>
+                        {c.gstin || '—'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>City</span>
+                      <span style={{ fontWeight: 500, color: 'var(--text-primary)', textAlign: 'right' }}>
+                        {c.address?.city || '—'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div style={{
+                    display: 'flex',
+                    gap: 8,
+                    borderTop: '1px solid var(--border)',
+                    paddingTop: 12,
+                  }}>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => navigate(`/clients/${c._id}/edit`)}
+                      style={{ flex: 1, justifyContent: 'center', gap: 4 }}
+                    >
+                      <Pencil size={14} /> Edit
+                    </button>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      style={{ color: 'var(--danger)', flex: 1, justifyContent: 'center', gap: 4 }}
+                      onClick={() => handleDelete(c._id)}
+                    >
+                      <Trash2 size={14} /> Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
