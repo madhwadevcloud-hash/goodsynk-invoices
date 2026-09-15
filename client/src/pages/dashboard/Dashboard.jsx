@@ -48,6 +48,17 @@ export default function Dashboard() {
 
   return (<>
     <div>
+      {/* Mobile-only styles */}
+      <style>{`
+        .mobile-recent-invoices { display: none; }
+        @media (max-width: 768px) {
+          .desktop-recent-invoices { display: none !important; }
+          .mobile-recent-invoices { display: block; }
+          .card-header { flex-direction: column; align-items: flex-start !important; gap: 10px; }
+          .card-header .btn { width: 100%; justify-content: center; }
+        }
+      `}</style>
+
       {/* Welcome */}
       <div className="mb-4">
         <h1 className="page-title">👋 Welcome, {user?.name?.split(' ')[0]}!</h1>
@@ -89,34 +100,92 @@ export default function Dashboard() {
             </button>
           </div>
         ) : (
-          <div className="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Invoice #</th>
-                  <th>Client</th>
-                  <th>Date</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentInvoices.map((inv) => (
-                  <tr key={inv._id}>
-                    <td>
-                      <Link to={`/invoices/${inv._id}`} style={{ color: 'var(--primary-light)', fontWeight: 600 }}>
-                        {inv.invoiceNumber}
-                      </Link>
-                    </td>
-                    <td>{inv.client?.name || '—'}</td>
-                    <td>{new Date(inv.issueDate).toLocaleDateString('en-IN')}</td>
-                    <td className="font-semibold">{formatINR(inv.total)}</td>
-                    <td>{statusBadge(inv.status)}</td>
+          <>
+            {/* Desktop table view */}
+            <div className="table-wrapper desktop-recent-invoices">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Invoice #</th>
+                    <th>Client</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {recentInvoices.map((inv) => (
+                    <tr key={inv._id}>
+                      <td>
+                        <Link to={`/invoices/${inv._id}`} style={{ color: 'var(--primary-light)', fontWeight: 600 }}>
+                          {inv.invoiceNumber}
+                        </Link>
+                      </td>
+                      <td>{inv.client?.name || '—'}</td>
+                      <td>{new Date(inv.issueDate).toLocaleDateString('en-IN')}</td>
+                      <td className="font-semibold">{formatINR(inv.total)}</td>
+                      <td>{statusBadge(inv.status)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile card view */}
+            <div className="mobile-recent-invoices">
+              {recentInvoices.map((inv) => (
+                <div
+                  key={inv._id}
+                  style={{
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '14px',
+                    margin: '12px',
+                    background: 'var(--bg-card)',
+                    boxShadow: 'var(--shadow-sm)',
+                  }}
+                >
+                  {/* Top row: invoice number + status */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                    <Link
+                      to={`/invoices/${inv._id}`}
+                      style={{ color: 'var(--primary-light)', fontWeight: 700, fontSize: '0.95rem' }}
+                    >
+                      {inv.invoiceNumber}
+                    </Link>
+                    {statusBadge(inv.status)}
+                  </div>
+
+                  {/* Details */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                    fontSize: '0.82rem',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Client</span>
+                      <span style={{ fontWeight: 500, color: 'var(--text-primary)', textAlign: 'right' }}>
+                        {inv.client?.name || '—'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Date</span>
+                      <span style={{ fontWeight: 500, color: 'var(--text-primary)', textAlign: 'right' }}>
+                        {new Date(inv.issueDate).toLocaleDateString('en-IN')}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, paddingTop: 6, borderTop: '1px solid var(--border)', marginTop: 4 }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Amount</span>
+                      <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                        {formatINR(inv.total)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
