@@ -351,3 +351,5 @@ export default function Template18({ invoice }) {
     </Document>
   );
 }
+
+/*E-Commerce Tax Invoice*/
