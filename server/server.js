@@ -14,19 +14,29 @@ const morgan = require('morgan');
 const connectDB = require('./config/db');
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Create Express App
+// ─────────────────────────────────────────────────────────────────────────────
+
+const app = express();
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Connect to MongoDB
 // ─────────────────────────────────────────────────────────────────────────────
 
 connectDB();
-
-const app = express();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Body Parser
 // ─────────────────────────────────────────────────────────────────────────────
 
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+app.use(
+  express.urlencoded({
+    limit: '10mb',
+    extended: true,
+  })
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CORS
@@ -59,10 +69,10 @@ if (process.env.NODE_ENV === 'development') {
 //
 // UptimeRobot will call this endpoint every 5 minutes.
 //
-// Example:
-// https://your-backend.onrender.com/api/health
+// URL:
+// https://YOUR-BACKEND-URL.onrender.com/api/health
 //
-// This endpoint intentionally does NOT require authentication.
+// This endpoint does not require authentication.
 //
 
 app.get('/api/health', (_req, res) => {
@@ -74,15 +84,21 @@ app.get('/api/health', (_req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Routes
+// API Routes
 // ─────────────────────────────────────────────────────────────────────────────
 
 app.use('/api/auth', require('./routes/authRoutes'));
+
 app.use('/api/invoices', require('./routes/invoiceRoutes'));
+
 app.use('/api/quotations', require('./routes/quotationRoutes'));
+
 app.use('/api/clients', require('./routes/clientRoutes'));
+
 app.use('/api/products', require('./routes/productRoutes'));
+
 app.use('/api/public', require('./routes/publicRoutes'));
+
 app.use('/api/payment', require('./routes/paymentRoutes'));
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -122,7 +138,10 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(
-    `Server running in ${process.env.NODE_ENV || 'production'} mode on port ${PORT}`
+    'Server running in ' +
+      (process.env.NODE_ENV || 'production') +
+      ' mode on port ' +
+      PORT
   );
 });
 ```
