@@ -30,6 +30,15 @@ export default function InvoiceView() {
   const [loading, setLoading] = useState(true);
   const [logoBase64, setLogoBase64] = useState(null);
   const [converting, setConverting] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Responsive detection
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const fetchLogoAsBase64 = useCallback(async (url) => {
     if (!url) return;
@@ -109,35 +118,78 @@ export default function InvoiceView() {
     ...invoice,
     invoiceType: isQuotation ? 'quotation' : 'invoice',
     _currency: currency,
-    // Always resolve the effective template so '' (account default) renders correctly
     template: effectiveTemplate,
     templateColors: colors,
     user: userForPDF
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: isMobile ? 'auto' : 'calc(100vh - 64px)',
+      height: isMobile ? 'auto' : 'calc(100vh - 64px)',
+      padding: isMobile ? '12px' : '0',
+      boxSizing: 'border-box',
+    }}>
 
       {/* ── Top bar ── */}
-      <div className="page-header" style={{ flexShrink: 0 }}>
-        <div className="flex gap-3" style={{ alignItems: 'center' }}>
-          <button className="btn btn-ghost btn-sm" onClick={() => navigate(basePath)}>
+      <div className="page-header" style={{
+        flexShrink: 0,
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'stretch' : 'center',
+        justifyContent: 'space-between',
+        gap: isMobile ? 12 : 0,
+        padding: isMobile ? '12px 0' : undefined,
+        flexWrap: 'wrap',
+      }}>
+        {/* Left: back + title + badge */}
+        <div className="flex gap-3" style={{
+          alignItems: 'center',
+          width: isMobile ? '100%' : 'auto',
+          minWidth: 0,
+        }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => navigate(basePath)} style={{ flexShrink: 0 }}>
             <ArrowLeft size={16} />
           </button>
-          <div>
-            <h1 className="page-title">{invoice.invoiceNumber || invoice.quotationNumber}</h1>
+          <div style={{ minWidth: 0, overflow: 'hidden' }}>
+            <h1 className="page-title" style={{
+              fontSize: isMobile ? '1rem' : undefined,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              margin: 0,
+            }}>
+              {invoice.invoiceNumber || invoice.quotationNumber}
+            </h1>
             <span className={`badge badge-${invoice.status}`}>{invoice.status}</span>
           </div>
         </div>
 
-        <div className="flex gap-2">
+        {/* Right: actions */}
+        <div className="flex gap-2" style={{
+          flexWrap: 'wrap',
+          width: isMobile ? '100%' : 'auto',
+          justifyContent: isMobile ? 'flex-start' : 'flex-end',
+          gap: isMobile ? 8 : undefined,
+        }}>
           {isQuotation ? (
             invoice.status !== 'accepted' && (
               <button
                 className="btn btn-primary"
                 disabled={converting}
                 onClick={handleConvert}
-                style={{ display: 'flex', alignItems: 'center', gap: 7 }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 7,
+                  flex: isMobile ? '1 1 auto' : undefined,
+                  justifyContent: 'center',
+                  fontSize: isMobile ? '0.8rem' : undefined,
+                  padding: isMobile ? '8px 12px' : undefined,
+                  whiteSpace: 'nowrap',
+                }}
               >
                 <FileText size={15} />
                 {converting ? 'Converting…' : 'Convert to Invoice'}
@@ -146,12 +198,33 @@ export default function InvoiceView() {
           ) : (
             <>
               {invoice.status === 'draft' && (
-                <button className="btn btn-secondary" onClick={() => updateStatus('pending')}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => updateStatus('pending')}
+                  style={{
+                    flex: isMobile ? '1 1 auto' : undefined,
+                    justifyContent: 'center',
+                    fontSize: isMobile ? '0.8rem' : undefined,
+                    padding: isMobile ? '8px 12px' : undefined,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
                   <Send size={15} /> Mark Pending
                 </button>
               )}
               {invoice.status === 'pending' && (
-                <button className="btn btn-secondary" style={{ color: 'var(--success)' }} onClick={() => updateStatus('paid')}>
+                <button
+                  className="btn btn-secondary"
+                  style={{
+                    color: 'var(--success)',
+                    flex: isMobile ? '1 1 auto' : undefined,
+                    justifyContent: 'center',
+                    fontSize: isMobile ? '0.8rem' : undefined,
+                    padding: isMobile ? '8px 12px' : undefined,
+                    whiteSpace: 'nowrap',
+                  }}
+                  onClick={() => updateStatus('paid')}
+                >
                   <CheckCircle size={15} /> Mark Paid
                 </button>
               )}
@@ -163,11 +236,20 @@ export default function InvoiceView() {
             href={invoiceForPDF ? undefined : '#'}
             id="pdf-download-btn"
             className="btn btn-secondary"
-            style={{ display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              textDecoration: 'none',
+              flex: isMobile ? '1 1 auto' : undefined,
+              justifyContent: 'center',
+              fontSize: isMobile ? '0.8rem' : undefined,
+              padding: isMobile ? '8px 12px' : undefined,
+              whiteSpace: 'nowrap',
+            }}
             onClick={async (e) => {
               e.preventDefault();
               try {
-                // Use TemplateResolver (same as PdfPane) so download matches preview
                 const [{ pdf }, { default: TemplateResolver }] = await Promise.all([
                   import('@react-pdf/renderer'),
                   import('./templates/TemplateResolver'),
@@ -189,14 +271,40 @@ export default function InvoiceView() {
             <Download size={15} /> Download PDF
           </a>
 
-          <Link to={`${basePath}/${id}/edit`} className="btn btn-primary">
+          <Link
+            to={`${basePath}/${id}/edit`}
+            className="btn btn-primary"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              textDecoration: 'none',
+              flex: isMobile ? '1 1 auto' : undefined,
+              justifyContent: 'center',
+              fontSize: isMobile ? '0.8rem' : undefined,
+              padding: isMobile ? '8px 12px' : undefined,
+              whiteSpace: 'nowrap',
+            }}
+          >
             <Pencil size={15} /> Edit
           </Link>
         </div>
       </div>
 
-      {/* ── Clean PDF embed — no browser toolbar ── */}
-      <div style={{ flex: 1, minHeight: 0, borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)', background: '#525659', width: '60%', margin: '0 auto' }}>
+      {/* ── PDF embed — responsive ── */}
+      <div style={{
+        flex: isMobile ? 'none' : 1,
+        minHeight: isMobile ? '70vh' : 0,
+        height: isMobile ? '70vh' : 'auto',
+        borderRadius: 12,
+        overflow: 'hidden',
+        border: '1px solid var(--border)',
+        background: '#525659',
+        width: isMobile ? '100%' : '60%',
+        maxWidth: isMobile ? '100%' : 900,
+        margin: isMobile ? '0' : '0 auto',
+        boxSizing: 'border-box',
+      }}>
         <Suspense fallback={<PdfPaneFallback />}>
           <PdfPane invoice={invoiceForPDF} />
         </Suspense>
