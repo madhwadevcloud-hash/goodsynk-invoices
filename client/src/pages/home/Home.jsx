@@ -52,168 +52,349 @@ export default function Home() {
   const navigate = useNavigate();
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-primary)', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div style={{
+      minHeight: '100vh',
+      width: '100%',
+      maxWidth: '100%',
+      overflowX: 'hidden',
+      background: 'var(--bg)',
+      color: 'var(--text-primary)',
+      fontFamily: 'Inter, system-ui, sans-serif'
+    }}>
 
-      {/* ── Navbar ── */}
-      <nav className="landing-nav">
-        {/* Logo */}
-        <Link to="/" className="sidebar-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <BrandLogo />
-        </Link>
+      {/* Mobile-friendly tweaks — desktop untouched */}
+      <style>{`
+        /* Base safety: prevent horizontal overflow on the landing page */
+        .landing-page,
+        .landing-page * {
+          box-sizing: border-box;
+        }
+        .landing-page {
+          width: 100%;
+          max-width: 100%;
+          overflow-x: hidden;
+        }
 
-        {/* Nav actions */}
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <ThemeToggle />
-          <Link to="/login" className="btn btn-ghost btn-sm">Sign In</Link>
-          <button onClick={() => navigate('/register')} className="btn btn-primary btn-sm">
-            Get Started <ArrowRight size={14} />
-          </button>
-        </div>
-      </nav>
+        @media (max-width: 768px) {
+          /* ── Navbar: fit everything on one row without overflow ── */
+          .landing-nav {
+            padding: 10px 12px !important;
+            flex-wrap: nowrap !important;
+            gap: 8px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            align-items: center !important;
+          }
+          .landing-nav .sidebar-logo {
+            flex-shrink: 1;
+            min-width: 0;
+            overflow: hidden;
+            transform: scale(0.72);
+            transform-origin: left center;
+          }
+          .landing-nav > div:last-child {
+            gap: 6px !important;
+            flex-shrink: 0;
+            margin-left: auto;
+            align-items: center;
+          }
+          .landing-nav .btn {
+            padding: 7px 12px !important;
+            font-size: 0.8rem !important;
+            white-space: nowrap;
+            flex-shrink: 0;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+          }
+          .landing-nav .btn svg {
+            width: 13px;
+            height: 13px;
+            display: block !important;
+          }
+          .landing-nav .theme-toggle,
+          .landing-nav button[class*="theme"] {
+            flex-shrink: 0;
+          }
 
-      {/* ── Hero ── */}
-      <section className="landing-section-hero">
-        {/* Glow blob */}
-        <div style={{
-          position: 'absolute', top: -80, left: '50%', transform: 'translateX(-50%)',
-          width: 560, height: 560,
-          background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)',
-          pointerEvents: 'none',
-        }} />
+          .landing-section-hero {
+            padding: 60px 16px 50px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            text-align: center !important;
+            overflow: hidden;
+          }
+          .landing-section-hero h1 {
+            font-size: 1.85rem !important;
+            line-height: 1.2 !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            max-width: 100% !important;
+          }
+          .landing-section-hero p {
+            font-size: 0.95rem !important;
+            margin-bottom: 28px !important;
+            max-width: 100% !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+          }
+          .landing-section-hero .btn-lg {
+            width: 100%;
+            max-width: 100%;
+            justify-content: center;
+            padding: 12px 18px !important;
+            font-size: 0.9rem !important;
+          }
+          .landing-section-hero > div:last-child {
+            gap: 24px !important;
+            margin-top: 44px !important;
+            flex-wrap: wrap;
+            justify-content: center;
+          }
 
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 8,
-          background: 'var(--primary-bg)', border: '1px solid rgba(99,102,241,0.3)',
-          borderRadius: 20, padding: '5px 14px', marginBottom: 28,
-          fontSize: '0.8rem', color: 'var(--primary-light)', fontWeight: 500,
-        }}>
-          <Zap size={13} /> Invoice smarter, get paid faster
-        </div>
+          .landing-section-features {
+            padding: 50px 16px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+          }
+          .landing-section-features h2 {
+            font-size: 1.5rem !important;
+          }
+          .landing-section-features > div:first-child {
+            margin-bottom: 34px !important;
+          }
+          .landing-section-features .card {
+            padding: 16px !important;
+          }
 
-        <h1 style={{
-          fontSize: 'clamp(2.2rem, 5vw, 3.6rem)',
-          fontWeight: 800,
-          lineHeight: 1.15,
-          letterSpacing: '-0.02em',
-          maxWidth: 720,
-          margin: '0 auto 20px',
-        }}>
-          Create{' '}
-          <span style={{
-            background: 'linear-gradient(135deg, var(--primary-light), #818cf8)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+          .landing-section-cta {
+            padding: 30px 14px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+          }
+          .landing-section-cta > div {
+            padding: 34px 20px !important;
+            border-radius: var(--radius-lg) !important;
+          }
+          .landing-section-cta h2 {
+            font-size: 1.35rem !important;
+          }
+          .landing-section-cta p {
+            font-size: 0.9rem !important;
+          }
+          .landing-section-cta .btn-lg {
+            width: 100%;
+            max-width: 100%;
+            justify-content: center;
+            padding: 12px 18px !important;
+            font-size: 0.9rem !important;
+          }
+
+          .landing-footer {
+            flex-direction: column !important;
+            gap: 12px !important;
+            text-align: center;
+            padding: 20px 14px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+          }
+          .landing-footer p {
+            font-size: 0.75rem !important;
+          }
+        }
+
+        /* Small phones: keep both buttons readable with full text */
+        @media (max-width: 480px) {
+          .landing-nav {
+            padding: 8px 10px !important;
+            gap: 4px !important;
+          }
+          .landing-nav .sidebar-logo {
+            transform: scale(0.62);
+            transform-origin: left center;
+          }
+          .landing-nav > div:last-child {
+            gap: 4px !important;
+          }
+          .landing-nav .btn {
+            padding: 6px 10px !important;
+            font-size: 0.75rem !important;
+          }
+          .landing-nav .btn svg {
+            width: 12px;
+            height: 12px;
+          }
+        }
+      `}</style>
+
+      <div className="landing-page">
+        {/* ── Navbar ── */}
+        <nav className="landing-nav">
+          {/* Logo */}
+          <Link to="/" className="sidebar-logo" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <BrandLogo />
+          </Link>
+
+          {/* Nav actions */}
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <ThemeToggle />
+            <Link to="/login" className="btn btn-ghost btn-sm">Sign In</Link>
+            <button onClick={() => navigate('/register')} className="btn btn-primary btn-sm">
+              <span>Get Started</span> <ArrowRight size={14} />
+            </button>
+          </div>
+        </nav>
+
+        {/* ── Hero ── */}
+        <section className="landing-section-hero">
+          {/* Glow blob */}
+          <div style={{
+            position: 'absolute', top: -80, left: '50%', transform: 'translateX(-50%)',
+            width: 560, height: 560, maxWidth: '100vw',
+            background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            background: 'var(--primary-bg)', border: '1px solid rgba(99,102,241,0.3)',
+            borderRadius: 20, padding: '5px 14px', marginBottom: 28,
+            fontSize: '0.8rem', color: 'var(--primary-light)', fontWeight: 500,
+            maxWidth: '100%',
           }}>
-            Professional Invoices
-          </span>
-          {' '}in Seconds
-        </h1>
+            <Zap size={13} /> Invoice smarter, get paid faster
+          </div>
 
-        <p style={{
-          fontSize: '1.1rem',
-          color: 'var(--text-secondary)',
-          maxWidth: 520,
-          margin: '0 auto 40px',
-          lineHeight: 1.7,
-        }}>
-          GST-compliant tax invoices, client management, product catalogue and business analytics — all in one place.
-        </p>
+          <h1 style={{
+            fontSize: 'clamp(2.2rem, 5vw, 3.6rem)',
+            fontWeight: 800,
+            lineHeight: 1.15,
+            letterSpacing: '-0.02em',
+            maxWidth: 720,
+            margin: '0 auto 20px',
+          }}>
+            Create{' '}
+            <span style={{
+              background: 'linear-gradient(135deg, var(--primary-light), #818cf8)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}>
+              Professional Invoices
+            </span>
+            {' '}in Seconds
+          </h1>
 
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button onClick={() => navigate('/register')} className="btn btn-primary btn-lg">
-            Start for Free <ArrowRight size={16} />
-          </button>
-          <button onClick={() => navigate('/login')} className="btn btn-secondary btn-lg">
-            Sign In
-          </button>
-        </div>
-
-        {/* Stats strip */}
-        <div style={{
-          display: 'flex', gap: 40, justifyContent: 'center',
-          marginTop: 64, flexWrap: 'wrap',
-        }}>
-          {[['GST Ready', 'CGST · SGST · IGST'], ['PDF Export', 'One-click download'], ['Multi-client', 'Unlimited clients']].map(([title, sub]) => (
-            <div key={title} style={{ textAlign: 'center' }}>
-              <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-primary)' }}>{title}</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>{sub}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Features Grid ── */}
-      <section className="landing-section-features">
-        <div style={{ textAlign: 'center', marginBottom: 52 }}>
-          <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: 10 }}>Everything you need</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>
-            A complete toolkit for freelancers and small businesses to manage their billing.
+          <p style={{
+            fontSize: '1.1rem',
+            color: 'var(--text-secondary)',
+            maxWidth: 520,
+            margin: '0 auto 40px',
+            lineHeight: 1.7,
+          }}>
+            GST-compliant tax invoices, client management, product catalogue and business analytics — all in one place.
           </p>
-        </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: 20,
-        }}>
-          {features.map(({ icon: Icon, color, bg, title, desc }) => (
-            <div key={title} className="card" style={{
-              display: 'flex', gap: 16, alignItems: 'flex-start',
-              transition: 'border-color 0.2s, transform 0.2s',
-              cursor: 'default',
-            }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = color; e.currentTarget.style.transform = 'translateY(-3px)'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'none'; }}
-            >
-              <div style={{
-                width: 44, height: 44, borderRadius: 12,
-                background: bg, display: 'flex', alignItems: 'center',
-                justifyContent: 'center', flexShrink: 0, color,
-              }}>
-                <Icon size={20} />
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button onClick={() => navigate('/register')} className="btn btn-primary btn-lg">
+              Start for Free <ArrowRight size={16} />
+            </button>
+            <button onClick={() => navigate('/login')} className="btn btn-secondary btn-lg">
+              Sign In
+            </button>
+          </div>
+
+          {/* Stats strip */}
+          <div style={{
+            display: 'flex', gap: 40, justifyContent: 'center',
+            marginTop: 64, flexWrap: 'wrap',
+          }}>
+            {[['GST Ready', 'CGST · SGST · IGST'], ['PDF Export', 'One-click download'], ['Multi-client', 'Unlimited clients']].map(([title, sub]) => (
+              <div key={title} style={{ textAlign: 'center' }}>
+                <div style={{ fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-primary)' }}>{title}</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>{sub}</div>
               </div>
-              <div>
-                <h3 style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: 6 }}>{title}</h3>
-                <p style={{ fontSize: '0.845rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{desc}</p>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Features Grid ── */}
+        <section className="landing-section-features">
+          <div style={{ textAlign: 'center', marginBottom: 52 }}>
+            <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: 10 }}>Everything you need</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>
+              A complete toolkit for freelancers and small businesses to manage their billing.
+            </p>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: 20,
+          }}>
+            {features.map(({ icon: Icon, color, bg, title, desc }) => (
+              <div key={title} className="card" style={{
+                display: 'flex', gap: 16, alignItems: 'flex-start',
+                transition: 'border-color 0.2s, transform 0.2s',
+                cursor: 'default',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = color; e.currentTarget.style.transform = 'translateY(-3px)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'none'; }}
+              >
+                <div style={{
+                  width: 44, height: 44, borderRadius: 12,
+                  background: bg, display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', flexShrink: 0, color,
+                }}>
+                  <Icon size={20} />
+                </div>
+                <div>
+                  <h3 style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: 6 }}>{title}</h3>
+                  <p style={{ fontSize: '0.845rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{desc}</p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
 
-      {/* ── CTA Banner ── */}
-      <section className="landing-section-cta">
-        <div style={{
-          maxWidth: 1100, margin: '0 auto',
-          background: 'linear-gradient(135deg, rgba(99,102,241,0.18) 0%, rgba(129,140,248,0.1) 100%)',
-          border: '1px solid rgba(99,102,241,0.25)',
-          borderRadius: 'var(--radius-lg)',
-          padding: '52px 40px',
-          textAlign: 'center',
-        }}>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: 12 }}>
-            Ready to get started?
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: 28, fontSize: '1rem' }}>
-            Create your free account and send your first invoice in minutes.
-          </p>
-          <button onClick={() => navigate('/register')} className="btn btn-primary btn-lg">
-            Create Free Account <ArrowRight size={16} />
-          </button>
-          <p style={{ marginTop: 16, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            Already have an account?{' '}
-            <Link to="/login" style={{ color: 'var(--primary-light)', fontWeight: 500 }}>Sign in</Link>
-          </p>
-        </div>
-      </section>
+        {/* ── CTA Banner ── */}
+        <section className="landing-section-cta">
+          <div style={{
+            maxWidth: 1100, margin: '0 auto',
+            background: 'linear-gradient(135deg, rgba(99,102,241,0.18) 0%, rgba(129,140,248,0.1) 100%)',
+            border: '1px solid rgba(99,102,241,0.25)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '52px 40px',
+            textAlign: 'center',
+          }}>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: 12 }}>
+              Ready to get started?
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: 28, fontSize: '1rem' }}>
+              Create your free account and send your first invoice in minutes.
+            </p>
+            <button onClick={() => navigate('/register')} className="btn btn-primary btn-lg">
+              Create Free Account <ArrowRight size={16} />
+            </button>
+            <p style={{ marginTop: 16, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              Already have an account?{' '}
+              <Link to="/login" style={{ color: 'var(--primary-light)', fontWeight: 500 }}>Sign in</Link>
+            </p>
+          </div>
+        </section>
 
-      {/* ── Footer ── */}
-      <footer className="landing-footer">
-        <BrandLogo style={{ transform: 'scale(0.82)', transformOrigin: 'left center' }} />
-        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-          © {new Date().getFullYear()} Goodsynk Invoices. Built for Indian businesses.
-        </p>
-      </footer>
+        {/* ── Footer ── */}
+        <footer className="landing-footer">
+          <BrandLogo style={{ transform: 'scale(0.82)', transformOrigin: 'left center' }} />
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            © {new Date().getFullYear()} Goodsynk Invoices. Built for Indian businesses.
+          </p>
+        </footer>
+      </div>
 
     </div>
   );
