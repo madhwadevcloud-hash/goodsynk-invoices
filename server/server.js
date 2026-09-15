@@ -1,11 +1,9 @@
-```js
 require('./babel-register');
 require('dotenv').config();
 require('colors');
 
 const dns = require('dns');
 
-// Use reliable DNS servers
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 const express = require('express');
@@ -13,22 +11,12 @@ const cors = require('cors');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Create Express App
-// ─────────────────────────────────────────────────────────────────────────────
-
 const app = express();
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Connect to MongoDB
-// ─────────────────────────────────────────────────────────────────────────────
-
 connectDB();
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Body Parser
-// ─────────────────────────────────────────────────────────────────────────────
-
+// Body parser
 app.use(express.json({ limit: '10mb' }));
 
 app.use(
@@ -38,10 +26,7 @@ app.use(
   })
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
 // CORS
-// ─────────────────────────────────────────────────────────────────────────────
-
 app.use(
   cors({
     origin: [
@@ -55,26 +40,14 @@ app.use(
   })
 );
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HTTP Request Logger
-// ─────────────────────────────────────────────────────────────────────────────
-
+// HTTP request logger
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Health Check
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// UptimeRobot will call this endpoint every 5 minutes.
-//
-// URL:
-// https://YOUR-BACKEND-URL.onrender.com/api/health
-//
-// This endpoint does not require authentication.
-//
-
+// Health check
+// UptimeRobot will call this URL:
+// https://YOUR-BACKEND.onrender.com/api/health
 app.get('/api/health', (_req, res) => {
   res.status(200).json({
     status: 'OK',
@@ -83,10 +56,7 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
 // API Routes
-// ─────────────────────────────────────────────────────────────────────────────
-
 app.use('/api/auth', require('./routes/authRoutes'));
 
 app.use('/api/invoices', require('./routes/invoiceRoutes'));
@@ -101,10 +71,7 @@ app.use('/api/public', require('./routes/publicRoutes'));
 
 app.use('/api/payment', require('./routes/paymentRoutes'));
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 404 Handler
-// ─────────────────────────────────────────────────────────────────────────────
-
+// 404 handler
 app.use((_req, res) => {
   res.status(404).json({
     success: false,
@@ -112,10 +79,7 @@ app.use((_req, res) => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Global Error Handler
-// ─────────────────────────────────────────────────────────────────────────────
-
+// Global error handler
 app.use((err, _req, res, _next) => {
   console.error(err.stack);
 
@@ -130,10 +94,7 @@ app.use((err, _req, res, _next) => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Start Server
-// ─────────────────────────────────────────────────────────────────────────────
-
+// Start server
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, '0.0.0.0', () => {
@@ -144,4 +105,3 @@ app.listen(PORT, '0.0.0.0', () => {
       PORT
   );
 });
-```
