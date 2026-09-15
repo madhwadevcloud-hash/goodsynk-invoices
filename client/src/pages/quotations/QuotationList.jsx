@@ -222,6 +222,20 @@ export default function QuotationList() {
 
   return (
     <div>
+      {/* Mobile-only styles */}
+      <style>{`
+        .mobile-quotation-list { display: none; }
+        @media (max-width: 768px) {
+          .desktop-quotation-table { display: none !important; }
+          .mobile-quotation-list { display: block; }
+          .page-header { flex-direction: column; align-items: flex-start !important; gap: 12px; }
+          .page-header > div:last-child { width: 100%; flex-wrap: wrap; }
+          .page-header .btn { flex: 1; justify-content: center; }
+          .filter-row { flex-direction: column; }
+          .filter-row input, .filter-row select { max-width: 100% !important; width: 100%; }
+        }
+      `}</style>
+
       <div className="page-header">
         <div>
           <h1 className="page-title">Quotations</h1>
@@ -246,6 +260,7 @@ export default function QuotationList() {
 
       <div className="card" style={{ padding: 0 }}>
         <div
+          className="filter-row"
           style={{
             display: 'flex',
             gap: '16px',
@@ -301,77 +316,195 @@ export default function QuotationList() {
             )}
           </div>
         ) : (
-          <div className="table-wrapper" style={{ border: 'none', borderRadius: 'var(--radius-lg)' }}>
-            <table>
-              <thead>
-                <tr>
-                  <th>Quotation #</th>
-                  <th>Client</th>
-                  <th>Issue Date</th>
-                  <th>Valid Until</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredQuotations.map((inv) => (
-                  <tr key={inv._id}>
-                    <td style={{ fontWeight: 600 }}>{inv.invoiceNumber}</td>
-                    <td>{inv.client?.name || '—'}</td>
-                    <td>{new Date(inv.issueDate).toLocaleDateString('en-IN')}</td>
-                    <td>{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('en-IN') : '—'}</td>
-                    <td className="font-semibold">{fmtCurrency(inv.total, inv.currency)}</td>
-                    <td>
-                      <select
-                        value={inv.status}
-                        onChange={(e) =>
-                          handleStatusChange(inv._id, e.target.value)
-                        }
-                        className="form-control"
-                        style={{
-                          width: '130px',
-                          fontWeight: 600,
-                          color:
-                            inv.status === 'accepted'
-                              ? '#22c55e'
-                              : '#9ca3af',
-
-                          border:
-                            inv.status === 'accepted'
-                              ? '1px solid rgba(34,197,94,.35)'
-                              : '1px solid rgba(107,114,128,.35)',
-
-                          background:
-                            inv.status === 'accepted'
-                              ? 'rgba(34,197,94,.12)'
-                              : 'rgba(107,114,128,.12)',
-                        }}
-                      >
-                        <option value="draft">Draft</option>
-                        <option value="accepted">Accepted</option>
-                      </select>
-                    </td>
-                    <td>
-                      <div className="flex gap-2">
-                        <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/quotations/${inv._id}`)} title="View"><Eye size={14} /></button>
-                        <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/quotations/${inv._id}/edit`)} title="Edit"><Pencil size={14} /></button>
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          title="Send"
-                          disabled={sendingId === inv._id}
-                          onClick={(e) => toggleShare(inv._id, e)}
-                        >
-                          {sendingId === inv._id ? <Loader2 size={14} className="spinner" /> : <Send size={14} />}
-                        </button>
-                        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(inv._id)} title="Delete"><Trash2 size={14} /></button>
-                      </div>
-                    </td>
+          <>
+            {/* Desktop table view */}
+            <div className="table-wrapper desktop-quotation-table" style={{ border: 'none', borderRadius: 'var(--radius-lg)' }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Quotation #</th>
+                    <th>Client</th>
+                    <th>Issue Date</th>
+                    <th>Valid Until</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredQuotations.map((inv) => (
+                    <tr key={inv._id}>
+                      <td style={{ fontWeight: 600 }}>{inv.invoiceNumber}</td>
+                      <td>{inv.client?.name || '—'}</td>
+                      <td>{new Date(inv.issueDate).toLocaleDateString('en-IN')}</td>
+                      <td>{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('en-IN') : '—'}</td>
+                      <td className="font-semibold">{fmtCurrency(inv.total, inv.currency)}</td>
+                      <td>
+                        <select
+                          value={inv.status}
+                          onChange={(e) =>
+                            handleStatusChange(inv._id, e.target.value)
+                          }
+                          className="form-control"
+                          style={{
+                            width: '130px',
+                            fontWeight: 600,
+                            color:
+                              inv.status === 'accepted'
+                                ? '#22c55e'
+                                : '#9ca3af',
+
+                            border:
+                              inv.status === 'accepted'
+                                ? '1px solid rgba(34,197,94,.35)'
+                                : '1px solid rgba(107,114,128,.35)',
+
+                            background:
+                              inv.status === 'accepted'
+                                ? 'rgba(34,197,94,.12)'
+                                : 'rgba(107,114,128,.12)',
+                          }}
+                        >
+                          <option value="draft">Draft</option>
+                          <option value="accepted">Accepted</option>
+                        </select>
+                      </td>
+                      <td>
+                        <div className="flex gap-2">
+                          <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/quotations/${inv._id}`)} title="View"><Eye size={14} /></button>
+                          <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/quotations/${inv._id}/edit`)} title="Edit"><Pencil size={14} /></button>
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            title="Send"
+                            disabled={sendingId === inv._id}
+                            onClick={(e) => toggleShare(inv._id, e)}
+                          >
+                            {sendingId === inv._id ? <Loader2 size={14} className="spinner" /> : <Send size={14} />}
+                          </button>
+                          <button className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => handleDelete(inv._id)} title="Delete"><Trash2 size={14} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile card view */}
+            <div className="mobile-quotation-list">
+              {filteredQuotations.map((inv) => (
+                <div
+                  key={inv._id}
+                  style={{
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '16px',
+                    margin: '12px',
+                    background: 'var(--bg-card)',
+                    boxShadow: 'var(--shadow-sm)',
+                  }}
+                >
+                  {/* Top row: number + status */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                        {inv.invoiceNumber}
+                      </div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                        {inv.client?.name || '—'}
+                      </div>
+                    </div>
+                    <select
+                      value={inv.status}
+                      onChange={(e) => handleStatusChange(inv._id, e.target.value)}
+                      className="form-control"
+                      style={{
+                        width: '120px',
+                        fontWeight: 600,
+                        fontSize: '0.8rem',
+                        color: inv.status === 'accepted' ? '#22c55e' : '#9ca3af',
+                        border: inv.status === 'accepted'
+                          ? '1px solid rgba(34,197,94,.35)'
+                          : '1px solid rgba(107,114,128,.35)',
+                        background: inv.status === 'accepted'
+                          ? 'rgba(34,197,94,.12)'
+                          : 'rgba(107,114,128,.12)',
+                      }}
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="accepted">Accepted</option>
+                    </select>
+                  </div>
+
+                  {/* Details grid */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '8px 16px',
+                    fontSize: '0.82rem',
+                    marginBottom: 14,
+                  }}>
+                    <div>
+                      <span style={{ color: 'var(--text-secondary)' }}>Issue Date</span>
+                      <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
+                        {new Date(inv.issueDate).toLocaleDateString('en-IN')}
+                      </div>
+                    </div>
+                    <div>
+                      <span style={{ color: 'var(--text-secondary)' }}>Valid Until</span>
+                      <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
+                        {inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('en-IN') : '—'}
+                      </div>
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Amount</span>
+                      <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-primary)' }}>
+                        {fmtCurrency(inv.total, inv.currency)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div style={{
+                    display: 'flex',
+                    gap: 8,
+                    borderTop: '1px solid var(--border)',
+                    paddingTop: 12,
+                  }}>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => navigate(`/quotations/${inv._id}`)}
+                      style={{ flex: 1, justifyContent: 'center', gap: 4 }}
+                    >
+                      <Eye size={14} /> View
+                    </button>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => navigate(`/quotations/${inv._id}/edit`)}
+                      style={{ flex: 1, justifyContent: 'center', gap: 4 }}
+                    >
+                      <Pencil size={14} /> Edit
+                    </button>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      disabled={sendingId === inv._id}
+                      onClick={(e) => toggleShare(inv._id, e)}
+                      style={{ flex: 1, justifyContent: 'center', gap: 4 }}
+                    >
+                      {sendingId === inv._id ? <Loader2 size={14} className="spinner" /> : <Send size={14} />} Send
+                    </button>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      style={{ color: 'var(--danger)', flex: 0, justifyContent: 'center' }}
+                      onClick={() => handleDelete(inv._id)}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
