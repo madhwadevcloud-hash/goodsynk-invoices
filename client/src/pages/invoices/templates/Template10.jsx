@@ -138,7 +138,7 @@ export default function Template10({ invoice }) {
     bizText: { fontSize: 8.5, color: '#4B5563' },
 
     // Card Layout for Info
-    cardsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 30 },
+    cardsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 30, alignItems: 'stretch' },
     card: { backgroundColor: LIGHT_CARD, borderRadius: 8, padding: 15, width: '48%' },
     cardHeader: { fontSize: 8, fontFamily: B, color: PRIMARY, textTransform: 'uppercase', marginBottom: 8, letterSpacing: 1 },
     clientName: { fontFamily: B, fontSize: 12, color: '#111', marginBottom: 4 },
@@ -146,6 +146,12 @@ export default function Template10({ invoice }) {
     metaRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
     metaLabel: { fontSize: 8.5, color: '#6B7280' },
     metaVal: { fontSize: 8.5, fontFamily: B, color: '#111' },
+
+    // Payment info styles
+    paymentSection: { marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#D1D5DB' },
+    paymentRow: { flexDirection: 'row', marginBottom: 3 },
+    paymentLabel: { fontSize: 8.5, color: '#6B7280', width: 70 },
+    paymentValue: { fontSize: 8.5, color: '#111', fontFamily: M, flex: 1 },
 
     // Clean Table
     table: { width: '100%', marginBottom: 14 },
@@ -212,6 +218,10 @@ export default function Template10({ invoice }) {
   const hasHsn = invoice.items?.some(i => i.hsn);
   const hasDiscount = invoice.items?.some(i => i.discount > 0);
 
+  // Check if there's any payment info to show
+  const hasBankDetails = biz?.bankDetails?.accountNumber;
+  const hasPaymentInfo = invoice.paymentInfo;
+
   return (
     <Document>
       <Page size="A4" style={s.page}>
@@ -275,22 +285,52 @@ export default function Template10({ invoice }) {
                </View>
              )}
 
-             {biz?.bankDetails?.accountNumber && (
-              <View style={{ marginTop: 10 }}>
-                <Text style={[s.cardHeader, { marginBottom: 4 }]}>Payment Info</Text>
-                {biz.bankDetails.bankName && <Text style={s.clientText}>Bank: {biz.bankDetails.bankName}</Text>}
-                {biz.bankDetails.accountName && <Text style={s.clientText}>A/C Name: {biz.bankDetails.accountName}</Text>}
-                <Text style={s.clientText}>A/C: {biz.bankDetails.accountNumber}</Text>
-                {biz.bankDetails.ifscCode && <Text style={s.clientText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
-                {biz.bankDetails.swiftCode && <Text style={s.clientText}>SWIFT: {biz.bankDetails.swiftCode}</Text>}
-                {biz.bankDetails.branch && <Text style={s.clientText}>Branch: {biz.bankDetails.branch}</Text>}
-              </View>
-            )}
-            {!biz?.bankDetails?.accountNumber && invoice.paymentInfo && (
-               <View style={{ marginTop: 10 }}>
-                  <Text style={[s.cardHeader, { marginBottom: 4 }]}>Payment Info</Text>
+             {/* Payment Info Section - Fixed */}
+             {(hasBankDetails || hasPaymentInfo) && (
+              <View style={s.paymentSection}>
+                <Text style={[s.cardHeader, { marginBottom: 6 }]}>Payment Info</Text>
+                
+                {hasBankDetails ? (
+                  <View>
+                    {biz.bankDetails.bankName && (
+                      <View style={s.paymentRow}>
+                        <Text style={s.paymentLabel}>Bank:</Text>
+                        <Text style={s.paymentValue}>{biz.bankDetails.bankName}</Text>
+                      </View>
+                    )}
+                    {biz.bankDetails.accountName && (
+                      <View style={s.paymentRow}>
+                        <Text style={s.paymentLabel}>A/C Name:</Text>
+                        <Text style={s.paymentValue}>{biz.bankDetails.accountName}</Text>
+                      </View>
+                    )}
+                    <View style={s.paymentRow}>
+                      <Text style={s.paymentLabel}>A/C No:</Text>
+                      <Text style={s.paymentValue}>{biz.bankDetails.accountNumber}</Text>
+                    </View>
+                    {biz.bankDetails.ifscCode && (
+                      <View style={s.paymentRow}>
+                        <Text style={s.paymentLabel}>IFSC:</Text>
+                        <Text style={s.paymentValue}>{biz.bankDetails.ifscCode}</Text>
+                      </View>
+                    )}
+                    {biz.bankDetails.swiftCode && (
+                      <View style={s.paymentRow}>
+                        <Text style={s.paymentLabel}>SWIFT:</Text>
+                        <Text style={s.paymentValue}>{biz.bankDetails.swiftCode}</Text>
+                      </View>
+                    )}
+                    {biz.bankDetails.branch && (
+                      <View style={s.paymentRow}>
+                        <Text style={s.paymentLabel}>Branch:</Text>
+                        <Text style={s.paymentValue}>{biz.bankDetails.branch}</Text>
+                      </View>
+                    )}
+                  </View>
+                ) : hasPaymentInfo ? (
                   <Text style={s.clientText}>{invoice.paymentInfo}</Text>
-               </View>
+                ) : null}
+              </View>
             )}
           </View>
         </View>
@@ -396,6 +436,5 @@ export default function Template10({ invoice }) {
     </Document>
   );
 }
-
 
 /*Soft Corporate Cards*/
