@@ -76,6 +76,7 @@ export const DEFAULT_COLORS = {
   template18: { primary: '#FFE500', secondary: '#2874F0' },
   template19: { primary: '#991B1B', secondary: '#DDD6FE' },
   template20: { primary: '#0F172A', secondary: '#38BDF8' },
+  restro: { primary: '#8B4513', secondary: '#F5E6D3' },
 };
 
 
@@ -2553,6 +2554,7 @@ export default function InvoiceForm() {
               template18: isQuotation ? '/templates/quotation18.svg' : '/templates/t18.svg',
               template19: isQuotation ? '/templates/quotation19.svg' : '/templates/t19.svg',
               template20: isQuotation ? '/templates/quotation20.svg' : '/templates/t20.svg',
+              restro: '/templates/restro.svg',
               invoice12: isQuotation ? '/templates/quotation12.svg' : '/templates/invoice12.svg',
               invoice14: isQuotation ? '/templates/quotation14.svg' : '/templates/invoice14.svg',
             };
@@ -2571,6 +2573,7 @@ export default function InvoiceForm() {
               { id: 'template18', name: 'E-Commerce Tax Invoice', img: TEMPLATE_IMGS.template18 },
               { id: 'template19', name: 'Legal Services Boxed', img: TEMPLATE_IMGS.template19 },
               { id: 'template20', name: 'Corporate Matrix', img: TEMPLATE_IMGS.template20 },
+              { id: 'restro', name: 'Restro', img: TEMPLATE_IMGS.restro },
               { id: 'invoice12', name: 'Ledger Gold', img: TEMPLATE_IMGS.invoice12 },
               { id: 'invoice14', name: 'Green Columns', img: TEMPLATE_IMGS.invoice14 },
             ];
