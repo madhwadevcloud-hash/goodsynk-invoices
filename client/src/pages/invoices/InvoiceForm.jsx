@@ -95,6 +95,30 @@ export function resolveTemplateColors(templateKey, storedColors) {
 const FREE_TEMPLATES = ['template1', 'template2', 'template5'];
 
 export default function InvoiceForm() {
+
+  // ── Mobile viewport / accidental zoom protection ─────────────────────────
+  useEffect(() => {
+    let viewport = document.querySelector('meta[name="viewport"]');
+    const previousContent = viewport?.getAttribute('content') || null;
+
+    if (!viewport) {
+      viewport = document.createElement('meta');
+      viewport.name = 'viewport';
+      document.head.appendChild(viewport);
+    }
+
+    viewport.setAttribute(
+      'content',
+      'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'
+    );
+
+    return () => {
+      if (previousContent !== null) {
+        viewport.setAttribute('content', previousContent);
+      }
+    };
+  }, []);
+
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -291,12 +315,35 @@ export default function InvoiceForm() {
     setTaxModal(false);
   };
 
+  // Keep invoice/quotation dates inside the current calendar year.
+  // Using local date parts avoids UTC timezone shifts around midnight.
+  const getLocalDateString = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const currentYear = new Date().getFullYear();
+  const currentYearStart = `${currentYear}-01-01`;
+  const currentYearEnd = `${currentYear}-12-31`;
+  const todayDate = getLocalDateString();
+
+  const isCurrentYearDate = (value) => {
+    if (!value || typeof value !== 'string') return false;
+    return value >= currentYearStart && value <= currentYearEnd;
+  };
+
+  const normalizeCurrentYearDate = (value, fallback = todayDate) => {
+    return isCurrentYearDate(value) ? value : fallback;
+  };
+
   const createBlankForm = () => ({
     client: '',
     invoiceType: docType,
     invoiceNumber: '',
-    issueDate: new Date().toISOString().split('T')[0],
-    dueDate: '',
+    issueDate: todayDate,
+    dueDate: todayDate,
     isInterstate: false,
     taxType: 'gst_india',
     notes: [],
@@ -428,8 +475,8 @@ export default function InvoiceForm() {
           client: inv.client?._id || '',
           invoiceType: inv.invoiceType || docType,
           invoiceNumber: inv.invoiceNumber || '',
-          issueDate: inv.issueDate ? new Date(inv.issueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-          dueDate: inv.dueDate ? new Date(inv.dueDate).toISOString().split('T')[0] : '',
+          issueDate: normalizeCurrentYearDate(inv.issueDate ? getLocalDateString(new Date(inv.issueDate)) : '', todayDate),
+          dueDate: normalizeCurrentYearDate(inv.dueDate ? getLocalDateString(new Date(inv.dueDate)) : '', todayDate),
           isInterstate: inv.isInterstate || false,
           taxType: inv.taxType || 'gst_india',
           notes: inv.notes ? inv.notes.split('\n') : [],
@@ -672,6 +719,17 @@ export default function InvoiceForm() {
     }
   };
 
+  // Correct any old draft/browser-saved dates that fall outside the current year.
+  useEffect(() => {
+    setForm((f) => {
+      if (!f) return f;
+      const normalizedIssueDate = normalizeCurrentYearDate(f.issueDate, todayDate);
+      const normalizedDueDate = normalizeCurrentYearDate(f.dueDate, normalizedIssueDate);
+      if (normalizedIssueDate === f.issueDate && normalizedDueDate === f.dueDate) return f;
+      return { ...f, issueDate: normalizedIssueDate, dueDate: normalizedDueDate };
+    });
+  }, [currentYear]);
+
   const handleSubmit = async (e, shouldDownload = false) => {
     e.preventDefault();
     if (!form.client) return toast.error('Please select a client');
@@ -759,7 +817,882 @@ export default function InvoiceForm() {
   if (loading || checkingLimit) return <div className="flex-center" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="invoice-form-responsive">
+
+      {/* ── Responsive/mobile styles for InvoiceForm ─────────────────────── */}
+      <style>{`
+        .invoice-form-responsive {
+          width: 100%;
+          max-width: 100%;
+          overflow-x: hidden;
+          box-sizing: border-box;
+        }
+
+        .invoice-form-responsive *,
+        .invoice-form-responsive *::before,
+        .invoice-form-responsive *::after {
+          box-sizing: border-box;
+        }
+
+        .invoice-form-responsive input,
+        .invoice-form-responsive select,
+        .invoice-form-responsive textarea,
+        .invoice-form-responsive button {
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Keep iOS/Android from automatically zooming when a field receives focus. */
+        .invoice-form-responsive input,
+        .invoice-form-responsive select,
+        .invoice-form-responsive textarea {
+          font-size: 16px !important;
+          line-height: 1.35;
+        }
+
+        .invoice-form-responsive button {
+          touch-action: manipulation;
+        }
+
+        .invoice-form-responsive .btn {
+          min-height: 42px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          white-space: nowrap;
+        }
+
+        .invoice-form-responsive .btn-sm {
+          min-height: 40px;
+        }
+
+        .invoice-form-responsive .btn svg {
+          width: 20px;
+          height: 20px;
+          flex: 0 0 20px;
+          stroke-width: 2.2;
+        }
+
+        .invoice-form-responsive .btn-sm svg {
+          width: 19px;
+          height: 19px;
+          flex-basis: 19px;
+        }
+
+        .invoice-form-responsive .page-header {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+
+        .invoice-form-responsive .page-header > .flex:last-child {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .invoice-form-responsive .card {
+          max-width: 100%;
+          min-width: 0;
+        }
+
+        .invoice-form-responsive .form-grid,
+        .invoice-form-responsive .form-grid-3 {
+          min-width: 0;
+        }
+
+        .invoice-form-responsive .form-grid > *,
+        .invoice-form-responsive .form-grid-3 > * {
+          min-width: 0;
+        }
+
+        .invoice-form-responsive .form-control {
+          min-height: 44px;
+        }
+
+        .invoice-form-responsive table {
+          min-width: 920px;
+        }
+
+        .invoice-form-responsive .invoice-items-scroll {
+          width: 100%;
+          max-width: 100%;
+          overflow-x: auto;
+          overflow-y: hidden;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: thin;
+        }
+
+        .invoice-form-responsive .invoice-items-scroll table {
+          width: max-content !important;
+          min-width: 920px;
+        }
+
+        .invoice-form-responsive .mobile-full-width {
+          width: 100%;
+          max-width: 100%;
+        }
+
+
+        /* Product picker: desktop stays compact, mobile becomes a clean touch-first panel. */
+        .invoice-form-responsive .product-search-wrap {
+          position: relative;
+        }
+
+        .invoice-form-responsive .product-picker {
+          position: absolute;
+          top: calc(100% + 8px);
+          left: 0;
+          right: 0;
+          z-index: 100;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 14px;
+          box-shadow: 0 18px 45px rgba(0,0,0,0.22);
+          overflow: hidden;
+        }
+
+        .invoice-form-responsive .product-picker-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 12px 14px;
+          border-bottom: 1px solid var(--border);
+          background: var(--bg-elevated);
+        }
+
+        .invoice-form-responsive .product-picker-header > div {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          min-width: 0;
+        }
+
+        .invoice-form-responsive .product-picker-header strong {
+          font-size: 0.86rem;
+        }
+
+        .invoice-form-responsive .product-picker-header span {
+          font-size: 0.7rem;
+          color: var(--text-muted);
+        }
+
+        .invoice-form-responsive .product-picker-close {
+          width: 40px;
+          height: 40px;
+          min-width: 40px;
+          border: 1px solid var(--border);
+          border-radius: 9px;
+          background: var(--bg-card);
+          color: var(--text-secondary);
+          display: grid;
+          place-items: center;
+          cursor: pointer;
+        }
+
+        .invoice-form-responsive .product-picker-list {
+          max-height: 360px;
+          overflow-y: auto;
+          overscroll-behavior: contain;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .invoice-form-responsive .product-picker-item {
+          width: 100%;
+          min-height: 62px;
+          display: grid;
+          grid-template-columns: 40px minmax(0, 1fr) auto 40px;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 12px;
+          border: 0;
+          border-bottom: 1px solid var(--border);
+          background: var(--bg-card);
+          color: var(--text-primary);
+          text-align: left;
+          cursor: pointer;
+        }
+
+        .invoice-form-responsive .product-picker-item:hover,
+        .invoice-form-responsive .product-picker-item:focus-visible {
+          background: var(--bg-elevated);
+          outline: none;
+        }
+
+        .invoice-form-responsive .product-picker-item-icon {
+          width: 40px;
+          height: 40px;
+          display: grid;
+          place-items: center;
+          border-radius: 10px;
+          background: var(--primary-bg);
+          color: var(--primary);
+        }
+
+        .invoice-form-responsive .product-picker-item-info {
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+        }
+
+        .invoice-form-responsive .product-picker-item-name {
+          font-size: 0.86rem;
+          font-weight: 700;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .invoice-form-responsive .product-picker-item-meta {
+          font-size: 0.7rem;
+          color: var(--text-secondary);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .invoice-form-responsive .product-picker-item-price {
+          font-size: 0.78rem;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+
+        .invoice-form-responsive .product-picker-add {
+          width: 40px;
+          height: 40px;
+          display: grid;
+          place-items: center;
+          border-radius: 10px;
+          background: var(--primary);
+          color: #fff;
+        }
+
+        .invoice-form-responsive .product-picker-empty {
+          min-height: 180px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 24px;
+          text-align: center;
+          color: var(--text-muted);
+        }
+
+        .invoice-form-responsive .product-picker-empty strong {
+          color: var(--text-primary);
+          font-size: 0.86rem;
+        }
+
+        .invoice-form-responsive .product-picker-empty span {
+          font-size: 0.72rem;
+        }
+
+        .invoice-form-responsive .product-picker-empty-icon {
+          width: 52px;
+          height: 52px;
+          display: grid;
+          place-items: center;
+          border-radius: 14px;
+          background: var(--primary-bg);
+          color: var(--primary);
+          margin-bottom: 4px;
+        }
+
+        .invoice-form-responsive .product-picker-footer {
+          padding: 8px 12px;
+          text-align: center;
+          font-size: 0.68rem;
+          color: var(--text-muted);
+          background: var(--bg-elevated);
+        }
+
+        @media (max-width: 900px) {
+          .invoice-form-responsive .form-grid-3 {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+
+          .invoice-form-responsive .page-header {
+            align-items: flex-start;
+          }
+
+          .invoice-form-responsive .page-header > .flex:last-child {
+            width: 100%;
+            justify-content: flex-start;
+          }
+
+          .invoice-form-responsive .page-header > .flex:last-child .btn {
+            flex: 1 1 180px;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .invoice-form-responsive {
+            width: 100%;
+            padding: 0;
+          }
+
+          .invoice-form-responsive .page-header {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 14px;
+            margin-bottom: 16px;
+          }
+
+          .invoice-form-responsive .page-header > .flex:first-child {
+            width: 100%;
+            align-items: center;
+          }
+
+          .invoice-form-responsive .page-header > .flex:first-child .btn {
+            width: 44px;
+            min-width: 44px;
+            padding: 0;
+          }
+
+          .invoice-form-responsive .page-header > .flex:first-child .btn svg {
+            width: 22px;
+            height: 22px;
+          }
+
+          .invoice-form-responsive .page-header > .flex:first-child > div:last-child {
+            min-width: 0;
+          }
+
+          .invoice-form-responsive .page-title {
+            font-size: 1.35rem !important;
+            line-height: 1.25;
+            word-break: break-word;
+          }
+
+          .invoice-form-responsive .page-subtitle {
+            font-size: 0.82rem !important;
+            line-height: 1.45;
+          }
+
+          .invoice-form-responsive .page-header > .flex:last-child {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+          }
+
+          .invoice-form-responsive .page-header > .flex:last-child .btn {
+            width: 100%;
+            min-width: 0;
+            min-height: 46px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+          }
+
+          .invoice-form-responsive .page-header > .flex:last-child .btn svg {
+            width: 21px;
+            height: 21px;
+          }
+
+          .invoice-form-responsive .card {
+            padding: 16px !important;
+            border-radius: 12px;
+            margin-bottom: 14px !important;
+          }
+
+          .invoice-form-responsive .card-title {
+            font-size: 1rem !important;
+          }
+
+          .invoice-form-responsive .form-grid,
+          .invoice-form-responsive .form-grid-3 {
+            grid-template-columns: 1fr !important;
+            gap: 14px !important;
+          }
+
+          .invoice-form-responsive .form-label {
+            font-size: 0.82rem;
+            margin-bottom: 6px;
+          }
+
+          .invoice-form-responsive .form-control {
+            width: 100%;
+            min-width: 0 !important;
+            min-height: 46px;
+            padding: 10px 12px !important;
+            font-size: 16px !important;
+          }
+
+          .invoice-form-responsive textarea.form-control {
+            min-height: 90px;
+          }
+
+          .invoice-form-responsive .invoice-toolbar {
+            display: grid !important;
+            grid-template-columns: 1fr;
+            gap: 10px !important;
+          }
+
+          .invoice-form-responsive .invoice-toolbar > .btn {
+            width: 100%;
+            min-height: 46px;
+            justify-content: center;
+          }
+
+          .invoice-form-responsive .invoice-line-header {
+            display: flex !important;
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 10px !important;
+          }
+
+          .invoice-form-responsive .invoice-line-header > div {
+            width: 100%;
+          }
+
+          .invoice-form-responsive .invoice-line-header .btn {
+            width: 100%;
+            min-height: 46px;
+          }
+
+          .invoice-form-responsive .invoice-items-scroll {
+            margin-left: -4px;
+            width: calc(100% + 8px);
+            padding-bottom: 6px;
+          }
+
+          .invoice-form-responsive .invoice-items-scroll::after {
+            content: 'Swipe left/right to view all item fields';
+            display: block;
+            position: sticky;
+            left: 0;
+            width: max-content;
+            padding: 6px 2px 0;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+          }
+
+          .invoice-form-responsive .invoice-items-scroll table {
+            min-width: 980px !important;
+            font-size: 0.88rem !important;
+          }
+
+          .invoice-form-responsive .invoice-items-scroll th {
+            font-size: 0.78rem !important;
+            padding: 10px 7px !important;
+          }
+
+          .invoice-form-responsive .invoice-items-scroll td {
+            padding: 7px 5px !important;
+          }
+
+          .invoice-form-responsive .invoice-items-scroll td .form-control {
+            min-height: 44px;
+          }
+
+          .invoice-form-responsive .invoice-items-scroll td button {
+            min-width: 44px;
+            min-height: 44px;
+          }
+
+          .invoice-form-responsive .invoice-items-scroll td button svg {
+            width: 20px;
+            height: 20px;
+          }
+
+          .invoice-form-responsive .invoice-items-scroll select {
+            min-height: 44px !important;
+          }
+
+          .invoice-form-responsive .invoice-total-wrapper {
+            width: 100% !important;
+            display: block !important;
+          }
+
+          .invoice-form-responsive .invoice-total-box {
+            width: 100% !important;
+            min-width: 0 !important;
+            padding: 14px !important;
+          }
+
+          .invoice-form-responsive .invoice-total-box span {
+            font-size: 0.88rem;
+          }
+
+          .invoice-form-responsive .invoice-total-box > div:last-child {
+            font-size: 1rem !important;
+          }
+
+          .invoice-form-responsive .bank-header {
+            flex-wrap: wrap;
+            gap: 12px !important;
+          }
+
+          .invoice-form-responsive .bank-header > div:last-child {
+            width: 100%;
+            display: grid !important;
+            grid-template-columns: 44px 1fr;
+            gap: 8px !important;
+          }
+
+          .invoice-form-responsive .bank-header > div:last-child > div {
+            min-width: 0;
+          }
+
+          .invoice-form-responsive .bank-header .btn {
+            min-height: 44px;
+          }
+
+          .invoice-form-responsive .bank-header .btn svg {
+            width: 20px;
+            height: 20px;
+          }
+
+          .invoice-form-responsive .bank-details-grid {
+            grid-template-columns: 1fr !important;
+          }
+
+          .invoice-form-responsive .notes-grid {
+            grid-template-columns: 1fr !important;
+          }
+
+          .invoice-form-responsive .notes-grid > .form-group > div {
+            padding: 9px !important;
+          }
+
+          .invoice-form-responsive .note-row {
+            display: grid !important;
+            grid-template-columns: 12px minmax(0, 1fr) 48px 44px !important;
+            align-items: center;
+            gap: 6px !important;
+          }
+
+          .invoice-form-responsive .note-row .form-control {
+            width: 100%;
+          }
+
+          .invoice-form-responsive .note-row > .btn {
+            width: 44px;
+            min-width: 44px;
+            padding: 0 !important;
+          }
+
+          .invoice-form-responsive .note-row > .btn svg {
+            width: 20px;
+            height: 20px;
+          }
+
+          .invoice-form-responsive .add-point-btn {
+            min-height: 44px;
+            width: 100%;
+          }
+
+          .invoice-form-responsive .template-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 12px !important;
+          }
+
+          .invoice-form-responsive .template-grid button {
+            min-height: 0 !important;
+          }
+
+          .invoice-form-responsive .template-grid button > div:last-child {
+            min-height: 44px !important;
+            padding: 7px 6px !important;
+            font-size: 0.78rem !important;
+          }
+
+          .invoice-form-responsive .template-color-section {
+            padding: 12px !important;
+          }
+
+          .invoice-form-responsive .template-color-controls {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px !important;
+          }
+
+          .invoice-form-responsive .template-color-controls > * {
+            min-width: 0;
+          }
+
+          .invoice-form-responsive .template-color-controls .btn {
+            grid-column: 1 / -1;
+            width: 100%;
+          }
+
+          .invoice-form-responsive .template-color-controls input[type="color"] {
+            width: 48px !important;
+            height: 48px !important;
+          }
+
+          .invoice-form-responsive .modal-overlay {
+            padding: 10px !important;
+            align-items: flex-start !important;
+            overflow-y: auto !important;
+          }
+
+          .invoice-form-responsive .modal-card {
+            width: 100% !important;
+            max-width: 100% !important;
+            max-height: calc(100vh - 20px) !important;
+            margin: auto 0;
+            padding: 18px !important;
+            border-radius: 14px !important;
+            overflow-y: auto !important;
+          }
+
+          .invoice-form-responsive .modal-card h3 {
+            font-size: 1rem !important;
+          }
+
+          .invoice-form-responsive .modal-actions {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px !important;
+          }
+
+          .invoice-form-responsive .modal-actions .btn {
+            width: 100%;
+            min-height: 46px;
+          }
+
+          .invoice-form-responsive .discount-type-grid {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+          }
+
+          .invoice-form-responsive .discount-line {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1.4fr) minmax(75px, 0.8fr) minmax(75px, 0.8fr) 44px !important;
+            gap: 6px !important;
+          }
+
+          .invoice-form-responsive .discount-line .btn {
+            width: 44px;
+            min-width: 44px;
+            padding: 0 !important;
+          }
+
+          .invoice-form-responsive .preview-modal-card {
+            width: 100% !important;
+            height: calc(100vh - 20px) !important;
+            max-height: calc(100vh - 20px) !important;
+            padding: 14px !important;
+            border-radius: 14px !important;
+          }
+
+          .invoice-form-responsive .preview-modal-content {
+            padding: 8px !important;
+          }
+
+          .invoice-form-responsive .preview-modal-content img,
+          .invoice-form-responsive .preview-modal-content > div {
+            max-width: none !important;
+          }
+
+          .invoice-form-responsive .preview-modal-actions {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px !important;
+          }
+
+          .invoice-form-responsive .preview-modal-actions .btn {
+            width: 100%;
+            min-height: 46px;
+          }
+        }
+
+
+        @media (max-width: 768px) {
+          .invoice-form-responsive .product-picker {
+            position: fixed;
+            left: 10px;
+            right: 10px;
+            top: max(72px, env(safe-area-inset-top) + 12px);
+            bottom: max(10px, env(safe-area-inset-bottom) + 10px);
+            width: auto;
+            max-height: none;
+            display: flex;
+            flex-direction: column;
+            border-radius: 16px;
+            box-shadow: 0 22px 60px rgba(0,0,0,0.35), 0 0 0 100vmax rgba(0,0,0,0.42);
+          }
+
+          .invoice-form-responsive .product-picker-header {
+            flex-shrink: 0;
+            padding: 14px;
+          }
+
+          .invoice-form-responsive .product-picker-header strong {
+            font-size: 0.96rem;
+          }
+
+          .invoice-form-responsive .product-picker-header span {
+            font-size: 0.74rem;
+          }
+
+          .invoice-form-responsive .product-picker-close {
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+          }
+
+          .invoice-form-responsive .product-picker-list {
+            flex: 1;
+            max-height: none;
+            min-height: 0;
+          }
+
+          .invoice-form-responsive .product-picker-item {
+            min-height: 76px;
+            grid-template-columns: 46px minmax(0, 1fr) auto 46px;
+            gap: 10px;
+            padding: 12px 10px;
+          }
+
+          .invoice-form-responsive .product-picker-item-icon,
+          .invoice-form-responsive .product-picker-add {
+            width: 46px;
+            height: 46px;
+          }
+
+          .invoice-form-responsive .product-picker-item-icon svg,
+          .invoice-form-responsive .product-picker-add svg {
+            width: 21px;
+            height: 21px;
+          }
+
+          .invoice-form-responsive .product-picker-item-name {
+            font-size: 0.92rem;
+          }
+
+          .invoice-form-responsive .product-picker-item-meta {
+            font-size: 0.74rem;
+            line-height: 1.35;
+            white-space: normal;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+          }
+
+          .invoice-form-responsive .product-picker-item-price {
+            font-size: 0.8rem;
+          }
+
+          .invoice-form-responsive .product-picker-footer {
+            flex-shrink: 0;
+            padding: 10px 12px;
+            font-size: 0.7rem;
+          }
+
+          .invoice-form-responsive .add-item-menu {
+            left: 0 !important;
+            right: 0 !important;
+            min-width: 0 !important;
+            width: 100%;
+          }
+
+          .invoice-form-responsive .add-item-menu button {
+            min-height: 50px;
+            font-size: 0.9rem;
+          }
+
+          .invoice-form-responsive .preview-modal-card {
+            gap: 10px !important;
+          }
+
+          .invoice-form-responsive .preview-modal-card h3 {
+            font-size: 1rem !important;
+          }
+
+          .invoice-form-responsive .preview-modal-content {
+            display: flex !important;
+            align-items: flex-start !important;
+            justify-content: flex-start !important;
+            overflow: auto !important;
+            padding: 10px !important;
+            -webkit-overflow-scrolling: touch;
+          }
+
+          .invoice-form-responsive .preview-modal-content > * {
+            flex: 0 0 auto;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+          }
+
+          .invoice-form-responsive .preview-modal-content img,
+          .invoice-form-responsive .preview-modal-content svg,
+          .invoice-form-responsive .preview-modal-content canvas {
+            width: 100% !important;
+            max-width: 100% !important;
+            height: auto !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .invoice-form-responsive .card {
+            padding: 13px !important;
+          }
+
+          .invoice-form-responsive .page-title {
+            font-size: 1.2rem !important;
+          }
+
+          .invoice-form-responsive .page-subtitle {
+            font-size: 0.76rem !important;
+          }
+
+          .invoice-form-responsive .page-header > .flex:last-child {
+            grid-template-columns: 1fr;
+          }
+
+          .invoice-form-responsive .page-header > .flex:last-child .btn {
+            min-height: 48px;
+          }
+
+          .invoice-form-responsive .template-grid {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 9px !important;
+          }
+
+          .invoice-form-responsive .template-grid button > div:last-child {
+            font-size: 0.72rem !important;
+          }
+
+          .invoice-form-responsive .template-color-controls {
+            grid-template-columns: 1fr;
+          }
+
+          .invoice-form-responsive .template-color-controls .btn {
+            grid-column: auto;
+          }
+
+          .invoice-form-responsive .discount-line {
+            grid-template-columns: 1fr 1fr 1fr 44px !important;
+          }
+
+          .invoice-form-responsive .modal-actions,
+          .invoice-form-responsive .preview-modal-actions {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        /* Respect devices that already have a touch interface while keeping
+           the form readable and preventing horizontal page-level overflow. */
+        @media (pointer: coarse) {
+          .invoice-form-responsive button,
+          .invoice-form-responsive select,
+          .invoice-form-responsive input {
+            touch-action: manipulation;
+          }
+        }
+      `}</style>
       <div className="page-header">
         <div className="flex gap-3" style={{ alignItems: 'center' }}>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate(basePath)}>
@@ -798,11 +1731,41 @@ export default function InvoiceForm() {
         <div className="form-grid">
           <div className="form-group">
             <label className="form-label">Issue Date *</label>
-            <input type="date" className="form-control" value={form.issueDate} onChange={(e) => setField('issueDate', e.target.value)} />
+            <input
+              type="date"
+              className="form-control"
+              min={currentYearStart}
+              max={currentYearEnd}
+              value={normalizeCurrentYearDate(form.issueDate, todayDate)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (isCurrentYearDate(value)) setField('issueDate', value);
+                else {
+                  setField('issueDate', todayDate);
+                  toast.error(`Issue date must be within ${currentYear}.`);
+                }
+              }}
+            />
           </div>
           <div className="form-group">
             <label className="form-label">{isQuotation ? 'Validity' : 'Due Date'} *</label>
-            <input type="date" className="form-control" required value={form.dueDate} onChange={(e) => setField('dueDate', e.target.value)} />
+            <input
+              type="date"
+              className="form-control"
+              required
+              min={form.issueDate && isCurrentYearDate(form.issueDate) ? form.issueDate : currentYearStart}
+              max={currentYearEnd}
+              value={normalizeCurrentYearDate(form.dueDate, form.issueDate && isCurrentYearDate(form.issueDate) ? form.issueDate : todayDate)}
+              onChange={(e) => {
+                const value = e.target.value;
+                const minimumDate = form.issueDate && isCurrentYearDate(form.issueDate) ? form.issueDate : currentYearStart;
+                if (isCurrentYearDate(value) && value >= minimumDate) setField('dueDate', value);
+                else {
+                  setField('dueDate', minimumDate);
+                  toast.error(`Due date must be within ${currentYear} and not before the issue date.`);
+                }
+              }}
+            />
           </div>
         </div>
 
@@ -953,7 +1916,7 @@ export default function InvoiceForm() {
           </div>
         </div>
         {/* ── Configure Tax / Currency / Format toolbar ── */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
+        <div className="invoice-toolbar" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
 
           <button
             type="button"
@@ -1016,7 +1979,7 @@ export default function InvoiceForm() {
 
       {/* Line Items */}
       <div className="card mb-4">
-        <div className="card-header" style={{ position: 'relative' }}>
+        <div className="card-header invoice-line-header" style={{ position: 'relative' }}>
           <h2 className="card-title">Line Items</h2>
           <div className="flex gap-2" style={{ position: 'relative' }}>
             {!showHsn && (
@@ -1024,7 +1987,7 @@ export default function InvoiceForm() {
             )}
             <button type="button" className="btn btn-primary btn-sm" onClick={() => setAddItemMenuOpen((o) => !o)}><Plus size={14} /> Add Item <ChevronDown size={12} /></button>
             {addItemMenuOpen && (
-              <div style={{ position: 'absolute', right: 0, top: '100%', zIndex: 40, marginTop: 6, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--shadow)', minWidth: 150, overflow: 'hidden' }}>
+              <div className="add-item-menu" style={{ position: 'absolute', right: 0, top: '100%', zIndex: 40, marginTop: 6, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--shadow)', minWidth: 150, overflow: 'hidden' }}>
                 {['Product', 'Service'].map((type) => (
                   <button key={type} type="button" onMouseDown={() => openNewItemPanel(type)} style={{ width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', color: 'var(--text-primary)', textAlign: 'left', cursor: 'pointer', fontWeight: 600 }}>
                     {type}
@@ -1035,7 +1998,7 @@ export default function InvoiceForm() {
           </div>
         </div>
 
-        <div style={{ position: 'relative', marginBottom: 14 }}>
+        <div className="product-search-wrap" style={{ position: 'relative', marginBottom: 14 }}>
           <input
             className="form-control"
             placeholder="Search products/services and press select to add a line item…"
@@ -1045,65 +2008,57 @@ export default function InvoiceForm() {
             onBlur={() => setTimeout(() => setLineSearchOpen(false), 150)}
           />
           {lineSearchOpen && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                right: 0,
-                zIndex: 35,
-                marginTop: 6,
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border)',
-                borderRadius: 12,
-                maxHeight: 320,
-                overflowY: 'auto',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
-                backdropFilter: 'blur(12px)',
-              }}
-            >
-              {filteredLineProducts.length === 0 ? (
-                <div style={{ padding: '12px 14px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>No products/services found.</div>
-              ) : displayedProducts.map((p) => (
+            <div className="product-picker">
+              <div className="product-picker-header">
+                <div>
+                  <strong>Select Product / Service</strong>
+                  <span>{filteredLineProducts.length} available</span>
+                </div>
                 <button
-                  key={p._id}
                   type="button"
-                  onMouseDown={() => appendProductLine(p)}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--bg-elevated)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                  }}
-                  style={{
-                    width: '100%',
-                    border: 'none',
-                    background: 'transparent',
-                    padding: '12px 16px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    borderBottom: '1px solid var(--border)',
-                    color: 'var(--text-primary)',
-                  }}
+                  className="product-picker-close"
+                  aria-label="Close product picker"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setLineSearchOpen(false)}
                 >
-                  <div
-                    style={{
-                      fontWeight: 700,
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    {p.name}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '0.72rem',
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    {[p.description, p.hsn, fmt(p.price)].filter(Boolean).join(' · ')}
-                  </div>
+                  <X size={20} />
                 </button>
-              ))}
+              </div>
+
+              <div className="product-picker-list">
+                {filteredLineProducts.length === 0 ? (
+                  <div className="product-picker-empty">
+                    <div className="product-picker-empty-icon"><Tag size={24} /></div>
+                    <strong>No products/services found</strong>
+                    <span>Try a different name, HSN or description.</span>
+                  </div>
+                ) : displayedProducts.map((p) => (
+                  <button
+                    key={p._id}
+                    type="button"
+                    className="product-picker-item"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => appendProductLine(p)}
+                  >
+                    <span className="product-picker-item-icon">
+                      <Tag size={19} />
+                    </span>
+                    <span className="product-picker-item-info">
+                      <span className="product-picker-item-name">{p.name}</span>
+                      <span className="product-picker-item-meta">
+                        {[p.description, p.hsn].filter(Boolean).join(' · ') || 'No description'}
+                      </span>
+                    </span>
+                    <span className="product-picker-item-price">{fmt(p.price)}</span>
+                    <span className="product-picker-add"><Plus size={19} /></span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="product-picker-footer">
+                {filteredLineProducts.length > 8 && <span>Showing first 8 results · Type to search more</span>}
+                {filteredLineProducts.length <= 8 && <span>Select a product to add it instantly</span>}
+              </div>
             </div>
           )}
         </div>
@@ -1200,7 +2155,7 @@ export default function InvoiceForm() {
           </div>
         )}
 
-        <div style={{ overflowX: 'auto' }}>
+        <div className="invoice-items-scroll" style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
             <thead>
               <tr>
@@ -1388,8 +2343,8 @@ export default function InvoiceForm() {
         </div>
 
         {/* Totals summary */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-          <div style={{ minWidth: '280px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="invoice-total-wrapper" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+          <div className="invoice-total-box" style={{ minWidth: '280px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Subtotal</span>
               <span>{fmt(totals.subtotal)}</span>
@@ -1449,7 +2404,7 @@ export default function InvoiceForm() {
       {/* Banking Details (from profile) */}
       {isQuotation && hasBankDetails && (
         <div className="card mb-4">
-          <div className="flex gap-2" style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <div className="flex gap-2 bank-header" style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <div className="flex gap-2" style={{ alignItems: 'center' }}>
               <div style={{ padding: 8, background: 'var(--primary-bg)', borderRadius: 8, color: 'var(--primary)' }}>
                 <Landmark size={18} />
@@ -1510,7 +2465,7 @@ export default function InvoiceForm() {
               )}
             </div>
           </div>
-          <div className="form-grid">
+          <div className="form-grid bank-details-grid">
             {bank.accountName && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Account Name</div><div style={{ fontWeight: 600, marginTop: 4 }}>{maskedBankValue(bank.accountName)}</div></div>}
             {bank.accountNumber && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Account Number</div><div style={{ fontWeight: 600, marginTop: 4 }}>{maskedBankValue(bank.accountNumber)}</div></div>}
             {bank.ifscCode && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>IFSC</div><div style={{ fontWeight: 600, marginTop: 4 }}>{maskedBankValue(bank.ifscCode)}</div></div>}
@@ -1522,13 +2477,13 @@ export default function InvoiceForm() {
       {/* Notes */}
       <div className="card">
         <h2 className="card-title mb-4" style={{ marginBottom: '16px' }}>Additional Info</h2>
-        <div className="form-grid">
+        <div className="form-grid notes-grid">
           <div className="form-group">
             <label className="form-label">Notes</label>
             <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 10, background: 'var(--bg-elevated)' }}>
               {notePoints.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: 8 }}>Add bullet-point notes for this {docLabel.toLowerCase()}.</p>}
               {notePoints.map((point, noteIdx) => (
-                <div key={noteIdx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <div key={noteIdx} className="note-row" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                   <span style={{ color: 'var(--primary)', fontWeight: 700 }}>•</span>
                   <input
                     className="form-control"
@@ -1548,7 +2503,7 @@ export default function InvoiceForm() {
                 </div>
               ))}
               {notePoints.length < 5 && (
-                <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('notes', [...notePoints, ''])}><Plus size={14} /> Add point</button>
+                <button type="button" className="btn btn-primary btn-sm add-point-btn" onClick={() => setField('notes', [...notePoints, ''])}><Plus size={14} /> Add point</button>
               )}
             </div>
           </div>
@@ -1557,7 +2512,7 @@ export default function InvoiceForm() {
             <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 10, background: 'var(--bg-elevated)' }}>
               {termsPoints.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: 8 }}>Add bullet-point terms for this {docLabel.toLowerCase()}.</p>}
               {termsPoints.map((point, termIdx) => (
-                <div key={termIdx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <div key={termIdx} className="note-row" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                   <span style={{ color: 'var(--primary)', fontWeight: 700 }}>•</span>
                   <input
                     className="form-control"
@@ -1577,7 +2532,7 @@ export default function InvoiceForm() {
                 </div>
               ))}
               {termsPoints.length < 5 && (
-                <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('termsAndConditions', [...termsPoints, ''])}><Plus size={14} /> Add point</button>
+                <button type="button" className="btn btn-primary btn-sm add-point-btn" onClick={() => setField('termsAndConditions', [...termsPoints, ''])}><Plus size={14} /> Add point</button>
               )}
             </div>
           </div>
@@ -1620,7 +2575,7 @@ export default function InvoiceForm() {
               { id: 'invoice14', name: 'Green Columns', img: TEMPLATE_IMGS.invoice14 },
             ];
             return (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '10px', marginTop: 8 }}>
+              <div className="template-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '10px', marginTop: 8 }}>
                 {TEMPLATES.map((t) => {
                   const isSelected = (form.template || '') === t.id;
                   const isFreePlan = !currentUser?.plan || String(currentUser.plan).toLowerCase() === 'free';
@@ -1723,6 +2678,7 @@ export default function InvoiceForm() {
               }}
             >
               <div
+                className="preview-modal-card"
                 onClick={(event) => event.stopPropagation()}
                 style={{
                   position: 'relative', background: 'var(--bg-card)', borderRadius: 16,
@@ -1744,7 +2700,7 @@ export default function InvoiceForm() {
                   <X size={20} />
                 </button>
                 <h3 style={{ margin: 0, paddingRight: 48, fontSize: '1.2rem' }}>{previewTemplate.name}</h3>
-                <div style={{ flex: 1, minHeight: 0, overflow: 'auto', background: 'var(--bg-elevated)', borderRadius: 8, padding: 16 }}>
+                <div className="preview-modal-content" style={{ flex: 1, minHeight: 0, overflow: 'auto', background: 'var(--bg-elevated)', borderRadius: 8, padding: 16 }}>
                   <TemplatePreview
                     src={previewTemplate.img}
                     templateId={(previewTemplate.id || ((isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) || 'template1')).toLowerCase()}
@@ -1757,7 +2713,7 @@ export default function InvoiceForm() {
                     isFreePlan={!currentUser?.plan || String(currentUser.plan).toLowerCase() === 'free'}
                   />
                 </div>
-                <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                <div className="preview-modal-actions" style={{ flexShrink: 0, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
                   <button type="button" className="btn btn-ghost" onClick={() => setPreviewTemplate(null)}>Cancel</button>
                   <button
                     type="button"
@@ -1784,7 +2740,7 @@ export default function InvoiceForm() {
           {(() => {
             const effectiveTemplate = (form.template || (isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) || 'template1').toLowerCase();
             return (
-              <div style={{ marginTop: 24, padding: 16, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--bg-elevated)' }}>
+              <div className="template-color-section" style={{ marginTop: 24, padding: 16, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--bg-elevated)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                   <div style={{ padding: 8, background: 'var(--primary-bg)', borderRadius: 8, color: 'var(--primary)' }}>
                     <Tag size={18} />
@@ -1860,8 +2816,8 @@ export default function InvoiceForm() {
       </div>
       {/* ══ Configure Tax Modal ══ */}
       {taxModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(3px)' }}>
-          <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '28px 28px 20px', width: 420, maxWidth: '95vw', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(3px)' }}>
+          <div className="modal-card" style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '28px 28px 20px', width: 420, maxWidth: '95vw', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h3 style={{ fontWeight: 700, fontSize: '1rem' }}>Configure Tax</h3>
               <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setTaxModal(false)}><X size={18} /></button>
@@ -1919,7 +2875,7 @@ export default function InvoiceForm() {
               </label>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
               <button type="button" className="btn btn-ghost" onClick={() => setTaxModal(false)}>Cancel</button>
               <button type="button" className="btn btn-primary" onClick={saveTaxConfig}>Save Changes</button>
             </div>
@@ -1930,8 +2886,8 @@ export default function InvoiceForm() {
 
       {/* ══ Configure Discount Modal ══ */}
       {discModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(3px)' }}>
-          <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '28px 28px 20px', width: 500, maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(3px)' }}>
+          <div className="modal-card" style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '28px 28px 20px', width: 500, maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h3 style={{ fontWeight: 700, fontSize: '1rem' }}>Configure Discount</h3>
               <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setDiscModal(false)}><X size={18} /></button>
@@ -1939,7 +2895,7 @@ export default function InvoiceForm() {
 
             <div className="form-group">
               <label className="form-label"><strong>Discount Type</strong></label>
-              <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+              <div className="discount-type-grid" style={{ display: 'flex', gap: 10, marginTop: 8 }}>
                 {[
                   ['item', 'Item-wise', 'Disc % / Amt columns per line item'],
                   ['overall', 'Subtotal Discount', 'One or more discounts after subtotal'],
@@ -1964,7 +2920,7 @@ export default function InvoiceForm() {
               <div className="form-group">
                 <label className="form-label" style={{ marginBottom: 8 }}><strong>Discount Lines</strong></label>
                 {discDraft.lines.map((l, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+                  <div key={i} className="discount-line" style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
                     <input className="form-control" placeholder="Name (e.g. Early Payment)" value={l.name}
                       onChange={(e) => setDiscLine(i, 'name', e.target.value)} style={{ flex: 2, padding: '7px 10px' }} />
                     <select className="form-control" value={l.type}
@@ -1988,7 +2944,7 @@ export default function InvoiceForm() {
               </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
               <button type="button" className="btn btn-ghost" onClick={() => setDiscModal(false)}>Cancel</button>
               <button type="button" className="btn btn-primary" onClick={saveDiscConfig}>Save Changes</button>
             </div>
@@ -1998,8 +2954,8 @@ export default function InvoiceForm() {
 
       {/* ══ Create Client Modal ══ */}
       {newClientModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(3px)' }}>
-          <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '28px 28px 20px', width: 440, maxWidth: '95vw', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(3px)' }}>
+          <div className="modal-card" style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '28px 28px 20px', width: 440, maxWidth: '95vw', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h3 style={{ fontWeight: 700, fontSize: '1rem' }}>Create Client</h3>
               <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setNewClientModal(false)}><X size={18} /></button>
@@ -2038,7 +2994,7 @@ export default function InvoiceForm() {
 
             </p>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
               <button type="button" className="btn btn-ghost" onClick={() => setNewClientModal(false)}>Cancel</button>
               <button type="button" className="btn btn-primary" disabled={creatingClient} onClick={handleCreateClientSubmit}>
                 {creatingClient ? 'Creating…' : 'Create Client'}
