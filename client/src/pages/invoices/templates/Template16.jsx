@@ -52,11 +52,7 @@ function numberToWords(num) {
   return words.trim();
 }
 
-// Template16 — "Formal Tax Invoice": a structured, fully-bordered GST tax
-// invoice layout (inspired by classic corporate tax invoices) with a boxed
-// item grid, separate Bill-to / Ship-to blocks, place of supply, an
-// amount-in-words strip, an Amount Paid / Amount Due badge, bank + branch
-// details, dynamic logo/signature/seal and page numbers.
+// Template16 — "Formal Tax Invoice"
 export default function Template16({ invoice }) {
   const { client, user: biz } = invoice;
   const colors = invoice.templateColors || { primary: '#1F4B3F' };
@@ -70,23 +66,29 @@ export default function Template16({ invoice }) {
     watermarkText: { fontSize: 60, fontFamily: B, color: hexToRgba(PRIMARY, 0.08), transform: 'rotate(-45deg)', letterSpacing: 5 },
 
     outerBox: { borderWidth: 1, borderColor: PRIMARY },
-    headerRow: { flexDirection: 'row', justifyContent: 'space-between', padding: 12, borderBottomWidth: 1, borderBottomColor: PRIMARY },
-    docTypeTag: { position: 'absolute', top: -10, right: 12, backgroundColor: PRIMARY, color: '#fff', fontFamily: B, fontSize: 9, letterSpacing: 1.5, paddingVertical: 3, paddingHorizontal: 10 },
-    brandRow: { flexDirection: 'row', alignItems: 'flex-start' },
-    logo: { width: 34, height: 34, objectFit: 'contain', marginRight: 8 },
-    bizName: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: PRIMARY, textTransform: 'uppercase', marginBottom: 2 },
-    bizText: { fontSize: scaled.bizSubTextFontSize, color: '#444', lineHeight: scaled.bizSubTextLineHeight },
-    metaBlock: { alignItems: 'flex-end' },
-    metaRow: { flexDirection: 'row', marginBottom: 2 },
-    metaLabel: { fontSize: 7.5, color: '#555', width: 78, textAlign: 'right', marginRight: 4 },
-    metaVal: { fontSize: 7.5, fontFamily: B, color: '#000', textAlign: 'right' },
 
-    partiesRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: PRIMARY },
-    partyCol: { flex: 1, padding: 10, borderRightWidth: 1, borderRightColor: PRIMARY },
-    partyColLast: { flex: 1, padding: 10 },
+    // Header — brand on left (constrained), badge inline on right
+    headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', padding: 12, borderBottomWidth: 1, borderBottomColor: PRIMARY },
+    brandRow: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, paddingRight: 10, maxWidth: '72%' },
+    logo: { width: 34, height: 34, objectFit: 'contain', marginRight: 8 },
+    bizInfo: { flex: 1, maxWidth: '100%' },
+    bizName: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: PRIMARY, textTransform: 'uppercase', marginBottom: 2 },
+    bizText: { fontSize: scaled.bizSubTextFontSize, color: '#444', lineHeight: scaled.bizSubTextLineHeight, marginBottom: 1 },
+
+    // Badge — sits inline at top-right of the header
+    docTypeTag: { backgroundColor: PRIMARY, color: '#fff', fontFamily: B, fontSize: 9, letterSpacing: 1.5, paddingVertical: 4, paddingHorizontal: 12, textAlign: 'center', flexShrink: 0 },
+
+    // Bill To + Invoice Meta section
+    billToRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: PRIMARY },
+    billToCol: { flex: 1, padding: 10, borderRightWidth: 1, borderRightColor: PRIMARY },
+    billToColLast: { flex: 1, padding: 10 },
     partyLabel: { fontSize: 7, fontFamily: B, color: PRIMARY, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
     partyName: { fontSize: 8.5, fontFamily: B, color: '#000', marginBottom: 2 },
     partyText: { fontSize: 7.5, color: '#333', lineHeight: 1.4, marginBottom: 1 },
+    invoiceMetaGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+    invoiceMetaItem: { width: '50%', marginBottom: 5 },
+    invoiceMetaItemLabel: { fontSize: 6.5, color: '#666', marginBottom: 1 },
+    invoiceMetaItemValue: { fontSize: 8, fontFamily: B, color: '#000' },
 
     table: {},
     tHead: { flexDirection: 'row', backgroundColor: PRIMARY, paddingVertical: 5 },
@@ -107,8 +109,9 @@ export default function Template16({ invoice }) {
 
     totalsRow: { flexDirection: 'row', justifyContent: 'space-between' },
     notesCol: { flex: 1, padding: 10, borderRightWidth: 1, borderRightColor: PRIMARY },
-    totalsCol: { width: 190, padding: 10 },
-    totalLine: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 },
+    totalsCol: { width: 200, padding: 10 },
+    totalLine: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2.5, paddingHorizontal: 4 },
+    totalLineAlt: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2.5, paddingHorizontal: 4, backgroundColor: '#F7F9F8' },
     totalLabel: { fontSize: 7.5, color: '#333' },
     totalVal: { fontSize: 7.5, fontFamily: M, color: '#000' },
     grandLine: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: PRIMARY, padding: 6, marginTop: 6 },
@@ -169,11 +172,11 @@ export default function Template16({ invoice }) {
         ) : null}
 
         <View style={s.outerBox}>
-          {/* Header */}
+          {/* Header — brand on left, TAX INVOICE badge inline on right */}
           <View style={s.headerRow}>
             <View style={s.brandRow}>
               {biz?.businessLogo && <Image src={biz.businessLogo} style={s.logo} />}
-              <View>
+              <View style={s.bizInfo}>
                 <Text style={s.bizName}>{bizName}</Text>
                 {biz?.gstin && <Text style={s.bizText}>GSTIN: {biz.gstin}</Text>}
                 {biz?.address?.street && <Text style={s.bizText}>{biz.address.street}</Text>}
@@ -181,20 +184,12 @@ export default function Template16({ invoice }) {
                 {biz?.phone && <Text style={s.bizText}>Mobile {biz.phone}</Text>}
               </View>
             </View>
-            <View style={s.metaBlock}>
-              <View style={s.docTypeTag}><Text>{docTitle}</Text></View>
-              <View style={{ marginTop: 8 }}>
-                <View style={s.metaRow}><Text style={s.metaLabel}>{isQuotation ? 'Quotation #' : 'Invoice #'}</Text><Text style={s.metaVal}>{invoice.invoiceNumber || invoice.quotationNumber}</Text></View>
-                <View style={s.metaRow}><Text style={s.metaLabel}>Date</Text><Text style={s.metaVal}>{new Date(invoice.issueDate).toLocaleDateString('en-GB')}</Text></View>
-                {invoice.dueDate && <View style={s.metaRow}><Text style={s.metaLabel}>{isQuotation ? 'Valid Until' : 'Due Date'}</Text><Text style={s.metaVal}>{new Date(invoice.dueDate).toLocaleDateString('en-GB')}</Text></View>}
-                {invoice.placeOfSupply && <View style={s.metaRow}><Text style={s.metaLabel}>Place of Supply</Text><Text style={s.metaVal}>{invoice.placeOfSupply}</Text></View>}
-              </View>
-            </View>
+            <View style={s.docTypeTag}><Text>{docTitle}</Text></View>
           </View>
 
-          {/* Bill to / Ship to */}
-          <View style={s.partiesRow}>
-            <View style={s.partyCol}>
+          {/* Bill To + Invoice Meta */}
+          <View style={s.billToRow}>
+            <View style={s.billToCol}>
               <Text style={s.partyLabel}>Bill To</Text>
               <Text style={s.partyName}>{client?.name}</Text>
               {client?.companyName && <Text style={s.partyText}>{client.companyName}</Text>}
@@ -203,12 +198,26 @@ export default function Template16({ invoice }) {
               {client?.phone && <Text style={s.partyText}>Ph: {client.phone}</Text>}
               {client?.gstin && <Text style={s.partyText}>GSTIN: {client.gstin}</Text>}
             </View>
-            <View style={s.partyColLast}>
-              <Text style={s.partyLabel}>Ship To</Text>
-              <Text style={s.partyName}>{client?.name}</Text>
-              {client?.address?.street && <Text style={s.partyText}>{client.address.street}</Text>}
-              {client?.address?.city && <Text style={s.partyText}>{client.address.city}, {client.address.state} {client.address.pincode}</Text>}
-              {!client?.address?.street && <Text style={s.partyText}>Same as billing address</Text>}
+            <View style={s.billToColLast}>
+              <Text style={s.partyLabel}>Invoice Details</Text>
+              <View style={s.invoiceMetaGrid}>
+                <View style={s.invoiceMetaItem}>
+                  <Text style={s.invoiceMetaItemLabel}>{isQuotation ? 'Quotation No.' : 'Invoice No.'}</Text>
+                  <Text style={s.invoiceMetaItemValue}>{invoice.invoiceNumber || invoice.quotationNumber || '—'}</Text>
+                </View>
+                <View style={s.invoiceMetaItem}>
+                  <Text style={s.invoiceMetaItemLabel}>Date</Text>
+                  <Text style={s.invoiceMetaItemValue}>{invoice.issueDate ? new Date(invoice.issueDate).toLocaleDateString('en-GB') : '—'}</Text>
+                </View>
+                <View style={s.invoiceMetaItem}>
+                  <Text style={s.invoiceMetaItemLabel}>{isQuotation ? 'Valid Until' : 'Due Date'}</Text>
+                  <Text style={s.invoiceMetaItemValue}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-GB') : '—'}</Text>
+                </View>
+                <View style={s.invoiceMetaItem}>
+                  <Text style={s.invoiceMetaItemLabel}>Place of Supply</Text>
+                  <Text style={s.invoiceMetaItemValue}>{invoice.placeOfSupply || '—'}</Text>
+                </View>
+              </View>
             </View>
           </View>
 
@@ -259,13 +268,44 @@ export default function Template16({ invoice }) {
               {invoice.termsAndConditions && (<><Text style={s.noteLabel}>Terms & Conditions</Text><Text style={s.noteText}>{invoice.termsAndConditions}</Text></>)}
             </View>
             <View style={s.totalsCol}>
-              <View style={s.totalLine}><Text style={s.totalLabel}>Taxable Amount</Text><Text style={s.totalVal}>{fmt(invoice.subtotal - (invoice.discountAmount || 0))}</Text></View>
-              {invoice.discountAmount > 0 && <View style={s.totalLine}><Text style={s.totalLabel}>Discount</Text><Text style={s.totalVal}>-{fmt(invoice.discountAmount)}</Text></View>}
-              {invoice.cgstTotal > 0 && <View style={s.totalLine}><Text style={s.totalLabel}>CGST</Text><Text style={s.totalVal}>{fmt(invoice.cgstTotal)}</Text></View>}
-              {invoice.sgstTotal > 0 && <View style={s.totalLine}><Text style={s.totalLabel}>SGST</Text><Text style={s.totalVal}>{fmt(invoice.sgstTotal)}</Text></View>}
-              {invoice.igstTotal > 0 && <View style={s.totalLine}><Text style={s.totalLabel}>IGST</Text><Text style={s.totalVal}>{fmt(invoice.igstTotal)}</Text></View>}
-              {invoice.vatTotal > 0 && <View style={s.totalLine}><Text style={s.totalLabel}>VAT</Text><Text style={s.totalVal}>{fmt(invoice.vatTotal)}</Text></View>}
-              <View style={s.grandLine}><Text style={s.grandLabel}>Total</Text><Text style={s.grandVal}>{currency} {fmt(invoice.total)}</Text></View>
+              <View style={s.totalLine}>
+                <Text style={s.totalLabel}>Taxable Amount</Text>
+                <Text style={s.totalVal}>{fmt(invoice.subtotal - (invoice.discountAmount || 0))}</Text>
+              </View>
+              {invoice.discountAmount > 0 && (
+                <View style={s.totalLineAlt}>
+                  <Text style={s.totalLabel}>Discount</Text>
+                  <Text style={s.totalVal}>-{fmt(invoice.discountAmount)}</Text>
+                </View>
+              )}
+              {invoice.cgstTotal > 0 && (
+                <View style={s.totalLine}>
+                  <Text style={s.totalLabel}>CGST</Text>
+                  <Text style={s.totalVal}>{fmt(invoice.cgstTotal)}</Text>
+                </View>
+              )}
+              {invoice.sgstTotal > 0 && (
+                <View style={s.totalLineAlt}>
+                  <Text style={s.totalLabel}>SGST</Text>
+                  <Text style={s.totalVal}>{fmt(invoice.sgstTotal)}</Text>
+                </View>
+              )}
+              {invoice.igstTotal > 0 && (
+                <View style={s.totalLine}>
+                  <Text style={s.totalLabel}>IGST</Text>
+                  <Text style={s.totalVal}>{fmt(invoice.igstTotal)}</Text>
+                </View>
+              )}
+              {invoice.vatTotal > 0 && (
+                <View style={s.totalLineAlt}>
+                  <Text style={s.totalLabel}>VAT</Text>
+                  <Text style={s.totalVal}>{fmt(invoice.vatTotal)}</Text>
+                </View>
+              )}
+              <View style={s.grandLine}>
+                <Text style={s.grandLabel}>Total</Text>
+                <Text style={s.grandVal}>{currency} {fmt(invoice.total)}</Text>
+              </View>
               {!isQuotation && paidAmount > 0 && (
                 isFullyPaid ? (
                   <View style={s.paidBadge}><View style={s.paidBadgeDot} /><Text style={s.paidBadgeText}>Amount Paid</Text></View>
@@ -315,3 +355,5 @@ export default function Template16({ invoice }) {
     </Document>
   );
 }
+
+/*Formal Tax Invoice*/
