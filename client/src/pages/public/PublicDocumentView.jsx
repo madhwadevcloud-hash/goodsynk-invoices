@@ -270,6 +270,12 @@ export default function PublicDocumentView() {
                 address: doc.user?.address || doc.businessAddress || '',
                 bankDetails: doc.user?.bankDetails || doc.bankDetails,
                 bankAccounts: doc.user?.bankAccounts || doc.bankAccounts,
+
+                // IMPORTANT: InvoiceView passes the logged-in user's plan to
+                // TemplateResolver. The public API also returns the owner's
+                // plan, so preserve it here to make watermark behavior
+                // exactly the same as the normal InvoiceView PDF.
+                plan: doc.user?.plan || doc.plan || '',
             };
 
             const invoiceForPDF = {
