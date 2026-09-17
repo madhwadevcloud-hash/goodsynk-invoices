@@ -942,6 +942,10 @@ export default function InvoiceForm() {
   const notePoints = form.notes || [];
   const termsPoints = form.termsAndConditions || [];
 
+  // Template 19 (Legal Services Boxed) has no 55-character restriction
+  // for Notes or Terms & Conditions. All other templates are limited to 55.
+  const isLegalServicesBoxed =
+    String(form.template || '').trim().toLowerCase() === 'template19';
 
   if (loading || checkingLimit) return <div className="flex-center" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
 
@@ -2210,15 +2214,36 @@ export default function InvoiceForm() {
                     value={point}
                     onChange={(e) => {
                       const next = [...notePoints];
-                      next[noteIdx] = e.target.value;
+                      let value = e.target.value;
+
+                      // Template 19 allows unlimited Notes.
+                      // Other templates are limited to 55 characters and
+                      // show a website notification when the limit is reached.
+                      if (!isLegalServicesBoxed && value.length > 55) {
+                        value = value.slice(0, 55);
+                        toast.error('Notes are limited to 55 characters for this template.', {
+                          id: `notes-limit-${noteIdx}`,
+                        });
+                      } else if (
+                        !isLegalServicesBoxed &&
+                        value.length === 55 &&
+                        notePoints[noteIdx]?.length < 55
+                      ) {
+                        toast.error('55 character limit reached for Notes.', {
+                          id: `notes-limit-${noteIdx}`,
+                        });
+                      }
+
+                      next[noteIdx] = value;
                       setField('notes', next);
                     }}
                     placeholder={`Point ${noteIdx + 1}`}
-                    maxLength={55}
                   />
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', minWidth: 40, textAlign: 'right' }}>
-                    {point.length}/55
-                  </span>
+                  {!isLegalServicesBoxed && (
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', minWidth: 40, textAlign: 'right' }}>
+                      {point.length}/55
+                    </span>
+                  )}
                   <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setField('notes', notePoints.filter((_, i) => i !== noteIdx))}><X size={14} /></button>
                 </div>
               ))}
@@ -2239,15 +2264,36 @@ export default function InvoiceForm() {
                     value={point}
                     onChange={(e) => {
                       const next = [...termsPoints];
-                      next[termIdx] = e.target.value;
+                      let value = e.target.value;
+
+                      // Template 19 allows unlimited Terms & Conditions.
+                      // Other templates are limited to 55 characters and
+                      // show a website notification when the limit is reached.
+                      if (!isLegalServicesBoxed && value.length > 55) {
+                        value = value.slice(0, 55);
+                        toast.error('Terms & Conditions are limited to 55 characters for this template.', {
+                          id: `terms-limit-${termIdx}`,
+                        });
+                      } else if (
+                        !isLegalServicesBoxed &&
+                        value.length === 55 &&
+                        termsPoints[termIdx]?.length < 55
+                      ) {
+                        toast.error('55 character limit reached for Terms & Conditions.', {
+                          id: `terms-limit-${termIdx}`,
+                        });
+                      }
+
+                      next[termIdx] = value;
                       setField('termsAndConditions', next);
                     }}
                     placeholder={`Term ${termIdx + 1}`}
-                    maxLength={55}
                   />
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', minWidth: 40, textAlign: 'right' }}>
-                    {point.length}/55
-                  </span>
+                  {!isLegalServicesBoxed && (
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', minWidth: 40, textAlign: 'right' }}>
+                      {point.length}/55
+                    </span>
+                  )}
                   <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setField('termsAndConditions', termsPoints.filter((_, i) => i !== termIdx))}><X size={14} /></button>
                 </div>
               ))}
