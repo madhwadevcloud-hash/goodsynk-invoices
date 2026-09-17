@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
+import { pdf } from '@react-pdf/renderer';
+import TemplateResolver from '../invoices/templates/TemplateResolver';
 import {
     Download, ChevronRight, X, AlertCircle, CheckCircle2, Clock,
     FileText, Copy, Check, Shield, Building2, Calendar,
@@ -196,24 +198,116 @@ export default function PublicDocumentView() {
     }, [detailsOpen]);
 
     const handleDownload = async () => {
-        if (downloading) return;
+        if (downloading || !doc) return;
+
         setDownloading(true);
+
         try {
-            const res = await fetch(`${API_BASE}/public/${docType}/${token}/pdf`);
-            if (!res.ok) throw new Error('Failed to fetch PDF');
-            const blob = await res.blob();
+            /*
+             * IMPORTANT:
+             *
+             * Do NOT call /public/:type/:token/pdf here.
+             *
+             * The normal website and email PDF are generated in the browser
+             * with the CLIENT TemplateResolver. The old public PDF endpoint
+             * used the separate server-side renderer, which can calculate
+             * item amounts differently (for example, showing tax-inclusive
+             * values such as 94,400 instead of the stored price 80,000).
+             *
+             * The public page has already loaded the document from the
+             * database through /public/:type/:token, so render that same
+             * database-backed document with the client TemplateResolver.
+             */
+            const isQuotation = docType === 'quotation';
+
+            const effectiveTemplate = String(
+                doc.template ||
+                (isQuotation ? doc.quotationTemplate : doc.invoiceTemplate) ||
+                (isQuotation
+                    ? doc.user?.quotationTemplate
+                    : doc.user?.invoiceTemplate) ||
+                'template1'
+            ).toLowerCase();
+
+            const templateColors =
+                doc.templateColors ||
+                (isQuotation
+                    ? doc.quotationTemplateColors
+                    : doc.invoiceTemplateColors) ||
+                (isQuotation
+                    ? doc.user?.quotationTemplateColors
+                    : doc.user?.invoiceTemplateColors) ||
+                {};
+
+            /*
+             * IMPORTANT FOR THE AMOUNT BUG:
+             *
+             * price is the stored unit/base price used by the normal client
+             * PDF renderer. Do not copy the tax-inclusive line total into
+             * amount. This keeps the public PDF consistent with the website
+             * and email PDF.
+             */
+            const normalizedItems = (doc.items || []).map((item) => {
+                const price = Number(item?.price ?? item?.rate ?? 0) || 0;
+                const quantity = Number(item?.quantity ?? 1) || 1;
+
+                return {
+                    ...item,
+                    price,
+                    rate: price,
+                    quantity,
+                    amount: price * quantity,
+                };
+            });
+
+            const userForPDF = {
+                ...(doc.user || {}),
+                name: doc.user?.name || doc.businessName || '',
+                email: doc.user?.email || doc.email || '',
+                businessName: doc.user?.businessName || doc.businessName || '',
+                businessLogo: doc.user?.businessLogo || doc.businessLogo || '',
+                phone: doc.user?.phone || doc.phone || '',
+                address: doc.user?.address || doc.businessAddress || '',
+                bankDetails: doc.user?.bankDetails || doc.bankDetails,
+                bankAccounts: doc.user?.bankAccounts || doc.bankAccounts,
+            };
+
+            const invoiceForPDF = {
+                ...doc,
+                user: userForPDF,
+                items: normalizedItems,
+                template: effectiveTemplate,
+                invoiceType: isQuotation ? 'quotation' : 'invoice',
+                templateColors,
+                _currency: doc.currency || doc._currency || 'INR',
+                _taxType: doc.taxType || doc._taxType,
+                _documentSettings: doc.documentSettings || doc._documentSettings,
+            };
+
+            const blob = await pdf(
+                <TemplateResolver invoice={invoiceForPDF} />
+            ).toBlob();
+
+            const label = isQuotation ? 'Quotation' : 'Invoice';
+            const number =
+                doc.number ||
+                doc.invoiceNumber ||
+                doc.quotationNumber ||
+                token;
+
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const label = docType === 'invoice' ? 'Invoice' : 'Quotation';
-            a.download = `${label}-${doc?.number || token}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${label}-${number}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Give the browser time to start the download before cleanup.
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         } catch (err) {
-            console.error('Download failed:', err);
-            window.open(`${API_BASE}/public/${docType}/${token}/pdf`, '_blank');
+            console.error('Public PDF download failed:', err);
+            window.alert('Unable to generate the PDF. Please try again.');
         } finally {
             setDownloading(false);
         }
