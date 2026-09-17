@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../api/services';
 import toast from 'react-hot-toast';
-import { Palette, CheckCircle2, X, Lock } from 'lucide-react';
+import { Palette, CheckCircle2, X, Lock, Eye } from 'lucide-react';
 import TemplatePreview from '../../components/TemplatePreview';
 const TEMPLATES = [
   { id: 'template1', name: 'Classic Blue', desc: 'A clean, universally trusted design with blue accents.', img: '/templates/t1.svg' },
@@ -36,6 +36,45 @@ const DEFAULT_COLORS = {
   invoice14: { primary: '#174A3A', secondary: '#B7D7C5' },
 };
 const FREE_TEMPLATES = ['template1', 'template2', 'template5'];
+
+const isFlatColorObject = (value) => Boolean(
+  value && typeof value === 'object' && (value.primary || value.secondary)
+);
+
+const getTemplateColors = (templateId, colorStore, currentDefaultTemplate) => {
+  const key = (templateId || 'template1').toLowerCase();
+  if (colorStore?.[key] && typeof colorStore[key] === 'object') {
+    return colorStore[key];
+  }
+
+  // Backward compatibility for users whose database still has the old
+  // { primary, secondary } format.
+  if (isFlatColorObject(colorStore)) {
+    const oldKey = (currentDefaultTemplate || '').toLowerCase();
+    if (!oldKey || oldKey === key) return colorStore;
+  }
+
+  return DEFAULT_COLORS[key] || DEFAULT_COLORS.template1;
+};
+
+const buildTemplateColorStore = (templateId, colors, existingStore, currentDefaultTemplate) => {
+  const next = {};
+
+  if (existingStore && typeof existingStore === 'object') {
+    if (isFlatColorObject(existingStore)) {
+      const oldKey = (currentDefaultTemplate || templateId || 'template1').toLowerCase();
+      next[oldKey] = { ...existingStore };
+    } else {
+      Object.entries(existingStore).forEach(([key, value]) => {
+        if (value && typeof value === 'object') next[key.toLowerCase()] = { ...value };
+      });
+    }
+  }
+
+  const key = (templateId || 'template1').toLowerCase();
+  next[key] = { ...(colors || DEFAULT_COLORS[key] || DEFAULT_COLORS.template1) };
+  return next;
+};
 const QUOTATION_PREVIEWS = {
   template1: '/templates/quotation1.svg',
   template2: '/templates/quotation2.svg',
@@ -57,50 +96,134 @@ export default function Templates() {
   const navigate = useNavigate();
   const [documentType, setDocumentType] = useState('invoice');
   const [activeTemplate, setActiveTemplate] = useState(user?.invoiceTemplate || 'template1');
-  const [templateColors, setTemplateColors] = useState(user?.invoiceTemplateColors || null);
+  const [templateColors, setTemplateColors] = useState(
+    getTemplateColors(user?.invoiceTemplate || 'template1', user?.invoiceTemplateColors, user?.invoiceTemplate)
+  );
   const [saving, setSaving] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState(null);
+  const [confirmTemplate, setConfirmTemplate] = useState(null);
   const isFreePlan = !user?.plan || String(user.plan).toLowerCase() === 'free';
-  const handleOpenPreview = (tmpl) => {
+
+  const currentTemplateKey = (documentType === 'quotation' ? user?.quotationTemplate : user?.invoiceTemplate) || 'template1';
+  const currentColorStore = documentType === 'quotation' ? user?.quotationTemplateColors : user?.invoiceTemplateColors;
+  const colorField = documentType === 'quotation' ? 'quotationTemplateColors' : 'invoiceTemplateColors';
+  const templateField = documentType === 'quotation' ? 'quotationTemplate' : 'invoiceTemplate';
+
+  const changeDocumentType = (type) => {
+    const nextTemplate = (type === 'quotation' ? user?.quotationTemplate : user?.invoiceTemplate) || 'template1';
+    const nextStore = type === 'quotation' ? user?.quotationTemplateColors : user?.invoiceTemplateColors;
+    setDocumentType(type);
+    setActiveTemplate(nextTemplate);
+    setTemplateColors(getTemplateColors(nextTemplate, nextStore, nextTemplate));
+    setPreviewTemplate(null);
+  };
+
+  const handleOpenPreview = (tmpl, colorsOnly = false) => {
     if (!FREE_TEMPLATES.includes(tmpl.id) && isFreePlan) {
       toast('Upgrade your plan to unlock this template', { icon: '🔒' });
       navigate('/upgrade');
       return;
     }
-    setPreviewTemplate(tmpl);
-    const selectedTemplate = documentType === 'quotation' ? user?.quotationTemplate : user?.invoiceTemplate;
-    const selectedColors = documentType === 'quotation' ? user?.quotationTemplateColors : user?.invoiceTemplateColors;
-    if (selectedTemplate === tmpl.id && selectedColors) {
-      setTemplateColors(selectedColors);
-    } else {
-      setTemplateColors(DEFAULT_COLORS[tmpl.id]);
-    }
+
+    const key = (tmpl.id || currentTemplateKey || 'template1').toLowerCase();
+    setPreviewTemplate({ ...tmpl, colorsOnly });
+    setTemplateColors(getTemplateColors(key, currentColorStore, currentTemplateKey));
   };
-  const selectTemplate = async (templateId) => {
+
+  // Opens the confirmation dialog inside the website.
+  // This intentionally does NOT use window.confirm/browser UI.
+  const selectTemplate = async (templateId, colorsOverride = templateColors) => {
     if (!FREE_TEMPLATES.includes(templateId) && isFreePlan) {
-      toast('Upgrade your plan to unlock this template', {
-        icon: '🔒',
-      });
+      toast('Upgrade your plan to unlock this template', { icon: '🔒' });
       navigate('/upgrade');
       return;
     }
-    setActiveTemplate(templateId);
+
+    const key = (templateId || 'template1').toLowerCase();
+    const templateName =
+      TEMPLATES.find((item) => item.id === templateId)?.name || 'this template';
+
+    setConfirmTemplate({
+      templateId,
+      templateName,
+      colors: { ...(colorsOverride || getTemplateColors(key, currentColorStore, currentTemplateKey)) },
+    });
+  };
+
+  const confirmSetAsDefault = async () => {
+    if (!confirmTemplate?.templateId || saving) return;
+
+    const templateId = confirmTemplate.templateId;
+    const key = templateId.toLowerCase();
+    const colorsOverride = confirmTemplate.colors || getTemplateColors(
+      key,
+      currentColorStore,
+      currentTemplateKey
+    );
+    const oldDefault = currentTemplateKey;
+    const existingStore = currentColorStore;
+    const mergedColorStore = buildTemplateColorStore(
+      key,
+      colorsOverride,
+      existingStore,
+      oldDefault
+    );
+
+    setConfirmTemplate(null);
     setSaving(true);
+
     try {
       const { data } = await authAPI.updateMe({
-        [documentType === 'quotation' ? 'quotationTemplate' : 'invoiceTemplate']: templateId,
-        [documentType === 'quotation' ? 'quotationTemplateColors' : 'invoiceTemplateColors']: templateColors
+        [templateField]: templateId,
+        [colorField]: mergedColorStore,
       });
+
       updateUser(data.user);
+      setActiveTemplate(templateId);
+      setTemplateColors(mergedColorStore[key] || DEFAULT_COLORS[key]);
       toast.success('Default template and colors updated');
       setPreviewTemplate(null);
-    } catch {
+    } catch (error) {
+      console.error('Failed to change template:', error);
       toast.error('Failed to change template');
-      setActiveTemplate(documentType === 'quotation' ? (user?.quotationTemplate || 'template1') : (user?.invoiceTemplate || 'template1'));
+      setActiveTemplate(currentTemplateKey);
+      setTemplateColors(
+        getTemplateColors(currentTemplateKey, currentColorStore, currentTemplateKey)
+      );
     } finally {
       setSaving(false);
     }
   };
+
+  const saveTemplateColorsOnly = async () => {
+    const key = (previewTemplate?.id || currentTemplateKey || 'template1').toLowerCase();
+    const mergedColorStore = buildTemplateColorStore(key, templateColors, currentColorStore, currentTemplateKey);
+    setSaving(true);
+    try {
+      const { data } = await authAPI.updateMe({ [colorField]: mergedColorStore });
+      updateUser(data.user);
+      setTemplateColors(mergedColorStore[key] || DEFAULT_COLORS[key]);
+      toast.success('Template colors saved');
+      setPreviewTemplate(null);
+    } catch (error) {
+      console.error('Failed to save template colors:', error);
+      toast.error('Failed to save template colors');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCardSelect = (tmpl) => {
+    if (tmpl.id && !FREE_TEMPLATES.includes(tmpl.id) && isFreePlan) {
+      toast('Upgrade your plan to unlock this template', { icon: '🔒' });
+      navigate('/upgrade');
+      return;
+    }
+    const key = (tmpl.id || currentTemplateKey || 'template1').toLowerCase();
+    const colors = getTemplateColors(key, currentColorStore, currentTemplateKey);
+    selectTemplate(tmpl.id, colors);
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -109,8 +232,12 @@ export default function Templates() {
           <p className="page-subtitle">Choose independent designs for invoices and quotations.</p>
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-        {['invoice', 'quotation'].map((type) => <button key={type} className={`btn ${documentType === type ? 'btn-primary' : 'btn-ghost'}`} onClick={() => { setDocumentType(type); setActiveTemplate(type === 'quotation' ? (user?.quotationTemplate || 'template1') : (user?.invoiceTemplate || 'template1')); setTemplateColors(type === 'quotation' ? user?.quotationTemplateColors : user?.invoiceTemplateColors); }}>{type === 'invoice' ? 'Invoice designs' : 'Quotation designs'}</button>)}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+        {['invoice', 'quotation'].map((type) => (
+          <button key={type} type="button" className={`btn ${documentType === type ? 'btn-primary' : 'btn-ghost'}`} onClick={() => changeDocumentType(type)}>
+            {type === 'invoice' ? 'Invoice designs' : 'Quotation designs'}
+          </button>
+        ))}
       </div>
       <div style={{
         display: 'grid',
@@ -124,22 +251,22 @@ export default function Templates() {
           return (
             <div
               key={tmpl.id}
-              onClick={() => {
-                handleOpenPreview(tmpl);
-              }}
+              onClick={() => handleCardSelect(tmpl)}
               style={{
-                background: 'var(--bg-card)',
+                background: isActive ? 'var(--bg-card)' : 'rgba(248,250,252,0.92)',
                 border: isActive ? '2px solid var(--primary)' : '1px solid var(--border)',
                 borderRadius: '16px',
-                padding: '20px',
+                padding: isActive ? '19px' : '20px',
                 minWidth: 0,
                 display: 'flex',
                 flexDirection: 'column',
                 cursor: 'pointer',
-                transition: 'all 0.2s',
+                transition: 'opacity 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease',
                 transform: isActive ? 'translateY(-2px)' : 'none',
                 boxShadow: isActive ? '0 8px 24px -6px rgba(99,102,241,0.2)' : 'var(--shadow)',
-                position: 'relative'
+                position: 'relative',
+                opacity: isLocked ? 0.42 : (isActive ? 1 : 0.58),
+                filter: isActive ? 'none' : 'saturate(0.72)',
               }}
             >
               <div style={{
@@ -209,6 +336,33 @@ export default function Templates() {
               <p style={{ minWidth: 0, margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, overflowWrap: 'anywhere' }}>
                 {tmpl.desc}
               </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14 }}>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={(e) => { e.stopPropagation(); handleOpenPreview(tmpl, false); }}
+                  style={{ minHeight: 38, fontSize: '0.75rem' }}
+                >
+                  <Eye size={14} /> Preview
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={(e) => { e.stopPropagation(); handleOpenPreview(tmpl, true); }}
+                  style={{ minHeight: 38, fontSize: '0.75rem' }}
+                >
+                  <Palette size={14} /> Custom Color
+                </button>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 5, marginTop: 8 }}>
+                {(() => {
+                  const colors = getTemplateColors(tmpl.id || currentTemplateKey, currentColorStore, currentTemplateKey);
+                  return <>
+                    <span title={`Primary ${colors.primary}`} style={{ width: 13, height: 13, borderRadius: '50%', background: colors.primary, border: '1px solid var(--border)' }} />
+                    {colors.secondary && <span title={`Secondary ${colors.secondary}`} style={{ width: 13, height: 13, borderRadius: '50%', background: colors.secondary, border: '1px solid var(--border)' }} />}
+                  </>;
+                })()}
+              </div>
             </div>
           );
         })}
@@ -220,8 +374,8 @@ export default function Templates() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)'
         }}>
           <div style={{
-            background: 'var(--bg-card)', borderRadius: '16px', width: '900px', maxWidth: '95vw',
-            maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden'
+            background: 'var(--bg-card)', borderRadius: '16px', width: previewTemplate.colorsOnly ? '900px' : '760px',
+            maxWidth: '95vw', maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden'
           }}>
             <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
@@ -233,7 +387,7 @@ export default function Templates() {
               </button>
             </div>
             <div style={{ flex: 1, overflow: 'auto', padding: '24px', backgroundColor: 'var(--bg-elevated)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-              <div style={{ position: 'relative', width: '100%', maxWidth: '500px' }}>
+              <div style={{ position: 'relative', width: '100%', maxWidth: previewTemplate.colorsOnly ? '500px' : '650px' }}>
                 <div style={{ position: 'relative' }}>
                   
                   <TemplatePreview
@@ -243,18 +397,24 @@ export default function Templates() {
                     seal={user?.businessSeal}
                     signature={user?.businessSignature}
                     alt={previewTemplate.name}
-                    style={{ width: '100%', boxShadow: 'var(--shadow-lg)', borderRadius: '8px' }}
+                    // Preview must show only the template artwork.
+                    // It must not open the browser's PDF viewer.
+                    templateColors={templateColors}
+                    user={user}
+                    isQuotation={documentType === 'quotation'}
+                    style={{ width: '100%', minHeight: 620, boxShadow: 'var(--shadow-lg)', borderRadius: '8px' }}
                     imageStyle={{ height: 'auto' }}
                     isFreePlan={isFreePlan}
                   />
 
                 </div>
               </div>
-              {/* Color Customization UI */}
-              <div style={{
-                width: '100%', maxWidth: '500px', padding: '20px',
-                background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border)'
-              }}>
+              {/* Color Customization UI — shown only from "Custom Color" */}
+              {previewTemplate.colorsOnly && (
+                <div style={{
+                  width: '100%', maxWidth: '500px', padding: '20px',
+                  background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border)'
+                }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                   <div style={{ padding: 8, background: 'var(--primary-bg)', borderRadius: 8, color: 'var(--primary)' }}>
                     <Palette size={18} />
@@ -295,28 +455,194 @@ export default function Templates() {
                     type="button"
                     className="btn btn-ghost btn-sm"
                     style={{ marginTop: 'auto', marginBottom: 6, fontSize: '0.75rem' }}
-                    onClick={() => setTemplateColors(DEFAULT_COLORS[previewTemplate.id])}
+                    onClick={() => setTemplateColors({ ...(DEFAULT_COLORS[previewTemplate.id] || DEFAULT_COLORS.template1) })}
                   >
                     Reset to Default
                   </button>
                 </div>
               </div>
+              )}
             </div>
             <div style={{ padding: '20px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '12px', background: 'var(--bg-card)' }}>
-              <button className="btn btn-ghost" onClick={() => setPreviewTemplate(null)}>Cancel</button>
-              {activeTemplate === previewTemplate.id ? (
-                <button className="btn btn-primary" disabled style={{ opacity: 0.7 }}>
-                  <CheckCircle2 size={16} /> Currently Default
-                </button>
-              ) : (
-                <button
-                  className="btn btn-primary"
-                  onClick={() => selectTemplate(previewTemplate.id)}
-                  disabled={saving}
-                >
-                  {saving ? 'Saving...' : 'Set as Default'}
-                </button>
+              <button className="btn btn-ghost" onClick={() => setPreviewTemplate(null)}>Close</button>
+              {previewTemplate.colorsOnly && (
+                <>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={saveTemplateColorsOnly}
+                    disabled={saving}
+                  >
+                    {saving ? 'Saving...' : 'Save Colors'}
+                  </button>
+                  {activeTemplate === previewTemplate.id ? (
+                    <button className="btn btn-primary" disabled style={{ opacity: 0.7 }}>
+                      <CheckCircle2 size={16} /> Currently Default
+                    </button>
+                  ) : (
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => selectTemplate(previewTemplate.id)}
+                      disabled={saving}
+                    >
+                      {saving ? 'Saving...' : 'Set as Default'}
+                    </button>
+                  )}
+                </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* In-website confirmation modal — no browser confirm dialog */}
+      {confirmTemplate && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="set-default-template-title"
+          onClick={() => !saving && setConfirmTemplate(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1100,
+            background: 'rgba(15, 23, 42, 0.62)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 20,
+            backdropFilter: 'blur(4px)',
+          }}
+        >
+          <div
+            onClick={(event) => event.stopPropagation()}
+            style={{
+              width: 'min(460px, 94vw)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: 18,
+              boxShadow: '0 24px 70px rgba(0,0,0,0.24)',
+              padding: 24,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+              <div
+                style={{
+                  width: 42,
+                  height: 42,
+                  flexShrink: 0,
+                  display: 'grid',
+                  placeItems: 'center',
+                  borderRadius: 12,
+                  background: 'var(--primary-bg)',
+                  color: 'var(--primary)',
+                }}
+              >
+                <CheckCircle2 size={21} />
+              </div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <h3
+                  id="set-default-template-title"
+                  style={{ margin: 0, fontSize: '1.05rem', fontWeight: 750 }}
+                >
+                  Set as Default?
+                </h3>
+                <p
+                  style={{
+                    margin: '8px 0 0',
+                    fontSize: '0.88rem',
+                    lineHeight: 1.55,
+                    color: 'var(--text-secondary)',
+                  }}
+                >
+                  Set <strong style={{ color: 'var(--text-primary)' }}>{confirmTemplate.templateName}</strong>{' '}
+                  as your default {documentType}? New {documentType}s will automatically use this template.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close confirmation"
+                disabled={saving}
+                onClick={() => setConfirmTemplate(null)}
+                style={{
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-muted)',
+                  width: 34,
+                  height: 34,
+                  borderRadius: '50%',
+                  display: 'grid',
+                  placeItems: 'center',
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  flexShrink: 0,
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div
+              style={{
+                marginTop: 20,
+                padding: 12,
+                borderRadius: 12,
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+              }}
+            >
+              <span
+                title={`Primary ${confirmTemplate.colors?.primary || ''}`}
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: '50%',
+                  background: confirmTemplate.colors?.primary || '#000',
+                  border: '1px solid var(--border)',
+                }}
+              />
+              {confirmTemplate.colors?.secondary && (
+                <span
+                  title={`Secondary ${confirmTemplate.colors.secondary}`}
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: '50%',
+                    background: confirmTemplate.colors.secondary,
+                    border: '1px solid var(--border)',
+                  }}
+                />
+              )}
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                These template colors will also be saved for this default.
+              </span>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 10,
+                marginTop: 22,
+              }}
+            >
+              <button
+                type="button"
+                className="btn btn-ghost"
+                disabled={saving}
+                onClick={() => setConfirmTemplate(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={saving}
+                onClick={confirmSetAsDefault}
+              >
+                {saving ? 'Saving...' : 'Yes, Set as Default'}
+              </button>
             </div>
           </div>
         </div>
