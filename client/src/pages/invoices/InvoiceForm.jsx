@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { invoiceAPI, clientAPI, productAPI, quotationAPI } from '../../api/services';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, Save, Download, Loader2, X, ChevronDown, Percent, Tag, Lock, Landmark, ArrowLeft, Eye, Settings } from 'lucide-react';
+import { Plus, Trash2, Save, Download, Loader2, X, ChevronDown, Percent, Tag, Palette, Lock, Landmark, ArrowLeft, Eye, Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import TemplatePreview from '../../components/TemplatePreview';
 import DocumentSettingsPanel from '../../components/DocumentSettingsPanel';
@@ -76,7 +76,6 @@ export const DEFAULT_COLORS = {
   template18: { primary: '#FFE500', secondary: '#2874F0' },
   template19: { primary: '#991B1B', secondary: '#DDD6FE' },
   template20: { primary: '#0F172A', secondary: '#38BDF8' },
-  restro: { primary: '#8B4513', secondary: '#F5E6D3' },
 };
 
 
@@ -94,32 +93,56 @@ export function resolveTemplateColors(templateKey, storedColors) {
 
 // Templates available on the free plan — everything else shows an "Upgrade" lock
 const FREE_TEMPLATES = ['template1', 'template2', 'template5'];
+const getNumberSequenceKey = (isQuotation) =>
+  isQuotation ? 'goodsynk_quotation_number_sequence' : 'goodsynk_invoice_number_sequence';
+
+const getNextSequentialNumber = (value) => {
+  const input = String(value || '').trim();
+  const match = input.match(/^(.*?)(\d+)$/);
+  if (!match) return '';
+
+  const prefix = match[1];
+  const numericPart = match[2];
+  const nextNumber = String(Number(numericPart) + 1).padStart(numericPart.length, '0');
+
+  return `${prefix}${nextNumber}`;
+};
+
+const getSavedNumberSequence = (isQuotation) => {
+  try {
+    const raw = localStorage.getItem(getNumberSequenceKey(isQuotation));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.current) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const saveNumberSequence = (isQuotation, number) => {
+  const normalized = String(number || '').trim();
+  if (!normalized) return;
+
+  const next = getNextSequentialNumber(normalized);
+  if (!next) return;
+
+  try {
+    localStorage.setItem(
+      getNumberSequenceKey(isQuotation),
+      JSON.stringify({
+        current: normalized,
+        next,
+        updatedAt: new Date().toISOString(),
+      })
+    );
+  } catch {
+    // localStorage unavailable — numbering still works for the current document.
+  }
+};
+
 
 export default function InvoiceForm() {
-
-  // ── Mobile viewport / accidental zoom protection ─────────────────────────
-  useEffect(() => {
-    let viewport = document.querySelector('meta[name="viewport"]');
-    const previousContent = viewport?.getAttribute('content') || null;
-
-    if (!viewport) {
-      viewport = document.createElement('meta');
-      viewport.name = 'viewport';
-      document.head.appendChild(viewport);
-    }
-
-    viewport.setAttribute(
-      'content',
-      'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'
-    );
-
-    return () => {
-      if (previousContent !== null) {
-        viewport.setAttribute('content', previousContent);
-      }
-    };
-  }, []);
-
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -132,6 +155,8 @@ export default function InvoiceForm() {
   const DRAFT_KEY = isQuotation ? 'draft_quotation' : 'draft_invoice';
   const DRAFT_CLIENT_QUERY_KEY = isQuotation ? 'draft_quotation_clientQuery' : 'draft_invoice_clientQuery';
   const DRAFT_DISCOUNT_KEY = isQuotation ? 'draft_quotation_discountConfig' : 'draft_invoice_discountConfig';
+  const CUSTOM_NUMBER_SEQUENCE_KEY = getNumberSequenceKey(isQuotation);
+
 
 
   const [clients, setClients] = useState([]);
@@ -142,6 +167,28 @@ export default function InvoiceForm() {
   const [usage, setUsage] = useState(null);
   const [checkingLimit, setCheckingLimit] = useState(false);
   const { user: currentUser } = useAuth();
+
+  // Prevent mobile browsers from zooming the page when an input receives focus.
+  // Keeping form controls at 16px+ also avoids the common iOS input auto-zoom.
+  useEffect(() => {
+    let viewport = document.querySelector('meta[name="viewport"]');
+    if (!viewport) {
+      viewport = document.createElement('meta');
+      viewport.name = 'viewport';
+      document.head.appendChild(viewport);
+    }
+
+    const previousContent = viewport.getAttribute('content');
+    viewport.setAttribute(
+      'content',
+      'width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover'
+    );
+
+    return () => {
+      if (previousContent) viewport.setAttribute('content', previousContent);
+    };
+  }, []);
+
   const [showHsn, setShowHsn] = useState(true);
   const [lineSearchQuery, setLineSearchQuery] = useState('');
   const [lineSearchOpen, setLineSearchOpen] = useState(false);
@@ -316,35 +363,12 @@ export default function InvoiceForm() {
     setTaxModal(false);
   };
 
-  // Keep invoice/quotation dates inside the current calendar year.
-  // Using local date parts avoids UTC timezone shifts around midnight.
-  const getLocalDateString = (date = new Date()) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  const currentYear = new Date().getFullYear();
-  const currentYearStart = `${currentYear}-01-01`;
-  const currentYearEnd = `${currentYear}-12-31`;
-  const todayDate = getLocalDateString();
-
-  const isCurrentYearDate = (value) => {
-    if (!value || typeof value !== 'string') return false;
-    return value >= currentYearStart && value <= currentYearEnd;
-  };
-
-  const normalizeCurrentYearDate = (value, fallback = todayDate) => {
-    return isCurrentYearDate(value) ? value : fallback;
-  };
-
   const createBlankForm = () => ({
     client: '',
     invoiceType: docType,
     invoiceNumber: '',
-    issueDate: todayDate,
-    dueDate: todayDate,
+    issueDate: new Date().toISOString().split('T')[0],
+    dueDate: '',
     isInterstate: false,
     taxType: 'gst_india',
     notes: [],
@@ -353,8 +377,13 @@ export default function InvoiceForm() {
     roundOff: false,
     selectedBankIndex: 0,
     paymentInfo: '',
-    template: '',
-    templateColors: null,
+    // A brand-new invoice/quotation always starts with the account default
+    // selected in the Document Templates section.
+    template: ((isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) || 'template1').toLowerCase(),
+    templateColors: resolveTemplateColors(
+      ((isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) || 'template1').toLowerCase(),
+      isQuotation ? currentUser?.quotationTemplateColors : currentUser?.invoiceTemplateColors
+    ),
     items: [],
   });
 
@@ -373,21 +402,68 @@ export default function InvoiceForm() {
     return createBlankForm();
   });
 
-
-  // Invoice and quotation forms share this component, so React can keep the
-  // component mounted while the route changes. Restore the correct draft when
-  // switching document types instead of carrying the previous form across.
+  // Restore the correct draft/numbering when opening a new document.
+  // The draft restore and custom-number restore are intentionally handled in
+  // one effect so a blank draft cannot overwrite the saved next number.
   useEffect(() => {
-    if (isEdit || location.state?.formDraft || location.state?.newClientId) return;
+    if (isEdit || location.state?.formDraft || location.state?.newClientId || !currentUser) return;
+
     try {
       const saved = localStorage.getItem(DRAFT_KEY);
-      setForm(saved ? JSON.parse(saved) : createBlankForm());
+      const restoredForm = saved ? JSON.parse(saved) : createBlankForm();
+      const savedSequence = getSavedNumberSequence(isQuotation);
+
+      if (!saved && savedSequence?.next) {
+        // Example: after saving MUI-220, the next new document starts at MUI-221.
+        restoredForm.invoiceNumber = savedSequence.next;
+        setIsCustomNumber(true);
+        setCustomNumberInput(savedSequence.next);
+      } else if (!saved) {
+        setIsCustomNumber(false);
+        setCustomNumberInput('');
+      }
+
+      // Do not let an old local draft override the company's current
+      // template preference when starting a new document.
+      const defaultTemplate = (
+        (isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) ||
+        'template1'
+      ).toLowerCase();
+      restoredForm.template = defaultTemplate;
+      restoredForm.templateColors = resolveTemplateColors(
+        defaultTemplate,
+        isQuotation ? currentUser?.quotationTemplateColors : currentUser?.invoiceTemplateColors
+      );
+
+      setForm(restoredForm);
       setClientQuery(localStorage.getItem(DRAFT_CLIENT_QUERY_KEY) || '');
     } catch (err) {
-      setForm(createBlankForm());
+      const restoredForm = createBlankForm();
+      const savedSequence = getSavedNumberSequence(isQuotation);
+
+      if (savedSequence?.next) {
+        restoredForm.invoiceNumber = savedSequence.next;
+        setIsCustomNumber(true);
+        setCustomNumberInput(savedSequence.next);
+      } else {
+        setIsCustomNumber(false);
+        setCustomNumberInput('');
+      }
+
+      const defaultTemplate = (
+        (isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) ||
+        'template1'
+      ).toLowerCase();
+      restoredForm.template = defaultTemplate;
+      restoredForm.templateColors = resolveTemplateColors(
+        defaultTemplate,
+        isQuotation ? currentUser?.quotationTemplateColors : currentUser?.invoiceTemplateColors
+      );
+
+      setForm(restoredForm);
       setClientQuery('');
     }
-  }, [isQuotation]);
+  }, [DRAFT_KEY, DRAFT_CLIENT_QUERY_KEY, isEdit, isQuotation, currentUser, location.state?.formDraft, location.state?.newClientId]);
 
   useEffect(() => {
     if (isEdit) return;
@@ -476,8 +552,8 @@ export default function InvoiceForm() {
           client: inv.client?._id || '',
           invoiceType: inv.invoiceType || docType,
           invoiceNumber: inv.invoiceNumber || '',
-          issueDate: normalizeCurrentYearDate(inv.issueDate ? getLocalDateString(new Date(inv.issueDate)) : '', todayDate),
-          dueDate: normalizeCurrentYearDate(inv.dueDate ? getLocalDateString(new Date(inv.dueDate)) : '', todayDate),
+          issueDate: inv.issueDate ? new Date(inv.issueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          dueDate: inv.dueDate ? new Date(inv.dueDate).toISOString().split('T')[0] : '',
           isInterstate: inv.isInterstate || false,
           taxType: inv.taxType || 'gst_india',
           notes: inv.notes ? inv.notes.split('\n') : [],
@@ -502,13 +578,17 @@ export default function InvoiceForm() {
       // form doesn't already have a value — this preserves a restored draft's
       // choices instead of clobbering them every time this effect re-runs.
       setForm(f => {
-        const resolvedTemplate = f.template || (isQuotation ? currentUser.quotationTemplate : currentUser.invoiceTemplate) || 'template1';
-        const tptKey = resolvedTemplate.toLowerCase();
+        const resolvedTemplate = (
+          (isQuotation ? currentUser.quotationTemplate : currentUser.invoiceTemplate) ||
+          'template1'
+        ).toLowerCase();
+
         return {
           ...f,
+          // The account-level template is the default for every new document.
           template: resolvedTemplate,
-          templateColors: f.templateColors || resolveTemplateColors(
-            tptKey,
+          templateColors: resolveTemplateColors(
+            resolvedTemplate,
             isQuotation ? currentUser.quotationTemplateColors : currentUser.invoiceTemplateColors
           ),
           currency: f.currency || currentUser.currency || 'INR',
@@ -533,6 +613,32 @@ export default function InvoiceForm() {
   }, []);
 
   const setField = (key, val) => setForm((f) => ({ ...f, [key]: val }));
+
+  // Resolve the colors saved for a specific template. Supports both the
+  // current per-template store and the older flat { primary, secondary } format.
+  const getColorsForTemplate = (templateId) => {
+    const key = (
+      templateId ||
+      (isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) ||
+      'template1'
+    ).toLowerCase();
+
+    const storedColors = isQuotation
+      ? currentUser?.quotationTemplateColors
+      : currentUser?.invoiceTemplateColors;
+
+    const defaults = DEFAULT_COLORS[key] || DEFAULT_COLORS.template1;
+
+    if (storedColors?.[key] && typeof storedColors[key] === 'object') {
+      return { ...defaults, ...storedColors[key] };
+    }
+
+    if (storedColors?.primary || storedColors?.secondary) {
+      return { ...defaults, ...storedColors };
+    }
+
+    return { ...defaults };
+  };
 
   const setItem = (idx, key, val) =>
     setForm((f) => ({ ...f, items: f.items.map((item, i) => i === idx ? { ...item, [key]: val } : item) }));
@@ -720,17 +826,6 @@ export default function InvoiceForm() {
     }
   };
 
-  // Correct any old draft/browser-saved dates that fall outside the current year.
-  useEffect(() => {
-    setForm((f) => {
-      if (!f) return f;
-      const normalizedIssueDate = normalizeCurrentYearDate(f.issueDate, todayDate);
-      const normalizedDueDate = normalizeCurrentYearDate(f.dueDate, normalizedIssueDate);
-      if (normalizedIssueDate === f.issueDate && normalizedDueDate === f.dueDate) return f;
-      return { ...f, issueDate: normalizedIssueDate, dueDate: normalizedDueDate };
-    });
-  }, [currentYear]);
-
   const handleSubmit = async (e, shouldDownload = false) => {
     e.preventDefault();
     if (!form.client) return toast.error('Please select a client');
@@ -739,8 +834,21 @@ export default function InvoiceForm() {
     setSaving(true);
     if (shouldDownload) setDownloading(true);
 
+    const normalizedCustomNumber = isCustomNumber
+      ? String(customNumberInput || form.invoiceNumber || '').trim()
+      : '';
+
+    if (isCustomNumber && !normalizedCustomNumber) {
+      toast.error(`Please enter a ${docLabel.toLowerCase()} number`);
+      setSaving(false);
+      setDownloading(false);
+      return;
+    }
+
     const body = {
       ...form,
+      invoiceNumber: isCustomNumber ? normalizedCustomNumber : '',
+      isCustomNumber,
       notes: serializeNotes(form.notes.map((n) => n.trim()).filter(Boolean)),
       termsAndConditions: serializeNotes(form.termsAndConditions.map((t) => t.trim()).filter(Boolean)),
       selectedBankIndex: Number(form.selectedBankIndex || 0),
@@ -758,6 +866,25 @@ export default function InvoiceForm() {
         const res = await docAPI.create(body);
         savedInvoice = res.data.invoice;
         toast.success(`${docLabel} created`);
+
+        // Keep the sequence only after the server confirms the document was created.
+        // Example: MUI-220 -> next new document is MUI-221.
+        if (isCustomNumber && savedInvoice?.invoiceNumber) {
+          saveNumberSequence(isQuotation, savedInvoice.invoiceNumber);
+
+          // The backend is authoritative. Store the returned number and its
+          // next value so a newly opened form immediately shows the next number.
+          const serverNumber = String(savedInvoice.invoiceNumber).trim();
+          const serverNext = getNextSequentialNumber(serverNumber);
+
+          if (serverNext) {
+            setCustomNumberInput(serverNext);
+            setForm((prev) => ({
+              ...prev,
+              invoiceNumber: serverNext,
+            }));
+          }
+        }
       }
 
       if (shouldDownload) {
@@ -815,886 +942,447 @@ export default function InvoiceForm() {
   const notePoints = form.notes || [];
   const termsPoints = form.termsAndConditions || [];
 
+
   if (loading || checkingLimit) return <div className="flex-center" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
 
+  const responsiveStyles = `
+    .invoice-form-page-header {
+      gap: 16px;
+    }
+
+    .invoice-form-actions {
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .invoice-action-btn {
+      min-height: 42px;
+      white-space: nowrap;
+    }
+
+    .document-number-group {
+      min-width: 0;
+    }
+
+    .document-number-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    .document-number-label {
+      display: block;
+    }
+
+    .document-number-helper {
+      margin: 4px 0 0;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      line-height: 1.45;
+      max-width: 420px;
+    }
+
+    .custom-number-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 44px;
+      cursor: pointer;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .custom-number-switch input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .custom-number-slider {
+      width: 46px;
+      height: 26px;
+      padding: 3px;
+      border-radius: 999px;
+      background: var(--border);
+      transition: background 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .custom-number-slider span {
+      display: block;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      transform: translateX(0);
+      transition: transform 0.2s ease;
+    }
+
+    .custom-number-switch input:checked + .custom-number-slider {
+      background: var(--primary);
+    }
+
+    .custom-number-switch input:checked + .custom-number-slider span {
+      transform: translateX(20px);
+    }
+
+    .custom-number-switch-text {
+      color: var(--text-primary);
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .custom-number-panel {
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg-elevated);
+    }
+
+    .custom-number-input-row {
+      display: flex;
+      width: 100%;
+    }
+
+    .custom-number-input-wrap {
+      position: relative;
+      width: 100%;
+    }
+
+    .custom-number-input {
+      min-height: 46px;
+      padding-left: 42px !important;
+      font-size: 16px !important;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .custom-number-input-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      background: var(--primary-bg);
+      color: var(--primary);
+      font-size: 0.78rem;
+      font-weight: 800;
+      pointer-events: none;
+    }
+
+    .custom-number-explanation {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+    }
+
+    .custom-number-example {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .custom-number-example > span:last-child {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .custom-number-example strong {
+      font-size: 0.76rem;
+      color: var(--text-primary);
+    }
+
+    .custom-number-example small {
+      margin-top: 2px;
+      color: var(--text-muted);
+      font-size: 0.68rem;
+      line-height: 1.35;
+    }
+
+    .sequence-step {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--primary-bg);
+      color: var(--primary);
+      font-size: 0.72rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .sequence-arrow {
+      color: var(--text-muted);
+      font-size: 1rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .custom-number-next-preview,
+    .custom-number-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 9px 10px;
+      border-radius: 9px;
+      font-size: 0.72rem;
+      line-height: 1.45;
+    }
+
+    .custom-number-next-preview {
+      color: var(--primary);
+      background: var(--primary-bg);
+    }
+
+    .custom-number-warning {
+      color: var(--text-secondary);
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+
+    .custom-number-next-preview strong,
+    .custom-number-warning strong {
+      font-weight: 800;
+    }
+
+    .next-preview-dot {
+      width: 8px;
+      height: 8px;
+      margin-top: 5px;
+      border-radius: 50%;
+      background: var(--primary);
+      flex-shrink: 0;
+    }
+
+    .auto-number-panel {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 46px;
+      padding: 10px 12px;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      background: var(--bg-elevated);
+    }
+
+    .auto-number-icon {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .auto-number-panel > div:last-child {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .auto-number-panel strong {
+      color: var(--text-primary);
+      font-size: 0.78rem;
+    }
+
+    .auto-number-panel span {
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      margin-top: 2px;
+      line-height: 1.35;
+    }
+
+    .touch-target {
+      min-height: 44px !important;
+    }
+
+    /* Mobile form controls: 16px prevents browser input auto-zoom and makes
+       controls much easier to tap. */
+    .invoice-form-page-header input,
+    .invoice-form-page-header button,
+    .invoice-form-page-header select,
+    form .form-control {
+      font-size: 16px;
+    }
+
+    form button,
+    form select,
+    form input {
+      touch-action: manipulation;
+    }
+
+    @media (max-width: 900px) {
+      .invoice-form-page-header {
+        align-items: flex-start !important;
+        flex-direction: column;
+      }
+
+      .invoice-form-actions {
+        width: 100%;
+      }
+
+      .invoice-action-btn {
+        flex: 1;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .invoice-form-page-header {
+        padding-bottom: 4px;
+      }
+
+      .invoice-form-actions {
+        display: grid !important;
+        grid-template-columns: 1fr 1.35fr;
+        width: 100%;
+        gap: 8px !important;
+      }
+
+      .invoice-action-btn {
+        width: 100%;
+        min-height: 46px;
+        padding: 8px 10px !important;
+      }
+
+      .document-number-header {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .custom-number-switch {
+        width: 100%;
+        padding: 9px 10px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--bg-elevated);
+        justify-content: flex-start;
+      }
+
+      .custom-number-switch-text {
+        font-size: 0.8rem;
+      }
+
+      .custom-number-explanation {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .sequence-arrow {
+        display: none;
+      }
+
+      .custom-number-example {
+        padding: 8px;
+        border-radius: 8px;
+        background: var(--bg-elevated);
+      }
+
+      .custom-number-panel {
+        padding: 10px;
+      }
+
+      /* The line-item table remains horizontally scrollable rather than
+         shrinking tiny controls until they become unusable. */
+      .card > div[style*="overflowX"] {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+      }
+
+      .card > div[style*="overflowX"] table {
+        min-width: 980px;
+      }
+
+      .card-header {
+        gap: 10px;
+      }
+
+      .card-header .btn {
+        min-height: 44px;
+        padding: 8px 12px;
+      }
+
+      .form-grid,
+      .form-grid-3 {
+        grid-template-columns: 1fr !important;
+      }
+
+      .template-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      }
+
+      .document-number-input {
+        font-size: 16px !important;
+      }
+
+      .custom-number-slider {
+        width: 48px;
+        height: 28px;
+      }
+
+      .custom-number-slider span {
+        width: 22px;
+        height: 22px;
+      }
+
+      .custom-number-switch input:checked + .custom-number-slider span {
+        transform: translateX(20px);
+      }
+    }
+
+    @media (max-width: 420px) {
+      .invoice-action-btn {
+        font-size: 0.78rem !important;
+      }
+
+      .invoice-form-page-header .page-title {
+        font-size: 1.35rem;
+      }
+
+      .invoice-form-page-header .page-subtitle {
+        font-size: 0.76rem;
+      }
+
+      .custom-number-switch-text {
+        font-size: 0.75rem;
+      }
+
+      .custom-number-input {
+        min-height: 48px;
+      }
+
+      .card {
+        padding: 14px !important;
+      }
+    }
+  `;
+
   return (
-    <form onSubmit={handleSubmit} className="invoice-form-responsive">
-
-      {/* ── Responsive/mobile styles for InvoiceForm ─────────────────────── */}
-      <style>{`
-        .invoice-form-responsive {
-          width: 100%;
-          max-width: 100%;
-          overflow-x: hidden;
-          box-sizing: border-box;
-        }
-
-        .invoice-form-responsive *,
-        .invoice-form-responsive *::before,
-        .invoice-form-responsive *::after {
-          box-sizing: border-box;
-        }
-
-        .invoice-form-responsive input,
-        .invoice-form-responsive select,
-        .invoice-form-responsive textarea,
-        .invoice-form-responsive button {
-          -webkit-tap-highlight-color: transparent;
-        }
-
-        /* Keep iOS/Android from automatically zooming when a field receives focus. */
-        .invoice-form-responsive input,
-        .invoice-form-responsive select,
-        .invoice-form-responsive textarea {
-          font-size: 16px !important;
-          line-height: 1.35;
-        }
-
-        .invoice-form-responsive button {
-          touch-action: manipulation;
-        }
-
-        .invoice-form-responsive .btn {
-          min-height: 42px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          white-space: nowrap;
-        }
-
-        .invoice-form-responsive .btn-sm {
-          min-height: 40px;
-        }
-
-        .invoice-form-responsive .btn svg {
-          width: 20px;
-          height: 20px;
-          flex: 0 0 20px;
-          stroke-width: 2.2;
-        }
-
-        .invoice-form-responsive .btn-sm svg {
-          width: 19px;
-          height: 19px;
-          flex-basis: 19px;
-        }
-
-        .invoice-form-responsive .page-header {
-          width: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 16px;
-          flex-wrap: wrap;
-        }
-
-        .invoice-form-responsive .page-header > .flex:last-child {
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          gap: 10px;
-          flex-wrap: wrap;
-        }
-
-        .invoice-form-responsive .card {
-          max-width: 100%;
-          min-width: 0;
-        }
-
-        .invoice-form-responsive .form-grid,
-        .invoice-form-responsive .form-grid-3 {
-          min-width: 0;
-        }
-
-        .invoice-form-responsive .form-grid > *,
-        .invoice-form-responsive .form-grid-3 > * {
-          min-width: 0;
-        }
-
-        .invoice-form-responsive .form-control {
-          min-height: 44px;
-        }
-
-        .invoice-form-responsive table {
-          min-width: 920px;
-        }
-
-        .invoice-form-responsive .invoice-items-scroll {
-          width: 100%;
-          max-width: 100%;
-          overflow-x: auto;
-          overflow-y: hidden;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: thin;
-        }
-
-        .invoice-form-responsive .invoice-items-scroll table {
-          width: max-content !important;
-          min-width: 920px;
-        }
-
-        .invoice-form-responsive .mobile-full-width {
-          width: 100%;
-          max-width: 100%;
-        }
-
-
-        /* Product picker: desktop stays compact, mobile becomes a clean touch-first panel. */
-        .invoice-form-responsive .product-search-wrap {
-          position: relative;
-        }
-
-        .invoice-form-responsive .product-picker {
-          position: absolute;
-          top: calc(100% + 8px);
-          left: 0;
-          right: 0;
-          z-index: 100;
-          background: var(--bg-card);
-          border: 1px solid var(--border);
-          border-radius: 14px;
-          box-shadow: 0 18px 45px rgba(0,0,0,0.22);
-          overflow: hidden;
-        }
-
-        .invoice-form-responsive .product-picker-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          padding: 12px 14px;
-          border-bottom: 1px solid var(--border);
-          background: var(--bg-elevated);
-        }
-
-        .invoice-form-responsive .product-picker-header > div {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-          min-width: 0;
-        }
-
-        .invoice-form-responsive .product-picker-header strong {
-          font-size: 0.86rem;
-        }
-
-        .invoice-form-responsive .product-picker-header span {
-          font-size: 0.7rem;
-          color: var(--text-muted);
-        }
-
-        .invoice-form-responsive .product-picker-close {
-          width: 40px;
-          height: 40px;
-          min-width: 40px;
-          border: 1px solid var(--border);
-          border-radius: 9px;
-          background: var(--bg-card);
-          color: var(--text-secondary);
-          display: grid;
-          place-items: center;
-          cursor: pointer;
-        }
-
-        .invoice-form-responsive .product-picker-list {
-          max-height: 360px;
-          overflow-y: auto;
-          overscroll-behavior: contain;
-          -webkit-overflow-scrolling: touch;
-        }
-
-        .invoice-form-responsive .product-picker-item {
-          width: 100%;
-          min-height: 62px;
-          display: grid;
-          grid-template-columns: 40px minmax(0, 1fr) auto 40px;
-          align-items: center;
-          gap: 10px;
-          padding: 10px 12px;
-          border: 0;
-          border-bottom: 1px solid var(--border);
-          background: var(--bg-card);
-          color: var(--text-primary);
-          text-align: left;
-          cursor: pointer;
-        }
-
-        .invoice-form-responsive .product-picker-item:hover,
-        .invoice-form-responsive .product-picker-item:focus-visible {
-          background: var(--bg-elevated);
-          outline: none;
-        }
-
-        .invoice-form-responsive .product-picker-item-icon {
-          width: 40px;
-          height: 40px;
-          display: grid;
-          place-items: center;
-          border-radius: 10px;
-          background: var(--primary-bg);
-          color: var(--primary);
-        }
-
-        .invoice-form-responsive .product-picker-item-info {
-          min-width: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 3px;
-        }
-
-        .invoice-form-responsive .product-picker-item-name {
-          font-size: 0.86rem;
-          font-weight: 700;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .invoice-form-responsive .product-picker-item-meta {
-          font-size: 0.7rem;
-          color: var(--text-secondary);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .invoice-form-responsive .product-picker-item-price {
-          font-size: 0.78rem;
-          font-weight: 700;
-          white-space: nowrap;
-        }
-
-        .invoice-form-responsive .product-picker-add {
-          width: 40px;
-          height: 40px;
-          display: grid;
-          place-items: center;
-          border-radius: 10px;
-          background: var(--primary);
-          color: #fff;
-        }
-
-        .invoice-form-responsive .product-picker-empty {
-          min-height: 180px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          padding: 24px;
-          text-align: center;
-          color: var(--text-muted);
-        }
-
-        .invoice-form-responsive .product-picker-empty strong {
-          color: var(--text-primary);
-          font-size: 0.86rem;
-        }
-
-        .invoice-form-responsive .product-picker-empty span {
-          font-size: 0.72rem;
-        }
-
-        .invoice-form-responsive .product-picker-empty-icon {
-          width: 52px;
-          height: 52px;
-          display: grid;
-          place-items: center;
-          border-radius: 14px;
-          background: var(--primary-bg);
-          color: var(--primary);
-          margin-bottom: 4px;
-        }
-
-        .invoice-form-responsive .product-picker-footer {
-          padding: 8px 12px;
-          text-align: center;
-          font-size: 0.68rem;
-          color: var(--text-muted);
-          background: var(--bg-elevated);
-        }
-
-        @media (max-width: 900px) {
-          .invoice-form-responsive .form-grid-3 {
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-          }
-
-          .invoice-form-responsive .page-header {
-            align-items: flex-start;
-          }
-
-          .invoice-form-responsive .page-header > .flex:last-child {
-            width: 100%;
-            justify-content: flex-start;
-          }
-
-          .invoice-form-responsive .page-header > .flex:last-child .btn {
-            flex: 1 1 180px;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .invoice-form-responsive {
-            width: 100%;
-            padding: 0;
-          }
-
-          .invoice-form-responsive .page-header {
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            gap: 14px;
-            margin-bottom: 16px;
-          }
-
-          .invoice-form-responsive .page-header > .flex:first-child {
-            width: 100%;
-            align-items: center;
-          }
-
-          .invoice-form-responsive .page-header > .flex:first-child .btn {
-            width: 44px;
-            min-width: 44px;
-            padding: 0;
-          }
-
-          .invoice-form-responsive .page-header > .flex:first-child .btn svg {
-            width: 22px;
-            height: 22px;
-          }
-
-          .invoice-form-responsive .page-header > .flex:first-child > div:last-child {
-            min-width: 0;
-          }
-
-          .invoice-form-responsive .page-title {
-            font-size: 1.35rem !important;
-            line-height: 1.25;
-            word-break: break-word;
-          }
-
-          .invoice-form-responsive .page-subtitle {
-            font-size: 0.82rem !important;
-            line-height: 1.45;
-          }
-
-          .invoice-form-responsive .page-header > .flex:last-child {
-            width: 100%;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-          }
-
-          .invoice-form-responsive .page-header > .flex:last-child .btn {
-            width: 100%;
-            min-width: 0;
-            min-height: 46px;
-            padding: 8px 12px;
-            font-size: 0.9rem;
-          }
-
-          .invoice-form-responsive .page-header > .flex:last-child .btn svg {
-            width: 21px;
-            height: 21px;
-          }
-
-          .invoice-form-responsive .card {
-            padding: 16px !important;
-            border-radius: 12px;
-            margin-bottom: 14px !important;
-          }
-
-          .invoice-form-responsive .card-title {
-            font-size: 1rem !important;
-          }
-
-          .invoice-form-responsive .form-grid,
-          .invoice-form-responsive .form-grid-3 {
-            grid-template-columns: 1fr !important;
-            gap: 14px !important;
-          }
-
-          .invoice-form-responsive .form-label {
-            font-size: 0.82rem;
-            margin-bottom: 6px;
-          }
-
-          .invoice-form-responsive .form-control {
-            width: 100%;
-            min-width: 0 !important;
-            min-height: 46px;
-            padding: 10px 12px !important;
-            font-size: 16px !important;
-          }
-
-          .invoice-form-responsive textarea.form-control {
-            min-height: 90px;
-          }
-
-          .invoice-form-responsive .invoice-toolbar {
-            display: grid !important;
-            grid-template-columns: 1fr;
-            gap: 10px !important;
-          }
-
-          .invoice-form-responsive .invoice-toolbar > .btn {
-            width: 100%;
-            min-height: 46px;
-            justify-content: center;
-          }
-
-          .invoice-form-responsive .invoice-line-header {
-            display: flex !important;
-            flex-direction: column;
-            align-items: stretch !important;
-            gap: 10px !important;
-          }
-
-          .invoice-form-responsive .invoice-line-header > div {
-            width: 100%;
-          }
-
-          .invoice-form-responsive .invoice-line-header .btn {
-            width: 100%;
-            min-height: 46px;
-          }
-
-          .invoice-form-responsive .invoice-items-scroll {
-            margin-left: -4px;
-            width: calc(100% + 8px);
-            padding-bottom: 6px;
-          }
-
-          .invoice-form-responsive .invoice-items-scroll::after {
-            content: 'Swipe left/right to view all item fields';
-            display: block;
-            position: sticky;
-            left: 0;
-            width: max-content;
-            padding: 6px 2px 0;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-          }
-
-          .invoice-form-responsive .invoice-items-scroll table {
-            min-width: 980px !important;
-            font-size: 0.88rem !important;
-          }
-
-          .invoice-form-responsive .invoice-items-scroll th {
-            font-size: 0.78rem !important;
-            padding: 10px 7px !important;
-          }
-
-          .invoice-form-responsive .invoice-items-scroll td {
-            padding: 7px 5px !important;
-          }
-
-          .invoice-form-responsive .invoice-items-scroll td .form-control {
-            min-height: 44px;
-          }
-
-          .invoice-form-responsive .invoice-items-scroll td button {
-            min-width: 44px;
-            min-height: 44px;
-          }
-
-          .invoice-form-responsive .invoice-items-scroll td button svg {
-            width: 20px;
-            height: 20px;
-          }
-
-          .invoice-form-responsive .invoice-items-scroll select {
-            min-height: 44px !important;
-          }
-
-          .invoice-form-responsive .invoice-total-wrapper {
-            width: 100% !important;
-            display: block !important;
-          }
-
-          .invoice-form-responsive .invoice-total-box {
-            width: 100% !important;
-            min-width: 0 !important;
-            padding: 14px !important;
-          }
-
-          .invoice-form-responsive .invoice-total-box span {
-            font-size: 0.88rem;
-          }
-
-          .invoice-form-responsive .invoice-total-box > div:last-child {
-            font-size: 1rem !important;
-          }
-
-          .invoice-form-responsive .bank-header {
-            flex-wrap: wrap;
-            gap: 12px !important;
-          }
-
-          .invoice-form-responsive .bank-header > div:last-child {
-            width: 100%;
-            display: grid !important;
-            grid-template-columns: 44px 1fr;
-            gap: 8px !important;
-          }
-
-          .invoice-form-responsive .bank-header > div:last-child > div {
-            min-width: 0;
-          }
-
-          .invoice-form-responsive .bank-header .btn {
-            min-height: 44px;
-          }
-
-          .invoice-form-responsive .bank-header .btn svg {
-            width: 20px;
-            height: 20px;
-          }
-
-          .invoice-form-responsive .bank-details-grid {
-            grid-template-columns: 1fr !important;
-          }
-
-          .invoice-form-responsive .notes-grid {
-            grid-template-columns: 1fr !important;
-          }
-
-          .invoice-form-responsive .notes-grid > .form-group > div {
-            padding: 9px !important;
-          }
-
-          .invoice-form-responsive .note-row {
-            display: grid !important;
-            grid-template-columns: 12px minmax(0, 1fr) 48px 44px !important;
-            align-items: center;
-            gap: 6px !important;
-          }
-
-          .invoice-form-responsive .note-row .form-control {
-            width: 100%;
-          }
-
-          .invoice-form-responsive .note-row > .btn {
-            width: 44px;
-            min-width: 44px;
-            padding: 0 !important;
-          }
-
-          .invoice-form-responsive .note-row > .btn svg {
-            width: 20px;
-            height: 20px;
-          }
-
-          .invoice-form-responsive .add-point-btn {
-            min-height: 44px;
-            width: 100%;
-          }
-
-          .invoice-form-responsive .template-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 12px !important;
-          }
-
-          .invoice-form-responsive .template-grid button {
-            min-height: 0 !important;
-          }
-
-          .invoice-form-responsive .template-grid button > div:last-child {
-            min-height: 44px !important;
-            padding: 7px 6px !important;
-            font-size: 0.78rem !important;
-          }
-
-          .invoice-form-responsive .template-color-section {
-            padding: 12px !important;
-          }
-
-          .invoice-form-responsive .template-color-controls {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px !important;
-          }
-
-          .invoice-form-responsive .template-color-controls > * {
-            min-width: 0;
-          }
-
-          .invoice-form-responsive .template-color-controls .btn {
-            grid-column: 1 / -1;
-            width: 100%;
-          }
-
-          .invoice-form-responsive .template-color-controls input[type="color"] {
-            width: 48px !important;
-            height: 48px !important;
-          }
-
-          .invoice-form-responsive .modal-overlay {
-            padding: 10px !important;
-            align-items: flex-start !important;
-            overflow-y: auto !important;
-          }
-
-          .invoice-form-responsive .modal-card {
-            width: 100% !important;
-            max-width: 100% !important;
-            max-height: calc(100vh - 20px) !important;
-            margin: auto 0;
-            padding: 18px !important;
-            border-radius: 14px !important;
-            overflow-y: auto !important;
-          }
-
-          .invoice-form-responsive .modal-card h3 {
-            font-size: 1rem !important;
-          }
-
-          .invoice-form-responsive .modal-actions {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px !important;
-          }
-
-          .invoice-form-responsive .modal-actions .btn {
-            width: 100%;
-            min-height: 46px;
-          }
-
-          .invoice-form-responsive .discount-type-grid {
-            display: grid !important;
-            grid-template-columns: 1fr !important;
-          }
-
-          .invoice-form-responsive .discount-line {
-            display: grid !important;
-            grid-template-columns: minmax(0, 1.4fr) minmax(75px, 0.8fr) minmax(75px, 0.8fr) 44px !important;
-            gap: 6px !important;
-          }
-
-          .invoice-form-responsive .discount-line .btn {
-            width: 44px;
-            min-width: 44px;
-            padding: 0 !important;
-          }
-
-          .invoice-form-responsive .preview-modal-card {
-            width: 100% !important;
-            height: calc(100vh - 20px) !important;
-            max-height: calc(100vh - 20px) !important;
-            padding: 14px !important;
-            border-radius: 14px !important;
-          }
-
-          .invoice-form-responsive .preview-modal-content {
-            padding: 8px !important;
-          }
-
-          .invoice-form-responsive .preview-modal-content img,
-          .invoice-form-responsive .preview-modal-content > div {
-            max-width: none !important;
-          }
-
-          .invoice-form-responsive .preview-modal-actions {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px !important;
-          }
-
-          .invoice-form-responsive .preview-modal-actions .btn {
-            width: 100%;
-            min-height: 46px;
-          }
-        }
-
-
-        @media (max-width: 768px) {
-          .invoice-form-responsive .product-picker {
-            position: fixed;
-            left: 10px;
-            right: 10px;
-            top: max(72px, env(safe-area-inset-top) + 12px);
-            bottom: max(10px, env(safe-area-inset-bottom) + 10px);
-            width: auto;
-            max-height: none;
-            display: flex;
-            flex-direction: column;
-            border-radius: 16px;
-            box-shadow: 0 22px 60px rgba(0,0,0,0.35), 0 0 0 100vmax rgba(0,0,0,0.42);
-          }
-
-          .invoice-form-responsive .product-picker-header {
-            flex-shrink: 0;
-            padding: 14px;
-          }
-
-          .invoice-form-responsive .product-picker-header strong {
-            font-size: 0.96rem;
-          }
-
-          .invoice-form-responsive .product-picker-header span {
-            font-size: 0.74rem;
-          }
-
-          .invoice-form-responsive .product-picker-close {
-            width: 44px;
-            height: 44px;
-            min-width: 44px;
-          }
-
-          .invoice-form-responsive .product-picker-list {
-            flex: 1;
-            max-height: none;
-            min-height: 0;
-          }
-
-          .invoice-form-responsive .product-picker-item {
-            min-height: 76px;
-            grid-template-columns: 46px minmax(0, 1fr) auto 46px;
-            gap: 10px;
-            padding: 12px 10px;
-          }
-
-          .invoice-form-responsive .product-picker-item-icon,
-          .invoice-form-responsive .product-picker-add {
-            width: 46px;
-            height: 46px;
-          }
-
-          .invoice-form-responsive .product-picker-item-icon svg,
-          .invoice-form-responsive .product-picker-add svg {
-            width: 21px;
-            height: 21px;
-          }
-
-          .invoice-form-responsive .product-picker-item-name {
-            font-size: 0.92rem;
-          }
-
-          .invoice-form-responsive .product-picker-item-meta {
-            font-size: 0.74rem;
-            line-height: 1.35;
-            white-space: normal;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-          }
-
-          .invoice-form-responsive .product-picker-item-price {
-            font-size: 0.8rem;
-          }
-
-          .invoice-form-responsive .product-picker-footer {
-            flex-shrink: 0;
-            padding: 10px 12px;
-            font-size: 0.7rem;
-          }
-
-          .invoice-form-responsive .add-item-menu {
-            left: 0 !important;
-            right: 0 !important;
-            min-width: 0 !important;
-            width: 100%;
-          }
-
-          .invoice-form-responsive .add-item-menu button {
-            min-height: 50px;
-            font-size: 0.9rem;
-          }
-
-          .invoice-form-responsive .preview-modal-card {
-            gap: 10px !important;
-          }
-
-          .invoice-form-responsive .preview-modal-card h3 {
-            font-size: 1rem !important;
-          }
-
-          .invoice-form-responsive .preview-modal-content {
-            display: flex !important;
-            align-items: flex-start !important;
-            justify-content: flex-start !important;
-            overflow: auto !important;
-            padding: 10px !important;
-            -webkit-overflow-scrolling: touch;
-          }
-
-          .invoice-form-responsive .preview-modal-content > * {
-            flex: 0 0 auto;
-            width: 100% !important;
-            min-width: 0 !important;
-            max-width: 100% !important;
-          }
-
-          .invoice-form-responsive .preview-modal-content img,
-          .invoice-form-responsive .preview-modal-content svg,
-          .invoice-form-responsive .preview-modal-content canvas {
-            width: 100% !important;
-            max-width: 100% !important;
-            height: auto !important;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .invoice-form-responsive .card {
-            padding: 13px !important;
-          }
-
-          .invoice-form-responsive .page-title {
-            font-size: 1.2rem !important;
-          }
-
-          .invoice-form-responsive .page-subtitle {
-            font-size: 0.76rem !important;
-          }
-
-          .invoice-form-responsive .page-header > .flex:last-child {
-            grid-template-columns: 1fr;
-          }
-
-          .invoice-form-responsive .page-header > .flex:last-child .btn {
-            min-height: 48px;
-          }
-
-          .invoice-form-responsive .template-grid {
-            grid-template-columns: 1fr 1fr !important;
-            gap: 9px !important;
-          }
-
-          .invoice-form-responsive .template-grid button > div:last-child {
-            font-size: 0.72rem !important;
-          }
-
-          .invoice-form-responsive .template-color-controls {
-            grid-template-columns: 1fr;
-          }
-
-          .invoice-form-responsive .template-color-controls .btn {
-            grid-column: auto;
-          }
-
-          .invoice-form-responsive .discount-line {
-            grid-template-columns: 1fr 1fr 1fr 44px !important;
-          }
-
-          .invoice-form-responsive .modal-actions,
-          .invoice-form-responsive .preview-modal-actions {
-            grid-template-columns: 1fr;
-          }
-        }
-
-        /* Respect devices that already have a touch interface while keeping
-           the form readable and preventing horizontal page-level overflow. */
-        @media (pointer: coarse) {
-          .invoice-form-responsive button,
-          .invoice-form-responsive select,
-          .invoice-form-responsive input {
-            touch-action: manipulation;
-          }
-        }
-      `}</style>
-      <div className="page-header">
+    <>
+      <style>{responsiveStyles}</style>
+    <form onSubmit={handleSubmit}>
+      <div className="page-header invoice-form-page-header">
         <div className="flex gap-3" style={{ alignItems: 'center' }}>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate(basePath)}>
             <ArrowLeft size={16} />
@@ -1704,10 +1392,10 @@ export default function InvoiceForm() {
             <p className="page-subtitle">{isEdit ? `Editing ${form.invoiceNumber}` : `Fill in the details to create a ${docLabel.toLowerCase()}`}</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 invoice-form-actions">
           <button
             type="button"
-            className="btn btn-secondary"
+            className="btn btn-secondary invoice-action-btn"
             disabled={saving || downloading}
             onClick={(e) => handleSubmit(e, false)}
           >
@@ -1716,7 +1404,7 @@ export default function InvoiceForm() {
           </button>
           <button
             type="button"
-            className="btn btn-primary"
+            className="btn btn-primary invoice-action-btn"
             disabled={saving || downloading}
             onClick={(e) => handleSubmit(e, true)}
           >
@@ -1732,41 +1420,11 @@ export default function InvoiceForm() {
         <div className="form-grid">
           <div className="form-group">
             <label className="form-label">Issue Date *</label>
-            <input
-              type="date"
-              className="form-control"
-              min={currentYearStart}
-              max={currentYearEnd}
-              value={normalizeCurrentYearDate(form.issueDate, todayDate)}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (isCurrentYearDate(value)) setField('issueDate', value);
-                else {
-                  setField('issueDate', todayDate);
-                  toast.error(`Issue date must be within ${currentYear}.`);
-                }
-              }}
-            />
+            <input type="date" className="form-control" value={form.issueDate} onChange={(e) => setField('issueDate', e.target.value)} />
           </div>
           <div className="form-group">
             <label className="form-label">{isQuotation ? 'Validity' : 'Due Date'} *</label>
-            <input
-              type="date"
-              className="form-control"
-              required
-              min={form.issueDate && isCurrentYearDate(form.issueDate) ? form.issueDate : currentYearStart}
-              max={currentYearEnd}
-              value={normalizeCurrentYearDate(form.dueDate, form.issueDate && isCurrentYearDate(form.issueDate) ? form.issueDate : todayDate)}
-              onChange={(e) => {
-                const value = e.target.value;
-                const minimumDate = form.issueDate && isCurrentYearDate(form.issueDate) ? form.issueDate : currentYearStart;
-                if (isCurrentYearDate(value) && value >= minimumDate) setField('dueDate', value);
-                else {
-                  setField('dueDate', minimumDate);
-                  toast.error(`Due date must be within ${currentYear} and not before the issue date.`);
-                }
-              }}
-            />
+            <input type="date" className="form-control" required value={form.dueDate} onChange={(e) => setField('dueDate', e.target.value)} />
           </div>
         </div>
 
@@ -1833,73 +1491,127 @@ export default function InvoiceForm() {
               </div>
             )}
           </div>
-          <div className="form-group">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-              <label className="form-label" style={{ marginBottom: 0 }}>{docLabel} #</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Custom No.</span>
-                <label style={{ position: 'relative', display: 'inline-block', width: 34, height: 18, cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={isCustomNumber}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      setIsCustomNumber(checked);
-                      if (!checked) {
-                        setCustomNumberInput('');
-                        setField('invoiceNumber', '');
-                      }
-                    }}
-                    style={{ opacity: 0, width: 0, height: 0 }}
-                  />
-                  <span style={{
-                    position: 'absolute', inset: 0,
-                    backgroundColor: isCustomNumber ? 'var(--primary)' : 'var(--border)',
-                    borderRadius: 18, transition: '0.2s',
-                  }}>
-                    <span style={{
-                      position: 'absolute', content: '""', height: 14, width: 14, left: isCustomNumber ? 17 : 2, bottom: 2,
-                      backgroundColor: '#fff', borderRadius: '50%', transition: '0.2s',
-                    }} />
-                  </span>
+          <div className="form-group document-number-group">
+            <div className="document-number-header">
+              <div>
+                <label className="form-label document-number-label" style={{ marginBottom: 0 }}>
+                  {docLabel} Number
                 </label>
+                <p className="document-number-helper">
+                  {isCustomNumber
+                    ? 'Custom numbering is ON. Enter the starting number once; future numbers continue automatically.'
+                    : 'Automatic numbering will be generated when you save.'}
+                </p>
               </div>
+
+              <label className="custom-number-switch" title={isCustomNumber ? 'Turn off custom numbering' : 'Turn on custom numbering'}>
+                <input
+                  type="checkbox"
+                  checked={isCustomNumber}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setIsCustomNumber(checked);
+
+                    if (checked) {
+                      const existingValue =
+                        customNumberInput.trim() ||
+                        form.invoiceNumber?.trim() ||
+                        getSavedNumberSequence(isQuotation)?.next ||
+                        '';
+
+                      setCustomNumberInput(existingValue);
+                      if (existingValue) setField('invoiceNumber', existingValue);
+                    } else {
+                      setCustomNumberInput('');
+                      setField('invoiceNumber', '');
+                    }
+                  }}
+                  aria-label={`Use custom ${docLabel.toLowerCase()} numbering`}
+                />
+                <span className="custom-number-slider" aria-hidden="true">
+                  <span />
+                </span>
+                <span className="custom-number-switch-text">
+                  {isCustomNumber ? 'Custom numbering ON' : 'Use custom number'}
+                </span>
+              </label>
             </div>
 
             {isCustomNumber ? (
-              <div style={{ display: 'flex', gap: 6 }}>
-                <input
-                  className="form-control"
-                  placeholder={`Enter ${docLabel.toLowerCase()} no. (e.g. ${isQuotation ? 'QT' : 'INV'}-2026-001)`}
-                  value={customNumberInput}
-                  onChange={(e) => setCustomNumberInput(e.target.value)}
-                />
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  style={{ padding: '0 14px', whiteSpace: 'nowrap' }}
-                  onClick={() => {
-                    if (!customNumberInput.trim()) {
-                      toast.error(`Please enter a ${docLabel.toLowerCase()} number`);
-                      return;
-                    }
-                    setField('invoiceNumber', customNumberInput.trim());
-                    toast.success(`${docLabel} number set to ${customNumberInput.trim()}`);
-                  }}
-                >
-                  OK
-                </button>
+              <div className="custom-number-panel">
+                <div className="custom-number-input-row">
+                  <div className="custom-number-input-wrap">
+                    <input
+                      className="form-control custom-number-input"
+                      placeholder={`Example: ${isQuotation ? 'QT' : 'INV'}-2026-001 or MUI-220`}
+                      value={customNumberInput}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setCustomNumberInput(value);
+                        setField('invoiceNumber', value.trim());
+                      }}
+                      inputMode="text"
+                      autoComplete="off"
+                      aria-label={`${docLabel} custom number`}
+                    />
+                    <span className="custom-number-input-icon">#</span>
+                  </div>
+                </div>
+
+                <div className="custom-number-explanation">
+                  <div className="custom-number-example">
+                    <span className="sequence-step">1</span>
+                    <span>
+                      <strong>Starting number</strong>
+                      <small>Type the number you want to use.</small>
+                    </span>
+                  </div>
+
+                  <div className="sequence-arrow">→</div>
+
+                  <div className="custom-number-example">
+                    <span className="sequence-step">2</span>
+                    <span>
+                      <strong>Next number</strong>
+                      <small>
+                        {getNextSequentialNumber(customNumberInput)
+                          ? `Automatically becomes ${getNextSequentialNumber(customNumberInput)}`
+                          : 'Use a number ending with digits to continue the sequence.'}
+                      </small>
+                    </span>
+                  </div>
+                </div>
+
+                {customNumberInput.trim() && !getNextSequentialNumber(customNumberInput) && (
+                  <div className="custom-number-warning">
+                    <span>!</span>
+                    <span>
+                      <strong>Sequence tip:</strong> End your number with digits, for example
+                      <strong> MUI-220</strong>. The next document can then become <strong>MUI-221</strong>.
+                    </span>
+                  </div>
+                )}
+
+                {getNextSequentialNumber(customNumberInput) && (
+                  <div className="custom-number-next-preview">
+                    <span className="next-preview-dot" />
+                    <span>
+                      After saving <strong>{customNumberInput.trim()}</strong>, the next new {docLabel.toLowerCase()} will start at{' '}
+                      <strong>{getNextSequentialNumber(customNumberInput)}</strong>.
+                    </span>
+                  </div>
+                )}
               </div>
             ) : (
-              <input
-                className="form-control"
-                placeholder="Auto-generated on save"
-                value={form.invoiceNumber}
-                disabled
-                readOnly
-                style={{ opacity: 0.7, cursor: 'not-allowed' }}
-              />
+              <div className="auto-number-panel">
+                <div className="auto-number-icon">#</div>
+                <div>
+                  <strong>Automatic numbering</strong>
+                  <span>The system will generate the next available {docLabel.toLowerCase()} number when you save.</span>
+                </div>
+              </div>
             )}
+          </div>
           </div>
           <div className="form-group">
             <label className="form-label">Currency *</label>
@@ -1917,7 +1629,7 @@ export default function InvoiceForm() {
           </div>
         </div>
         {/* ── Configure Tax / Currency / Format toolbar ── */}
-        <div className="invoice-toolbar" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 12 }}>
 
           <button
             type="button"
@@ -1972,7 +1684,6 @@ export default function InvoiceForm() {
           </button>
 
         </div>
-      </div>
 
       {showDocSettings && (
         <DocumentSettingsPanel onClose={() => setShowDocSettings(false)} />
@@ -1980,15 +1691,15 @@ export default function InvoiceForm() {
 
       {/* Line Items */}
       <div className="card mb-4">
-        <div className="card-header invoice-line-header" style={{ position: 'relative' }}>
+        <div className="card-header" style={{ position: 'relative' }}>
           <h2 className="card-title">Line Items</h2>
           <div className="flex gap-2" style={{ position: 'relative' }}>
             {!showHsn && (
               <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: '0.75rem' }} onClick={() => setShowHsn(true)}>+ HSN</button>
             )}
-            <button type="button" className="btn btn-primary btn-sm" onClick={() => setAddItemMenuOpen((o) => !o)}><Plus size={14} /> Add Item <ChevronDown size={12} /></button>
+            <button type="button" className="btn btn-primary btn-sm touch-target" onClick={() => setAddItemMenuOpen((o) => !o)}><Plus size={14} /> Add Item <ChevronDown size={12} /></button>
             {addItemMenuOpen && (
-              <div className="add-item-menu" style={{ position: 'absolute', right: 0, top: '100%', zIndex: 40, marginTop: 6, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--shadow)', minWidth: 150, overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', right: 0, top: '100%', zIndex: 40, marginTop: 6, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--shadow)', minWidth: 150, overflow: 'hidden' }}>
                 {['Product', 'Service'].map((type) => (
                   <button key={type} type="button" onMouseDown={() => openNewItemPanel(type)} style={{ width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', color: 'var(--text-primary)', textAlign: 'left', cursor: 'pointer', fontWeight: 600 }}>
                     {type}
@@ -1999,7 +1710,7 @@ export default function InvoiceForm() {
           </div>
         </div>
 
-        <div className="product-search-wrap" style={{ position: 'relative', marginBottom: 14 }}>
+        <div style={{ position: 'relative', marginBottom: 14 }}>
           <input
             className="form-control"
             placeholder="Search products/services and press select to add a line item…"
@@ -2009,57 +1720,65 @@ export default function InvoiceForm() {
             onBlur={() => setTimeout(() => setLineSearchOpen(false), 150)}
           />
           {lineSearchOpen && (
-            <div className="product-picker">
-              <div className="product-picker-header">
-                <div>
-                  <strong>Select Product / Service</strong>
-                  <span>{filteredLineProducts.length} available</span>
-                </div>
+            <div
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                zIndex: 35,
+                marginTop: 6,
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                borderRadius: 12,
+                maxHeight: 320,
+                overflowY: 'auto',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+                backdropFilter: 'blur(12px)',
+              }}
+            >
+              {filteredLineProducts.length === 0 ? (
+                <div style={{ padding: '12px 14px', color: 'var(--text-muted)', fontSize: '0.8rem' }}>No products/services found.</div>
+              ) : displayedProducts.map((p) => (
                 <button
+                  key={p._id}
                   type="button"
-                  className="product-picker-close"
-                  aria-label="Close product picker"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => setLineSearchOpen(false)}
+                  onMouseDown={() => appendProductLine(p)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--bg-elevated)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                  style={{
+                    width: '100%',
+                    border: 'none',
+                    background: 'transparent',
+                    padding: '12px 16px',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    borderBottom: '1px solid var(--border)',
+                    color: 'var(--text-primary)',
+                  }}
                 >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="product-picker-list">
-                {filteredLineProducts.length === 0 ? (
-                  <div className="product-picker-empty">
-                    <div className="product-picker-empty-icon"><Tag size={24} /></div>
-                    <strong>No products/services found</strong>
-                    <span>Try a different name, HSN or description.</span>
-                  </div>
-                ) : displayedProducts.map((p) => (
-                  <button
-                    key={p._id}
-                    type="button"
-                    className="product-picker-item"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => appendProductLine(p)}
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      color: 'var(--text-primary)',
+                    }}
                   >
-                    <span className="product-picker-item-icon">
-                      <Tag size={19} />
-                    </span>
-                    <span className="product-picker-item-info">
-                      <span className="product-picker-item-name">{p.name}</span>
-                      <span className="product-picker-item-meta">
-                        {[p.description, p.hsn].filter(Boolean).join(' · ') || 'No description'}
-                      </span>
-                    </span>
-                    <span className="product-picker-item-price">{fmt(p.price)}</span>
-                    <span className="product-picker-add"><Plus size={19} /></span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="product-picker-footer">
-                {filteredLineProducts.length > 8 && <span>Showing first 8 results · Type to search more</span>}
-                {filteredLineProducts.length <= 8 && <span>Select a product to add it instantly</span>}
-              </div>
+                    {p.name}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '0.72rem',
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    {[p.description, p.hsn, fmt(p.price)].filter(Boolean).join(' · ')}
+                  </div>
+                </button>
+              ))}
             </div>
           )}
         </div>
@@ -2156,7 +1875,7 @@ export default function InvoiceForm() {
           </div>
         )}
 
-        <div className="invoice-items-scroll" style={{ overflowX: 'auto' }}>
+        <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
             <thead>
               <tr>
@@ -2344,8 +2063,8 @@ export default function InvoiceForm() {
         </div>
 
         {/* Totals summary */}
-        <div className="invoice-total-wrapper" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
-          <div className="invoice-total-box" style={{ minWidth: '280px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+          <div style={{ minWidth: '280px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius)', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Subtotal</span>
               <span>{fmt(totals.subtotal)}</span>
@@ -2405,7 +2124,7 @@ export default function InvoiceForm() {
       {/* Banking Details (from profile) */}
       {isQuotation && hasBankDetails && (
         <div className="card mb-4">
-          <div className="flex gap-2 bank-header" style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <div className="flex gap-2" style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <div className="flex gap-2" style={{ alignItems: 'center' }}>
               <div style={{ padding: 8, background: 'var(--primary-bg)', borderRadius: 8, color: 'var(--primary)' }}>
                 <Landmark size={18} />
@@ -2466,7 +2185,7 @@ export default function InvoiceForm() {
               )}
             </div>
           </div>
-          <div className="form-grid bank-details-grid">
+          <div className="form-grid">
             {bank.accountName && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Account Name</div><div style={{ fontWeight: 600, marginTop: 4 }}>{maskedBankValue(bank.accountName)}</div></div>}
             {bank.accountNumber && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Account Number</div><div style={{ fontWeight: 600, marginTop: 4 }}>{maskedBankValue(bank.accountNumber)}</div></div>}
             {bank.ifscCode && <div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>IFSC</div><div style={{ fontWeight: 600, marginTop: 4 }}>{maskedBankValue(bank.ifscCode)}</div></div>}
@@ -2478,13 +2197,13 @@ export default function InvoiceForm() {
       {/* Notes */}
       <div className="card">
         <h2 className="card-title mb-4" style={{ marginBottom: '16px' }}>Additional Info</h2>
-        <div className="form-grid notes-grid">
+        <div className="form-grid">
           <div className="form-group">
             <label className="form-label">Notes</label>
             <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 10, background: 'var(--bg-elevated)' }}>
               {notePoints.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: 8 }}>Add bullet-point notes for this {docLabel.toLowerCase()}.</p>}
               {notePoints.map((point, noteIdx) => (
-                <div key={noteIdx} className="note-row" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <div key={noteIdx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                   <span style={{ color: 'var(--primary)', fontWeight: 700 }}>•</span>
                   <input
                     className="form-control"
@@ -2504,7 +2223,7 @@ export default function InvoiceForm() {
                 </div>
               ))}
               {notePoints.length < 5 && (
-                <button type="button" className="btn btn-primary btn-sm add-point-btn" onClick={() => setField('notes', [...notePoints, ''])}><Plus size={14} /> Add point</button>
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('notes', [...notePoints, ''])}><Plus size={14} /> Add point</button>
               )}
             </div>
           </div>
@@ -2513,7 +2232,7 @@ export default function InvoiceForm() {
             <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 10, background: 'var(--bg-elevated)' }}>
               {termsPoints.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: 8 }}>Add bullet-point terms for this {docLabel.toLowerCase()}.</p>}
               {termsPoints.map((point, termIdx) => (
-                <div key={termIdx} className="note-row" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <div key={termIdx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                   <span style={{ color: 'var(--primary)', fontWeight: 700 }}>•</span>
                   <input
                     className="form-control"
@@ -2533,7 +2252,7 @@ export default function InvoiceForm() {
                 </div>
               ))}
               {termsPoints.length < 5 && (
-                <button type="button" className="btn btn-primary btn-sm add-point-btn" onClick={() => setField('termsAndConditions', [...termsPoints, ''])}><Plus size={14} /> Add point</button>
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('termsAndConditions', [...termsPoints, ''])}><Plus size={14} /> Add point</button>
               )}
             </div>
           </div>
@@ -2554,7 +2273,6 @@ export default function InvoiceForm() {
               template18: isQuotation ? '/templates/quotation18.svg' : '/templates/t18.svg',
               template19: isQuotation ? '/templates/quotation19.svg' : '/templates/t19.svg',
               template20: isQuotation ? '/templates/quotation20.svg' : '/templates/t20.svg',
-              restro: '/templates/restro.svg',
               invoice12: isQuotation ? '/templates/quotation12.svg' : '/templates/invoice12.svg',
               invoice14: isQuotation ? '/templates/quotation14.svg' : '/templates/invoice14.svg',
             };
@@ -2573,77 +2291,135 @@ export default function InvoiceForm() {
               { id: 'template18', name: 'E-Commerce Tax Invoice', img: TEMPLATE_IMGS.template18 },
               { id: 'template19', name: 'Legal Services Boxed', img: TEMPLATE_IMGS.template19 },
               { id: 'template20', name: 'Corporate Matrix', img: TEMPLATE_IMGS.template20 },
-              { id: 'restro', name: 'Restro', img: TEMPLATE_IMGS.restro },
               { id: 'invoice12', name: 'Ledger Gold', img: TEMPLATE_IMGS.invoice12 },
               { id: 'invoice14', name: 'Green Columns', img: TEMPLATE_IMGS.invoice14 },
             ];
             return (
               <div className="template-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '10px', marginTop: 8 }}>
                 {TEMPLATES.map((t) => {
-                  const isSelected = (form.template || '') === t.id;
+                  const selectedKey = (form.template || defaultKey || 'template1').toLowerCase();
+                  // Highlight the actual template that will be used. The
+                  // Account Default tile is informational and is selected only
+                  // when the form has no explicit template value.
+                  const isSelected = t.id
+                    ? selectedKey === t.id.toLowerCase()
+                    : !form.template;
                   const isFreePlan = !currentUser?.plan || String(currentUser.plan).toLowerCase() === 'free';
                   const isLocked = Boolean(t.id) && !FREE_TEMPLATES.includes(t.id) && isFreePlan;
+
                   return (
-                    <button
+                    <div
                       key={t.id}
-                      type="button"
-                      onClick={() => {
-                        if (isLocked) {
-                          toast('Upgrade your plan to unlock this template', { icon: '🔒' });
-                          navigate('/upgrade');
-                          return;
-                        }
-                        setPreviewTemplate(t);
-                      }}
                       style={{
-                        border: '0',
-                        borderRadius: 8,
-                        padding: 0,
-                        background: '#fff',
-                        cursor: 'pointer',
+                        border: isSelected ? '2px solid var(--primary)' : '1px solid var(--border)',
+                        borderRadius: 10,
+                        padding: isSelected ? 0 : 1,
+                        background: isSelected ? 'var(--bg-card)' : 'rgba(255,255,255,0.72)',
+                        cursor: isLocked ? 'not-allowed' : 'default',
                         overflow: 'hidden',
                         minWidth: 0,
-                        boxShadow: isSelected ? '0 0 0 3px var(--primary)' : 'none',
-                        transition: 'border 0.15s, box-shadow 0.15s',
-                        opacity: isLocked ? 0.85 : 1,
+                        boxShadow: isSelected
+                          ? '0 0 0 3px var(--primary-bg), 0 8px 22px rgba(0,0,0,0.10)'
+                          : '0 2px 8px rgba(0,0,0,0.03)',
+                        transition: 'opacity 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease',
+                        opacity: isLocked ? 0.42 : (isSelected ? 1 : 0.56),
+                        filter: isSelected ? 'none' : 'saturate(0.72)',
                       }}
                     >
                       <div style={{ position: 'relative' }}>
-                        <TemplatePreview
-                          src={t.img}
-                          templateId={t.id || defaultKey}
-                          logo={currentUser?.businessLogo}
-                          seal={currentUser?.businessSeal}
-                          signature={currentUser?.businessSignature}
-                          alt={t.name}
-                          style={{ aspectRatio: '5/7' }}
-                          imageStyle={{ aspectRatio: '5/7' }}
-                          isFreePlan={isFreePlan}
-                        />
-                        {t.id === '' && (
-                          <span style={{
-                            position: 'absolute', top: 4, left: 4,
-                            background: 'var(--primary)', color: '#fff',
-                            fontSize: '0.6rem', fontWeight: 700,
-                            padding: '2px 5px', borderRadius: 4,
-                            }}>DEFAULT</span>
-                        )}
-                        {isLocked && (
-                          <div style={{
-                            position: 'absolute', inset: 0, background: 'rgba(20,20,30,0.45)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          }}>
+                        <button
+                          type="button"
+                          disabled={isLocked}
+                          onClick={() => setPreviewTemplate(t)}
+                          aria-label={`Preview ${t.name}`}
+                          style={{
+                            width: '100%',
+                            display: 'block',
+                            border: 0,
+                            padding: 0,
+                            background: '#fff',
+                            cursor: isLocked ? 'not-allowed' : 'pointer',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <TemplatePreview
+                            thumbnail
+                            src={t.img}
+                            templateId={t.id || defaultKey}
+                            templateColors={getColorsForTemplate(t.id || defaultKey)}
+                            user={currentUser}
+                            isQuotation={isQuotation}
+                            logo={currentUser?.businessLogo}
+                            seal={currentUser?.businessSeal}
+                            signature={currentUser?.businessSignature}
+                            alt={t.name}
+                            style={{ aspectRatio: '5/7' }}
+                            imageStyle={{ aspectRatio: '5/7' }}
+                            isFreePlan={isFreePlan}
+                          />
+
+                          {t.id === '' && (
                             <span style={{
-                              display: 'flex', alignItems: 'center', gap: 4,
-                              background: '#fff', color: '#111',
-                              fontSize: '0.62rem', fontWeight: 700,
-                              padding: '3px 8px', borderRadius: 20,
+                              position: 'absolute',
+                              top: 4,
+                              left: 4,
+                              background: 'var(--primary)',
+                              color: '#fff',
+                              fontSize: '0.6rem',
+                              fontWeight: 700,
+                              padding: '2px 5px',
+                              borderRadius: 4,
                             }}>
-                              <Lock size={10} /> Upgrade
+                              ACCOUNT DEFAULT
                             </span>
-                          </div>
-                        )}
+                          )}
+
+                          {isSelected && (
+                            <span style={{
+                              position: 'absolute',
+                              top: 4,
+                              right: 4,
+                              zIndex: 2,
+                              background: 'var(--primary)',
+                              color: '#fff',
+                              fontSize: '0.58rem',
+                              fontWeight: 800,
+                              letterSpacing: '0.03em',
+                              padding: '3px 6px',
+                              borderRadius: 5,
+                              boxShadow: '0 2px 7px rgba(0,0,0,0.16)',
+                            }}>
+                              SELECTED
+                            </span>
+                          )}
+
+                          {isLocked && (
+                            <div style={{
+                              position: 'absolute',
+                              inset: 0,
+                              background: 'rgba(20,20,30,0.45)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}>
+                              <span style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                background: '#fff',
+                                color: '#111',
+                                fontSize: '0.62rem',
+                                fontWeight: 700,
+                                padding: '3px 8px',
+                                borderRadius: 20,
+                              }}>
+                                <Lock size={10} /> Upgrade
+                              </span>
+                            </div>
+                          )}
+                        </button>
                       </div>
+
                       <div style={{
                         padding: '5px 6px',
                         fontSize: '0.72rem',
@@ -2656,11 +2432,48 @@ export default function InvoiceForm() {
                         justifyContent: 'center',
                         overflowWrap: 'anywhere',
                         wordBreak: 'normal',
-                        background: 'var(--bg-card)',
+                        background: isSelected ? 'var(--bg-card)' : 'rgba(248,250,252,0.92)',
                       }}>
                         {t.name}
                       </div>
-                    </button>
+
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: 6,
+                        padding: 6,
+                        background: 'var(--bg-card)',
+                      }}>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm"
+                          disabled={isLocked}
+                          onClick={() => setPreviewTemplate(t)}
+                          style={{ minHeight: 36, fontSize: '0.68rem', padding: '5px 6px' }}
+                        >
+                          <Eye size={13} /> Preview
+                        </button>
+
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          disabled={isLocked}
+                          onClick={() => {
+                            setPreviewTemplate({
+                              ...t,
+                              colorsOnly: true,
+                              templateColors: getColorsForTemplate(t.id || defaultKey),
+                            });
+                            document
+                              .querySelector('.template-color-section')
+                              ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }}
+                          style={{ minHeight: 36, fontSize: '0.68rem', padding: '5px 6px' }}
+                        >
+                          <Palette size={13} /> Custom Color
+                        </button>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -2681,7 +2494,6 @@ export default function InvoiceForm() {
               }}
             >
               <div
-                className="preview-modal-card"
                 onClick={(event) => event.stopPropagation()}
                 style={{
                   position: 'relative', background: 'var(--bg-card)', borderRadius: 16,
@@ -2703,7 +2515,7 @@ export default function InvoiceForm() {
                   <X size={20} />
                 </button>
                 <h3 style={{ margin: 0, paddingRight: 48, fontSize: '1.2rem' }}>{previewTemplate.name}</h3>
-                <div className="preview-modal-content" style={{ flex: 1, minHeight: 0, overflow: 'auto', background: 'var(--bg-elevated)', borderRadius: 8, padding: 16 }}>
+                <div style={{ flex: 1, minHeight: 0, overflow: 'auto', background: 'var(--bg-elevated)', borderRadius: 8, padding: 16 }}>
                   <TemplatePreview
                     src={previewTemplate.img}
                     templateId={(previewTemplate.id || ((isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) || 'template1')).toLowerCase()}
@@ -2716,7 +2528,7 @@ export default function InvoiceForm() {
                     isFreePlan={!currentUser?.plan || String(currentUser.plan).toLowerCase() === 'free'}
                   />
                 </div>
-                <div className="preview-modal-actions" style={{ flexShrink: 0, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
                   <button type="button" className="btn btn-ghost" onClick={() => setPreviewTemplate(null)}>Cancel</button>
                   <button
                     type="button"
@@ -2727,8 +2539,12 @@ export default function InvoiceForm() {
                         navigate('/upgrade');
                         return;
                       }
-                      setField('template', previewTemplate.id);
-                      setField('templateColors', previewTemplate.id ? DEFAULT_COLORS[previewTemplate.id.toLowerCase()] : null);
+                      const selectedTemplateKey = (previewTemplate.id || 'template1').toLowerCase();
+                      setField('template', selectedTemplateKey);
+                      setField(
+                        'templateColors',
+                        getColorsForTemplate(selectedTemplateKey)
+                      );
                       setPreviewTemplate(null);
                     }}
                   >
@@ -2746,10 +2562,10 @@ export default function InvoiceForm() {
               <div className="template-color-section" style={{ marginTop: 24, padding: 16, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--bg-elevated)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                   <div style={{ padding: 8, background: 'var(--primary-bg)', borderRadius: 8, color: 'var(--primary)' }}>
-                    <Tag size={18} />
+                    <Palette size={18} />
                   </div>
                   <div>
-                    <h4 style={{ fontSize: '0.875rem', fontWeight: 700, margin: 0 }}>Customize Template Colors</h4>
+                    <h4 style={{ fontSize: '0.875rem', fontWeight: 700, margin: 0 }}>Custom Template Colors</h4>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
                       {form.template
                         ? 'Tailor this specific invoice'
@@ -2819,8 +2635,8 @@ export default function InvoiceForm() {
       </div>
       {/* ══ Configure Tax Modal ══ */}
       {taxModal && (
-        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(3px)' }}>
-          <div className="modal-card" style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '28px 28px 20px', width: 420, maxWidth: '95vw', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(3px)' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '28px 28px 20px', width: 420, maxWidth: '95vw', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h3 style={{ fontWeight: 700, fontSize: '1rem' }}>Configure Tax</h3>
               <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setTaxModal(false)}><X size={18} /></button>
@@ -2878,7 +2694,7 @@ export default function InvoiceForm() {
               </label>
             </div>
 
-            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
               <button type="button" className="btn btn-ghost" onClick={() => setTaxModal(false)}>Cancel</button>
               <button type="button" className="btn btn-primary" onClick={saveTaxConfig}>Save Changes</button>
             </div>
@@ -2889,8 +2705,8 @@ export default function InvoiceForm() {
 
       {/* ══ Configure Discount Modal ══ */}
       {discModal && (
-        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(3px)' }}>
-          <div className="modal-card" style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '28px 28px 20px', width: 500, maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(3px)' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '28px 28px 20px', width: 500, maxWidth: '95vw', maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h3 style={{ fontWeight: 700, fontSize: '1rem' }}>Configure Discount</h3>
               <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setDiscModal(false)}><X size={18} /></button>
@@ -2898,7 +2714,7 @@ export default function InvoiceForm() {
 
             <div className="form-group">
               <label className="form-label"><strong>Discount Type</strong></label>
-              <div className="discount-type-grid" style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+              <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
                 {[
                   ['item', 'Item-wise', 'Disc % / Amt columns per line item'],
                   ['overall', 'Subtotal Discount', 'One or more discounts after subtotal'],
@@ -2923,7 +2739,7 @@ export default function InvoiceForm() {
               <div className="form-group">
                 <label className="form-label" style={{ marginBottom: 8 }}><strong>Discount Lines</strong></label>
                 {discDraft.lines.map((l, i) => (
-                  <div key={i} className="discount-line" style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+                  <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
                     <input className="form-control" placeholder="Name (e.g. Early Payment)" value={l.name}
                       onChange={(e) => setDiscLine(i, 'name', e.target.value)} style={{ flex: 2, padding: '7px 10px' }} />
                     <select className="form-control" value={l.type}
@@ -2947,7 +2763,7 @@ export default function InvoiceForm() {
               </div>
             )}
 
-            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
               <button type="button" className="btn btn-ghost" onClick={() => setDiscModal(false)}>Cancel</button>
               <button type="button" className="btn btn-primary" onClick={saveDiscConfig}>Save Changes</button>
             </div>
@@ -2957,8 +2773,8 @@ export default function InvoiceForm() {
 
       {/* ══ Create Client Modal ══ */}
       {newClientModal && (
-        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(3px)' }}>
-          <div className="modal-card" style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '28px 28px 20px', width: 440, maxWidth: '95vw', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(3px)' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', padding: '28px 28px 20px', width: 440, maxWidth: '95vw', boxShadow: 'var(--shadow)', border: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h3 style={{ fontWeight: 700, fontSize: '1rem' }}>Create Client</h3>
               <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => setNewClientModal(false)}><X size={18} /></button>
@@ -2997,7 +2813,7 @@ export default function InvoiceForm() {
 
             </p>
 
-            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
               <button type="button" className="btn btn-ghost" onClick={() => setNewClientModal(false)}>Cancel</button>
               <button type="button" className="btn btn-primary" disabled={creatingClient} onClick={handleCreateClientSubmit}>
                 {creatingClient ? 'Creating…' : 'Create Client'}
@@ -3009,5 +2825,6 @@ export default function InvoiceForm() {
 
 
     </form>
+    </>
   );
 }
