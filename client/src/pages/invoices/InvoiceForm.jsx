@@ -93,9 +93,6 @@ export function resolveTemplateColors(templateKey, storedColors) {
 
 // Templates available on the free plan — everything else shows an "Upgrade" lock
 const FREE_TEMPLATES = ['template1', 'template2', 'template5'];
-const getNumberSequenceKey = (isQuotation) =>
-  isQuotation ? 'goodsynk_quotation_number_sequence' : 'goodsynk_invoice_number_sequence';
-
 const getNextSequentialNumber = (value) => {
   const input = String(value || '').trim();
   const match = input.match(/^(.*?)(\d+)$/);
@@ -108,37 +105,21 @@ const getNextSequentialNumber = (value) => {
   return `${prefix}${nextNumber}`;
 };
 
-const getSavedNumberSequence = (isQuotation) => {
-  try {
-    const raw = localStorage.getItem(getNumberSequenceKey(isQuotation));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || !parsed.current) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-};
+// Returns the number immediately before an automatic sequence value.
+// This is only used for the small UI hint; the backend remains the source of truth.
+const getPreviousSequentialNumber = (value) => {
+  const input = String(value || '').trim();
+  const match = input.match(/^(.*?)(\d+)$/);
+  if (!match) return '';
 
-const saveNumberSequence = (isQuotation, number) => {
-  const normalized = String(number || '').trim();
-  if (!normalized) return;
+  const prefix = match[1];
+  const numericPart = match[2];
+  const currentNumber = Number(numericPart);
 
-  const next = getNextSequentialNumber(normalized);
-  if (!next) return;
+  if (!Number.isFinite(currentNumber) || currentNumber <= 1) return '';
 
-  try {
-    localStorage.setItem(
-      getNumberSequenceKey(isQuotation),
-      JSON.stringify({
-        current: normalized,
-        next,
-        updatedAt: new Date().toISOString(),
-      })
-    );
-  } catch {
-    // localStorage unavailable — numbering still works for the current document.
-  }
+  const previousNumber = String(currentNumber - 1).padStart(numericPart.length, '0');
+  return `${prefix}${previousNumber}`;
 };
 
 
@@ -151,11 +132,13 @@ export default function InvoiceForm() {
   const docType = isQuotation ? 'quotation' : 'invoice';
   const docLabel = isQuotation ? 'Quotation' : 'Invoice';
   const basePath = isQuotation ? '/quotations' : '/invoices';
+  // IMPORTANT: invoices and quotations use separate CRUD endpoints.
+  // Both use MongoDB-backed InvoiceSequence numbering on the backend, but a
+  // quotation must be previewed/saved through /quotations, not /invoices.
   const docAPI = isQuotation ? quotationAPI : invoiceAPI;
   const DRAFT_KEY = isQuotation ? 'draft_quotation' : 'draft_invoice';
   const DRAFT_CLIENT_QUERY_KEY = isQuotation ? 'draft_quotation_clientQuery' : 'draft_invoice_clientQuery';
   const DRAFT_DISCOUNT_KEY = isQuotation ? 'draft_quotation_discountConfig' : 'draft_invoice_discountConfig';
-  const CUSTOM_NUMBER_SEQUENCE_KEY = getNumberSequenceKey(isQuotation);
 
 
 
@@ -201,6 +184,7 @@ export default function InvoiceForm() {
   const [showBankDetails, setShowBankDetails] = useState(false);
   const [isCustomNumber, setIsCustomNumber] = useState(false);
   const [customNumberInput, setCustomNumberInput] = useState('');
+  const [generatedNumber, setGeneratedNumber] = useState('');
 
   const updateNewItemDiscount = (val, mode, price, quantity) => {
     const rawVal = val === '' ? 0 : parseFloat(val) || 0;
@@ -392,36 +376,47 @@ export default function InvoiceForm() {
   const draftDiscountKeyRef = useRef(DRAFT_DISCOUNT_KEY);
 
   const [form, setForm] = useState(() => {
-    if (location.state?.formDraft) return location.state.formDraft;
+    if (location.state?.formDraft) {
+      const routedDraft = { ...location.state.formDraft };
+      // A routed new-document draft can contain an old automatic number.
+      // Never trust that value; the number must come from MongoDB below.
+      routedDraft.invoiceNumber = '';
+      return routedDraft;
+    }
+
     if (!isEdit) {
       try {
         const saved = localStorage.getItem(DRAFT_KEY);
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+          const parsedDraft = JSON.parse(saved);
+          // Do not restore automatic numbering from localStorage.
+          parsedDraft.invoiceNumber = '';
+          return parsedDraft;
+        }
       } catch (err) {}
     }
+
     return createBlankForm();
   });
 
-  // Restore the correct draft/numbering when opening a new document.
-  // The draft restore and custom-number restore are intentionally handled in
-  // one effect so a blank draft cannot overwrite the saved next number.
+  // Restore the current draft when opening a new document.
+  // Invoice numbering is no longer read from localStorage; it comes from
+  // the MongoDB-backed numbering sequence below.
   useEffect(() => {
     if (isEdit || location.state?.formDraft || location.state?.newClientId || !currentUser) return;
 
     try {
       const saved = localStorage.getItem(DRAFT_KEY);
       const restoredForm = saved ? JSON.parse(saved) : createBlankForm();
-      const savedSequence = getSavedNumberSequence(isQuotation);
-
-      if (!saved && savedSequence?.next) {
-        // Example: after saving MUI-220, the next new document starts at MUI-221.
-        restoredForm.invoiceNumber = savedSequence.next;
-        setIsCustomNumber(true);
-        setCustomNumberInput(savedSequence.next);
-      } else if (!saved) {
-        setIsCustomNumber(false);
-        setCustomNumberInput('');
-      }
+      // Automatic document numbers must NEVER be restored from a local draft.
+      // The server/database is the only source of truth for the next automatic
+      // number. This prevents an old draft containing OO-008 from showing OO-008
+      // when OO-008 has already been created and the next number is OO-009.
+      // A custom number is handled separately by the custom-number toggle/input.
+      restoredForm.invoiceNumber = '';
+      setGeneratedNumber('');
+      setIsCustomNumber(false);
+      setCustomNumberInput('');
 
       // Do not let an old local draft override the company's current
       // template preference when starting a new document.
@@ -439,16 +434,10 @@ export default function InvoiceForm() {
       setClientQuery(localStorage.getItem(DRAFT_CLIENT_QUERY_KEY) || '');
     } catch (err) {
       const restoredForm = createBlankForm();
-      const savedSequence = getSavedNumberSequence(isQuotation);
-
-      if (savedSequence?.next) {
-        restoredForm.invoiceNumber = savedSequence.next;
-        setIsCustomNumber(true);
-        setCustomNumberInput(savedSequence.next);
-      } else {
-        setIsCustomNumber(false);
-        setCustomNumberInput('');
-      }
+      restoredForm.invoiceNumber = '';
+      setIsCustomNumber(false);
+      setCustomNumberInput('');
+      setGeneratedNumber('');
 
       const defaultTemplate = (
         (isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) ||
@@ -464,6 +453,104 @@ export default function InvoiceForm() {
       setClientQuery('');
     }
   }, [DRAFT_KEY, DRAFT_CLIENT_QUERY_KEY, isEdit, isQuotation, currentUser, location.state?.formDraft, location.state?.newClientId]);
+
+  // Fetch the current automatic document number from MongoDB.
+  // This is read-only: it does not consume the number. The backend allocates
+  // the number only when the document is actually saved.
+  // IMPORTANT: quotations call quotationAPI.getAll(), while invoices call
+  // invoiceAPI.getAll(). This keeps quotation numbering separate from invoice
+  // numbering and prevents stale values such as KK-999 / KK-1000.
+  useEffect(() => {
+    if (isEdit || !currentUser || isCustomNumber) return;
+
+    let cancelled = false;
+
+    const loadNextDocumentNumber = async () => {
+      try {
+        const response = await docAPI.getAll({
+          nextNumber: true,
+          invoiceType: docType,
+          limit: 1,
+        });
+
+        const data = response?.data || {};
+        const nextNumber = String(data?.nextNumber || '').trim();
+
+        if (!cancelled && data?.success && nextNumber) {
+          setGeneratedNumber(nextNumber);
+          setForm((previous) => ({
+            ...previous,
+            invoiceNumber: nextNumber,
+          }));
+        }
+      } catch (error) {
+        console.error(
+          `Failed to load next ${docLabel.toLowerCase()} number:`,
+          error
+        );
+      }
+    };
+
+    loadNextDocumentNumber();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isEdit, isQuotation, docType, docLabel, currentUser, isCustomNumber, docAPI]);
+
+  useEffect(() => {
+    if (isEdit || !currentUser || isCustomNumber) return;
+
+    let cancelled = false;
+
+    const loadNextDocumentNumber = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const apiBase = String(import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
+        if (!apiBase) {
+          throw new Error('VITE_API_URL is not configured');
+        }
+
+        const response = await fetch(
+          `${apiBase}/invoices?nextNumber=true&invoiceType=${encodeURIComponent(docType)}&limit=1`,
+          {
+            method: 'GET',
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to load next ${docLabel.toLowerCase()} number (${response.status})`);
+        }
+
+        const data = await response.json();
+        const nextNumber = String(data?.nextNumber || '').trim();
+
+        if (!cancelled && data?.success && nextNumber) {
+          // IMPORTANT: an automatic number is only a preview until Save.
+          // Never allow an old local draft number (for example OO-008) to
+          // override the fresh database preview (for example OO-009).
+          setGeneratedNumber(nextNumber);
+          setForm((previous) => ({
+            ...previous,
+            invoiceNumber: nextNumber,
+          }));
+        }
+      } catch (error) {
+        console.error(`Failed to load next ${docLabel.toLowerCase()} number:`, error);
+      }
+    };
+
+    loadNextDocumentNumber();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isEdit, isQuotation, docType, docLabel, currentUser, isCustomNumber]);
 
   useEffect(() => {
     if (isEdit) return;
@@ -826,6 +913,20 @@ export default function InvoiceForm() {
     }
   };
 
+  // Returns the number currently available for this new document.
+  // Priority is the value already visible/edited in the form, then the saved
+  // automatic sequence preview. This is used when switching to custom mode so
+  // the user never gets an unexpectedly blank field.
+  const getCurrentDocumentNumber = () => {
+    const fromCustomInput = String(customNumberInput || '').trim();
+    if (fromCustomInput) return fromCustomInput;
+
+    const fromGeneratedNumber = String(generatedNumber || '').trim();
+    if (fromGeneratedNumber) return fromGeneratedNumber;
+
+    return String(form.invoiceNumber || '').trim();
+  };
+
   const handleSubmit = async (e, shouldDownload = false) => {
     e.preventDefault();
     if (!form.client) return toast.error('Please select a client');
@@ -867,23 +968,16 @@ export default function InvoiceForm() {
         savedInvoice = res.data.invoice;
         toast.success(`${docLabel} created`);
 
-        // Keep the sequence only after the server confirms the document was created.
-        // Example: MUI-220 -> next new document is MUI-221.
-        if (isCustomNumber && savedInvoice?.invoiceNumber) {
-          saveNumberSequence(isQuotation, savedInvoice.invoiceNumber);
-
-          // The backend is authoritative. Store the returned number and its
-          // next value so a newly opened form immediately shows the next number.
+        // The backend/database is the source of truth. Keep the number
+        // returned by the server only for the current UI state; the next
+        // New Invoice preview will be fetched from MongoDB again.
+        if (savedInvoice?.invoiceNumber) {
           const serverNumber = String(savedInvoice.invoiceNumber).trim();
-          const serverNext = getNextSequentialNumber(serverNumber);
-
-          if (serverNext) {
-            setCustomNumberInput(serverNext);
-            setForm((prev) => ({
-              ...prev,
-              invoiceNumber: serverNext,
-            }));
-          }
+          setGeneratedNumber(serverNumber);
+          setForm((prev) => ({
+            ...prev,
+            invoiceNumber: serverNumber,
+          }));
         }
       }
 
@@ -897,14 +991,23 @@ export default function InvoiceForm() {
         localStorage.removeItem(DRAFT_CLIENT_QUERY_KEY);
         localStorage.removeItem(DRAFT_DISCOUNT_KEY);
       }
-      navigate(`${basePath}/${savedInvoice._id}`);
+      // Keep quotations inside the quotation section after saving.
+      // Quotation documents are stored through the shared invoice controller
+      // with invoiceType: 'quotation', so the quotation list is the correct
+      // destination after create/update. Invoices keep their existing detail
+      // page navigation.
+      if (isQuotation) {
+        navigate('/quotations');
+      } else {
+        navigate(`/invoices/${savedInvoice._id}`);
+      }
     } catch (err) {
       if (err.response?.status === 403 && err.response?.data?.code === 'PLAN_LIMIT_DOCUMENTS') {
         toast.error(err.response.data.message, { id: 'document-limit-toast' });
         navigate('/upgrade');
         return;
       }
-      toast.error(err.response?.data?.message || 'Failed to save invoice');
+      toast.error(err.response?.data?.message || `Failed to save ${docLabel.toLowerCase()}`);
     } finally {
       setSaving(false);
       setDownloading(false);
@@ -1176,45 +1279,61 @@ export default function InvoiceForm() {
       flex-shrink: 0;
     }
 
+    /* Compact automatic-number hint. It intentionally takes very little
+       vertical space so the Client and Number fields stay visually balanced. */
     .auto-number-panel {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-height: 46px;
-      padding: 10px 12px;
-      border: 1px dashed var(--border);
-      border-radius: 10px;
-      background: var(--bg-elevated);
-    }
-
-    .auto-number-icon {
-      width: 28px;
-      height: 28px;
-      display: grid;
-      place-items: center;
-      border-radius: 7px;
-      background: var(--bg-card);
-      color: var(--text-muted);
-      font-weight: 800;
-      flex-shrink: 0;
+      display: block;
+      min-height: 0;
+      padding: 3px 0 0;
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
     }
 
     .auto-number-panel > div:last-child {
-      display: flex;
-      flex-direction: column;
+      display: block;
       min-width: 0;
     }
 
-    .auto-number-panel strong {
-      color: var(--text-primary);
-      font-size: 0.78rem;
+    .auto-number-panel .auto-number-text {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.68rem;
+      line-height: 1.35;
+      margin: 0;
     }
 
-    .auto-number-panel span {
+    .auto-number-panel .auto-number-text strong {
+      color: var(--text-primary);
+      font-size: inherit;
+      font-weight: 700;
+    }
+
+    .auto-number-panel .auto-number-separator {
+      display: inline;
+      margin: 0 5px;
       color: var(--text-muted);
-      font-size: 0.7rem;
-      margin-top: 2px;
-      line-height: 1.35;
+    }
+
+    .client-select-wrap {
+      position: relative;
+      width: 100%;
+    }
+
+    .client-dropdown {
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 0;
+      width: 100%;
+      z-index: 100;
+      box-sizing: border-box;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      max-height: 280px;
+      overflow-y: auto;
+      box-shadow: var(--shadow);
     }
 
     .touch-target {
@@ -1434,27 +1553,23 @@ export default function InvoiceForm() {
 
         <div className="form-grid-3">
           {/* ── Client search-select ── */}
-          <div className="form-group" style={{ position: 'relative' }}>
+          <div className="form-group">
             <label className="form-label">Client *</label>
-            <input
-              className="form-control"
-              placeholder="Search customers by name, company, GSTIN, tags…"
-              value={clientQuery}
-              onChange={(e) => {
-                setClientQuery(e.target.value);
-                setField('client', '');
-                setClientDropdownOpen(true);
-              }}
-              onFocus={() => setClientDropdownOpen(true)}
-              onBlur={() => setTimeout(() => setClientDropdownOpen(false), 150)}
-            />
-            {clientDropdownOpen && (
-              <div style={{
-                position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 30,
-                background: 'var(--bg-card)', border: '1px solid var(--border)',
-                borderRadius: 10, marginTop: 4, maxHeight: 280, overflowY: 'auto',
-                boxShadow: 'var(--shadow)',
-              }}>
+            <div className="client-select-wrap">
+              <input
+                className="form-control"
+                placeholder="Search customers by name, company, GSTIN, tags…"
+                value={clientQuery}
+                onChange={(e) => {
+                  setClientQuery(e.target.value);
+                  setField('client', '');
+                  setClientDropdownOpen(true);
+                }}
+                onFocus={() => setClientDropdownOpen(true)}
+                onBlur={() => setTimeout(() => setClientDropdownOpen(false), 180)}
+              />
+              {clientDropdownOpen && (
+                <div className="client-dropdown">
                 {filteredClients.length === 0 ? (
                   <div style={{ padding: '12px 14px', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center' }}>
                     No clients found{clientQuery ? ` for "${clientQuery}"` : ''}
@@ -1480,20 +1595,21 @@ export default function InvoiceForm() {
                     </div>
                   ))
                 )}
-                <button
-                  type="button"
-                  onMouseDown={openNewClientModal}
-                  style={{
-                    width: '100%', textAlign: 'center', padding: '12px 14px',
-                    background: 'var(--bg-elevated)', border: 'none', borderTop: '1px solid var(--border)',
-                    cursor: 'pointer', color: 'var(--primary)', fontWeight: 700,
-                    fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                  }}
-                >
-                  <Plus size={14} /> Create Client
-                </button>
-              </div>
-            )}
+                  <button
+                    type="button"
+                    onMouseDown={openNewClientModal}
+                    style={{
+                      width: '100%', textAlign: 'center', padding: '12px 14px',
+                      background: 'var(--bg-elevated)', border: 'none', borderTop: '1px solid var(--border)',
+                      cursor: 'pointer', color: 'var(--primary)', fontWeight: 700,
+                      fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    }}
+                  >
+                    <Plus size={14} /> Create Client
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           <div className="form-group document-number-group">
             <div className="document-number-header">
@@ -1504,7 +1620,7 @@ export default function InvoiceForm() {
                 <p className="document-number-helper">
                   {isCustomNumber
                     ? 'Custom numbering is ON. Enter the starting number once; future numbers continue automatically.'
-                    : 'Automatic numbering will be generated when you save.'}
+                    : 'The next number is loaded from your database sequence.'}
                 </p>
               </div>
 
@@ -1514,20 +1630,38 @@ export default function InvoiceForm() {
                   checked={isCustomNumber}
                   onChange={(e) => {
                     const checked = e.target.checked;
-                    setIsCustomNumber(checked);
 
                     if (checked) {
-                      const existingValue =
-                        customNumberInput.trim() ||
-                        form.invoiceNumber?.trim() ||
-                        getSavedNumberSequence(isQuotation)?.next ||
-                        '';
+                      // The exact automatic preview came from MongoDB.
+                      // Copy that value into the custom field when the user
+                      // switches custom numbering ON.
+                      const existingValue = getCurrentDocumentNumber();
 
+                      setIsCustomNumber(true);
                       setCustomNumberInput(existingValue);
-                      if (existingValue) setField('invoiceNumber', existingValue);
+
+                      if (existingValue) {
+                        setForm((prev) => ({
+                          ...prev,
+                          invoiceNumber: existingValue,
+                        }));
+                      }
                     } else {
+                      // Return to automatic mode. Do not keep the manually
+                      // edited custom value as the automatic preview.
+                      setIsCustomNumber(false);
                       setCustomNumberInput('');
-                      setField('invoiceNumber', '');
+
+                      const automaticValue = String(
+                        generatedNumber || ''
+                      ).trim();
+
+                      if (automaticValue) {
+                        setForm((prev) => ({
+                          ...prev,
+                          invoiceNumber: automaticValue,
+                        }));
+                      }
                     }
                   }}
                   aria-label={`Use custom ${docLabel.toLowerCase()} numbering`}
@@ -1608,10 +1742,18 @@ export default function InvoiceForm() {
               </div>
             ) : (
               <div className="auto-number-panel">
-                <div className="auto-number-icon">#</div>
                 <div>
-                  <strong>Automatic numbering</strong>
-                  <span>The system will generate the next available {docLabel.toLowerCase()} number when you save.</span>
+                  {String(generatedNumber || form.invoiceNumber || '').trim() ? (
+                    <span className="auto-number-text">
+                      Previous {docLabel.toLowerCase()}: <strong>{getPreviousSequentialNumber(generatedNumber || form.invoiceNumber) || '—'}</strong>
+                      <span className="auto-number-separator">·</span>
+                      This {docLabel.toLowerCase()}: <strong>{String(generatedNumber || form.invoiceNumber).trim()}</strong>
+                    </span>
+                  ) : (
+                    <span className="auto-number-text">
+                      Automatic {docLabel.toLowerCase()} number will be generated when you save.
+                    </span>
+                  )}
                 </div>
               </div>
             )}
