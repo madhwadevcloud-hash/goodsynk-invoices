@@ -103,6 +103,33 @@ function formatTimeOnly(value) {
   return `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
 }
 
+// Common pricing calculation — mirrors InvoiceForm.jsx logic exactly.
+// Does NOT introduce new fields or a separate tax system.
+function computeLine(item, isInterstate, taxType = 'gst_india', isDiscColumnVisible = true) {
+  const lineSubtotal = (item.price || 0) * (item.quantity || 0);
+
+  const discAmt = isDiscColumnVisible
+    ? (lineSubtotal * (item.discount || 0)) / 100
+    : 0;
+
+  const taxable = lineSubtotal - discAmt;
+
+  if (taxType === 'none') {
+    return { taxable, cgst: 0, sgst: 0, igst: 0, vat: 0, total: taxable, discAmt, lineSubtotal };
+  }
+
+  if (taxType === 'vat') {
+    const vat = (taxable * (item.vatRate || 0)) / 100;
+    return { taxable, cgst: 0, sgst: 0, igst: 0, vat, total: taxable + vat, discAmt, lineSubtotal };
+  }
+
+  const cgst = isInterstate ? 0 : (taxable * (item.cgstRate || 0)) / 100;
+  const sgst = isInterstate ? 0 : (taxable * (item.sgstRate || 0)) / 100;
+  const igst = isInterstate ? (taxable * (item.igstRate || 0)) / 100 : 0;
+
+  return { taxable, cgst, sgst, igst, vat: 0, total: taxable + cgst + sgst + igst, discAmt, lineSubtotal };
+}
+
 export default function Template19({ invoice }) {
   const inv = invoice || {};
   const client = inv.client || {};
@@ -118,7 +145,6 @@ export default function Template19({ invoice }) {
   const fmt = (n) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0);
 
   const bizName = biz?.businessName || biz?.name || '';
-  const totalInWords = numberToWords(Math.floor(inv.total || 0));
   const rawDate = inv.issueDate || inv.invoiceDate || inv.date || '';
   const resolvedDate = formatDateOnly(rawDate);
   const resolvedTime = formatTimeOnly(rawDate);
@@ -132,9 +158,64 @@ export default function Template19({ invoice }) {
 
   const sacCodes = Array.from(new Set((inv.items || []).map((it) => (it?.hsn || '').toString().trim()).filter(Boolean))).join(', ');
 
-  const sgst = (inv.total * 0.09) || 0;
-  const cgst = (inv.total * 0.09) || 0;
-  const igst = (inv.total * 0.18) || 0;
+  // ---- Pricing configuration (read from document, never invented here) ----
+  const taxType = inv.taxType || 'gst_india';
+  const isInterstate = inv.isInterstate === true;
+  const isDiscColumnVisible =
+    inv.isDiscColumnVisible !== undefined
+      ? inv.isDiscColumnVisible
+      : inv.showDiscount !== undefined
+        ? inv.showDiscount
+        : true;
+
+  // ---- Compute per-line values using the common structure ----
+  const computedItems = (inv.items || []).map((item) => {
+    const c = computeLine(item, isInterstate, taxType, isDiscColumnVisible);
+    return { item, ...c };
+  });
+
+  // ---- Aggregate from the common per-line results ----
+  const aggSubtotal = computedItems.reduce((acc, r) => acc + (r.lineSubtotal || 0), 0);
+  const aggDiscount = computedItems.reduce((acc, r) => acc + (r.discAmt || 0), 0);
+  const aggTaxable = computedItems.reduce((acc, r) => acc + (r.taxable || 0), 0);
+  const aggCgst = computedItems.reduce((acc, r) => acc + (r.cgst || 0), 0);
+  const aggSgst = computedItems.reduce((acc, r) => acc + (r.sgst || 0), 0);
+  const aggIgst = computedItems.reduce((acc, r) => acc + (r.igst || 0), 0);
+  const aggVat = computedItems.reduce((acc, r) => acc + (r.vat || 0), 0);
+  const aggTotal = computedItems.reduce((acc, r) => acc + (r.total || 0), 0);
+
+  // Document-level totals: prefer persisted values when present.
+  const subtotal = inv.subtotal != null ? inv.subtotal : aggSubtotal;
+  const discountAmount = inv.discountAmount != null ? inv.discountAmount : aggDiscount;
+  const overallDiscTotal = inv.overallDiscTotal != null ? inv.overallDiscTotal : 0;
+  const taxTotal = inv.taxTotal != null ? inv.taxTotal : (aggCgst + aggSgst + aggIgst + aggVat);
+  const grandTotal = inv.total != null ? inv.total : aggTotal;
+
+  const showDiscountColumn = isDiscColumnVisible;
+  const showDiscountRow = showDiscountColumn && (discountAmount > 0 || overallDiscTotal > 0);
+
+  // Which tax rows to display
+  const showCgstSgst = taxType === 'gst_india' && !isInterstate;
+  const showIgst = taxType === 'gst_india' && isInterstate;
+  const showVat = taxType === 'vat';
+
+  // Derive representative rates from items for the tax summary labels.
+  const cgstRate = computedItems.reduce((acc, r) => acc || (r.item?.cgstRate || 0), 0);
+  const sgstRate = computedItems.reduce((acc, r) => acc || (r.item?.sgstRate || 0), 0);
+  const igstRate = computedItems.reduce((acc, r) => acc || (r.item?.igstRate || 0), 0);
+  const vatRate = computedItems.reduce((acc, r) => acc || (r.item?.vatRate || 0), 0);
+
+  const totalInWords = numberToWords(Math.floor(grandTotal || 0));
+
+  // Dynamic bank / payment details
+  const bank = biz?.bankDetails || {};
+  const beneficiaryName = bank?.beneficiaryName || bank?.accountName || bizName;
+  const bankName = bank?.bankName || '';
+  const accountNumber = bank?.accountNumber || '';
+  const ifscCode = bank?.ifscCode || '';
+  const branch = bank?.branch || '';
+  const panNumber = biz?.pan || '';
+  const paymentTerms = inv.paymentTerms || biz?.paymentTerms || '15 days from date of document';
 
   const s = StyleSheet.create({
     page: { paddingTop: 25, paddingBottom: 50, paddingHorizontal: 30, fontFamily: 'Inter', color: '#111827', fontSize: 8 },
@@ -294,38 +375,60 @@ export default function Template19({ invoice }) {
               <Text style={s.thAmount}>Amount (Rs.)</Text>
             </View>
 
-            {inv.items?.map((item, idx) => {
-              const itemAmount = item.price != null ? item.price : (item.amount != null ? item.amount : ((item.quantity || 1) * (item.rate || 0)));
+            {computedItems.map((row, idx) => {
+              const item = row.item;
+              const taxAmt = (row.cgst || 0) + (row.sgst || 0) + (row.igst || 0) + (row.vat || 0);
+              const lineTotal = row.taxable + taxAmt;
               return (
                 <View key={idx} style={s.tRow} wrap={false}>
                   <Text style={s.tdSno}>{idx + 1}</Text>
                   <View style={s.tdDesc}>
                     <Text style={s.itemName}>{item.name || ''}</Text>
                     {item.description ? <Text style={s.itemDesc}>{item.description}</Text> : null}
+                    {item.hsn ? <Text style={s.itemDesc}>HSN/SAC: {item.hsn}</Text> : null}
                   </View>
-                  <Text style={s.tdAmount}>{fmt(itemAmount)}</Text>
+                  <Text style={s.tdAmount}>{fmt(lineTotal)}</Text>
                 </View>
               );
             })}
 
-            <View style={s.taxRow} wrap={false}>
-              <Text style={s.taxLabel}>SGST @ 9%</Text>
-              <Text style={s.taxVal}>{fmt(sgst)}</Text>
-            </View>
+            {showDiscountRow ? (
+              <View style={s.taxRow} wrap={false}>
+                <Text style={s.taxLabel}>Discount</Text>
+                <Text style={s.taxVal}>- {fmt((discountAmount || 0) + (overallDiscTotal || 0))}</Text>
+              </View>
+            ) : null}
 
-            <View style={s.taxRow} wrap={false}>
-              <Text style={s.taxLabel}>CGST @ 9%</Text>
-              <Text style={s.taxVal}>{fmt(cgst)}</Text>
-            </View>
+            {showCgstSgst ? (
+              <>
+                <View style={s.taxRow} wrap={false}>
+                  <Text style={s.taxLabel}>SGST @ {sgstRate}%</Text>
+                  <Text style={s.taxVal}>{fmt(aggSgst)}</Text>
+                </View>
+                <View style={s.taxRow} wrap={false}>
+                  <Text style={s.taxLabel}>CGST @ {cgstRate}%</Text>
+                  <Text style={s.taxVal}>{fmt(aggCgst)}</Text>
+                </View>
+              </>
+            ) : null}
 
-            <View style={s.taxRow} wrap={false}>
-              <Text style={s.taxLabel}>IGST @ 18%</Text>
-              <Text style={s.taxVal}>{fmt(igst)}</Text>
-            </View>
+            {showIgst ? (
+              <View style={s.taxRow} wrap={false}>
+                <Text style={s.taxLabel}>IGST @ {igstRate}%</Text>
+                <Text style={s.taxVal}>{fmt(aggIgst)}</Text>
+              </View>
+            ) : null}
+
+            {showVat ? (
+              <View style={s.taxRow} wrap={false}>
+                <Text style={s.taxLabel}>VAT @ {vatRate}%</Text>
+                <Text style={s.taxVal}>{fmt(aggVat)}</Text>
+              </View>
+            ) : null}
 
             <View style={s.sumRow} wrap={false}>
               <Text style={s.sumText}>{isQuotation ? 'QUOTATION TOTAL:' : 'INVOICE TOTAL:'}</Text>
-              <Text style={s.sumVal}>Rs. {fmt(inv.total)}/-</Text>
+              <Text style={s.sumVal}>Rs. {fmt(grandTotal)}/-</Text>
             </View>
 
             <View style={s.wordsRow} wrap={false}>
@@ -354,25 +457,25 @@ export default function Template19({ invoice }) {
               <Text style={s.payTitle}>Payment Details:</Text>
               <Text style={s.payRow}>You may please make the payment either by online transfer to bank</Text>
               <Text style={s.payRow}>
-                <Text style={{ fontFamily: B }}>Beneficiary Name:</Text> {bizName}
+                <Text style={{ fontFamily: B }}>Beneficiary Name:</Text> {beneficiaryName}
               </Text>
               <Text style={s.payRow}>
-                <Text style={{ fontFamily: B }}>Bank:</Text> {biz?.bankDetails?.bankName || ''}
+                <Text style={{ fontFamily: B }}>Bank:</Text> {bankName}
               </Text>
               <Text style={s.payRow}>
-                <Text style={{ fontFamily: B }}>Account Number:</Text> {biz?.bankDetails?.accountNumber || ''}
+                <Text style={{ fontFamily: B }}>Account Number:</Text> {accountNumber}
               </Text>
               <Text style={s.payRow}>
-                <Text style={{ fontFamily: B }}>IFSC Code:</Text> {biz?.bankDetails?.ifscCode || ''}
+                <Text style={{ fontFamily: B }}>IFSC Code:</Text> {ifscCode}
               </Text>
               <Text style={s.payRow}>
-                <Text style={{ fontFamily: B }}>Branch:</Text> {biz?.bankDetails?.branch || ''}
+                <Text style={{ fontFamily: B }}>Branch:</Text> {branch}
               </Text>
               <Text style={s.payRow}>
-                <Text style={{ fontFamily: B }}>PAN:</Text> {biz?.pan || ''}
+                <Text style={{ fontFamily: B }}>PAN:</Text> {panNumber}
               </Text>
               <Text style={s.payRow}>
-                <Text style={{ fontFamily: B }}>Payment Terms:</Text> 15 days from date of document
+                <Text style={{ fontFamily: B }}>Payment Terms:</Text> {paymentTerms}
               </Text>
             </View>
 
@@ -407,5 +510,3 @@ export default function Template19({ invoice }) {
     </Document>
   );
 }
-
-/*Legal Services Boxed*/
