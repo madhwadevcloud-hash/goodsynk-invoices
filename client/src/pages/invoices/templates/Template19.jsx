@@ -91,20 +91,7 @@ function formatDateOnly(value) {
   return `${day}-${month}-${year}`;
 }
 
-function formatTimeOnly(value) {
-  if (!value) return '';
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return '';
-  let hours = d.getHours();
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  hours = hours % 12;
-  hours = hours ? hours : 12;
-  return `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
-}
-
 // Common pricing calculation — mirrors InvoiceForm.jsx logic exactly.
-// Does NOT introduce new fields or a separate tax system.
 function computeLine(item, isInterstate, taxType = 'gst_india', isDiscColumnVisible = true) {
   const lineSubtotal = (item.price || 0) * (item.quantity || 0);
 
@@ -147,7 +134,6 @@ export default function Template19({ invoice }) {
   const bizName = biz?.businessName || biz?.name || '';
   const rawDate = inv.issueDate || inv.invoiceDate || inv.date || '';
   const resolvedDate = formatDateOnly(rawDate);
-  const resolvedTime = formatTimeOnly(rawDate);
   const notesText = inv.notes || '';
   const termsText = inv.termsAndConditions || '';
 
@@ -158,7 +144,7 @@ export default function Template19({ invoice }) {
 
   const sacCodes = Array.from(new Set((inv.items || []).map((it) => (it?.hsn || '').toString().trim()).filter(Boolean))).join(', ');
 
-  // ---- Pricing configuration (read from document, never invented here) ----
+  // ---- Pricing configuration ----
   const taxType = inv.taxType || 'gst_india';
   const isInterstate = inv.isInterstate === true;
   const isDiscColumnVisible =
@@ -184,7 +170,6 @@ export default function Template19({ invoice }) {
   const aggVat = computedItems.reduce((acc, r) => acc + (r.vat || 0), 0);
   const aggTotal = computedItems.reduce((acc, r) => acc + (r.total || 0), 0);
 
-  // Document-level totals: prefer persisted values when present.
   const subtotal = inv.subtotal != null ? inv.subtotal : aggSubtotal;
   const discountAmount = inv.discountAmount != null ? inv.discountAmount : aggDiscount;
   const overallDiscTotal = inv.overallDiscTotal != null ? inv.overallDiscTotal : 0;
@@ -194,12 +179,10 @@ export default function Template19({ invoice }) {
   const showDiscountColumn = isDiscColumnVisible;
   const showDiscountRow = showDiscountColumn && (discountAmount > 0 || overallDiscTotal > 0);
 
-  // Which tax rows to display
   const showCgstSgst = taxType === 'gst_india' && !isInterstate;
   const showIgst = taxType === 'gst_india' && isInterstate;
   const showVat = taxType === 'vat';
 
-  // Derive representative rates from items for the tax summary labels.
   const cgstRate = computedItems.reduce((acc, r) => acc || (r.item?.cgstRate || 0), 0);
   const sgstRate = computedItems.reduce((acc, r) => acc || (r.item?.sgstRate || 0), 0);
   const igstRate = computedItems.reduce((acc, r) => acc || (r.item?.igstRate || 0), 0);
@@ -216,6 +199,9 @@ export default function Template19({ invoice }) {
   const branch = bank?.branch || '';
   const panNumber = biz?.pan || '';
   const paymentTerms = inv.paymentTerms || biz?.paymentTerms || '15 days from date of document';
+
+  // Category with Legal Services default
+  const categoryText = inv.category || 'Legal Services';
 
   const s = StyleSheet.create({
     page: { paddingTop: 25, paddingBottom: 50, paddingHorizontal: 30, fontFamily: 'Inter', color: '#111827', fontSize: 8 },
@@ -321,7 +307,7 @@ export default function Template19({ invoice }) {
 
           <View style={s.catRow}>
             <View>
-              <Text style={s.catText}>CATEGORY: {inv.category || ''}</Text>
+              <Text style={s.catText}>CATEGORY: {categoryText}</Text>
               <Text style={s.catText}>SAC CODE: {sacCodes || ''}</Text>
             </View>
             <Text style={s.gstText}>GSTIN: {biz?.gstin || ''}</Text>
@@ -356,9 +342,6 @@ export default function Template19({ invoice }) {
               <Text style={{ fontSize: 7.5, color: '#111827', marginTop: 4 }}>
                 Date: <Text style={{ fontFamily: B }}>{resolvedDate}</Text>
               </Text>
-              <Text style={{ fontSize: 7.5, color: '#111827', marginTop: 2 }}>
-                Time: <Text style={{ fontFamily: B }}>{resolvedTime}</Text>
-              </Text>
             </View>
           </View>
 
@@ -377,8 +360,8 @@ export default function Template19({ invoice }) {
 
             {computedItems.map((row, idx) => {
               const item = row.item;
-              const taxAmt = (row.cgst || 0) + (row.sgst || 0) + (row.igst || 0) + (row.vat || 0);
-              const lineTotal = row.taxable + taxAmt;
+              // Show the base taxable amount (price × qty − discount) before tax
+              const baseAmount = row.taxable;
               return (
                 <View key={idx} style={s.tRow} wrap={false}>
                   <Text style={s.tdSno}>{idx + 1}</Text>
@@ -387,7 +370,7 @@ export default function Template19({ invoice }) {
                     {item.description ? <Text style={s.itemDesc}>{item.description}</Text> : null}
                     {item.hsn ? <Text style={s.itemDesc}>HSN/SAC: {item.hsn}</Text> : null}
                   </View>
-                  <Text style={s.tdAmount}>{fmt(lineTotal)}</Text>
+                  <Text style={s.tdAmount}>{fmt(baseAmount)}</Text>
                 </View>
               );
             })}
