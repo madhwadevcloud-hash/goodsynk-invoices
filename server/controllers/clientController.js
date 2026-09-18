@@ -6,10 +6,20 @@ const { getLimits } = require('../utils/planLimits');
 // @access  Private
 const getClients = async (req, res) => {
   try {
-    const clients = await Client.find({ user: req.user._id }).sort({ name: 1 });
-    res.json({ success: true, count: clients.length, clients });
+    const clients = await Client.find({
+      user: req.user._id,
+    }).sort({ name: 1 });
+
+    res.json({
+      success: true,
+      count: clients.length,
+      clients,
+    });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
@@ -18,11 +28,27 @@ const getClients = async (req, res) => {
 // @access  Private
 const getClient = async (req, res) => {
   try {
-    const client = await Client.findOne({ _id: req.params.id, user: req.user._id });
-    if (!client) return res.status(404).json({ success: false, message: 'Client not found' });
-    res.json({ success: true, client });
+    const client = await Client.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
+
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        message: 'Client not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      client,
+    });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
@@ -31,13 +57,25 @@ const getClient = async (req, res) => {
 // @access  Private
 const createClient = async (req, res) => {
   try {
+    // ─────────────────────────────────────────────────────────────
+    // Plan limit
+    // ─────────────────────────────────────────────────────────────
     const limits = getLimits(req.user.plan);
+
     if (limits.clients !== Infinity) {
       const startOfMonth = new Date();
+
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
 
-      const count = await Client.countDocuments({ user: req.user._id, createdAt: { $gte: startOfMonth } });
+      const count =
+        await Client.countDocuments({
+          user: req.user._id,
+          createdAt: {
+            $gte: startOfMonth,
+          },
+        });
+
       if (count >= limits.clients) {
         return res.status(403).json({
           success: false,
@@ -47,11 +85,49 @@ const createClient = async (req, res) => {
         });
       }
     }
-    
-    const client = await Client.create({ ...req.body, user: req.user._id });
-    res.status(201).json({ success: true, client });
+
+    // ─────────────────────────────────────────────────────────────
+    // Special / Kind Attention
+    // ─────────────────────────────────────────────────────────────
+    const specialAttention = {
+      enabled:
+        !!req.body.specialAttention?.enabled,
+
+      label:
+        req.body.specialAttention?.label ===
+        'Special Attention'
+          ? 'Special Attention'
+          : 'Kind Attention',
+
+      value:
+        req.body.specialAttention?.enabled
+          ? String(
+              req.body.specialAttention?.value ||
+                ''
+            ).trim()
+          : '',
+    };
+
+    // ─────────────────────────────────────────────────────────────
+    // Create Client
+    // ─────────────────────────────────────────────────────────────
+    const client = await Client.create({
+      ...req.body,
+
+      user: req.user._id,
+
+      specialAttention,
+    });
+
+    res.status(201).json({
+      success: true,
+      client,
+    });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
@@ -60,15 +136,72 @@ const createClient = async (req, res) => {
 // @access  Private
 const updateClient = async (req, res) => {
   try {
-    const client = await Client.findOneAndUpdate(
-      { _id: req.params.id, user: req.user._id },
-      req.body,
-      { new: true, runValidators: true }
-    );
-    if (!client) return res.status(404).json({ success: false, message: 'Client not found' });
-    res.json({ success: true, client });
+    // ─────────────────────────────────────────────────────────────
+    // Special / Kind Attention
+    // ─────────────────────────────────────────────────────────────
+    const specialAttention = {
+      enabled:
+        !!req.body.specialAttention?.enabled,
+
+      label:
+        req.body.specialAttention?.label ===
+        'Special Attention'
+          ? 'Special Attention'
+          : 'Kind Attention',
+
+      value:
+        req.body.specialAttention?.enabled
+          ? String(
+              req.body.specialAttention?.value ||
+                ''
+            ).trim()
+          : '',
+    };
+
+    // ─────────────────────────────────────────────────────────────
+    // Prepare update
+    // ─────────────────────────────────────────────────────────────
+    const updateData = {
+      ...req.body,
+
+      specialAttention,
+    };
+
+    // Prevent ownership from being changed
+    delete updateData.user;
+
+    // ─────────────────────────────────────────────────────────────
+    // Update Client
+    // ─────────────────────────────────────────────────────────────
+    const client =
+      await Client.findOneAndUpdate(
+        {
+          _id: req.params.id,
+          user: req.user._id,
+        },
+        updateData,
+        {
+          new: true,
+          runValidators: true,
+        }
+      );
+
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        message: 'Client not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      client,
+    });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    res.status(400).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
@@ -77,12 +210,35 @@ const updateClient = async (req, res) => {
 // @access  Private
 const deleteClient = async (req, res) => {
   try {
-    const client = await Client.findOneAndDelete({ _id: req.params.id, user: req.user._id });
-    if (!client) return res.status(404).json({ success: false, message: 'Client not found' });
-    res.json({ success: true, message: 'Client deleted' });
+    const client =
+      await Client.findOneAndDelete({
+        _id: req.params.id,
+        user: req.user._id,
+      });
+
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        message: 'Client not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Client deleted',
+    });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
-module.exports = { getClients, getClient, createClient, updateClient, deleteClient };
+module.exports = {
+  getClients,
+  getClient,
+  createClient,
+  updateClient,
+  deleteClient,
+};
