@@ -5,6 +5,7 @@ import { authAPI } from '../../api/services';
 import toast from 'react-hot-toast';
 import { Palette, CheckCircle2, X, Lock, Eye } from 'lucide-react';
 import TemplatePreview from '../../components/TemplatePreview';
+
 const TEMPLATES = [
   { id: 'template1', name: 'Classic Blue', desc: 'A clean, universally trusted design with blue accents.', img: '/templates/t1.svg' },
   { id: 'template2', name: 'Minimalist Monochrome', desc: 'Elegant black and white. Perfect for ultra-clean printing.', img: '/templates/t2.svg' },
@@ -20,6 +21,7 @@ const TEMPLATES = [
   { id: 'invoice12', name: 'Ledger Gold', desc: 'A structured finance layout with a strong ledger header and gold totals.', img: '/templates/invoice12.svg' },
   { id: 'invoice14', name: 'Green Columns', desc: 'A calm two-column invoice for service businesses and consultants.', img: '/templates/invoice14.svg' },
 ];
+
 const DEFAULT_COLORS = {
   template1: { primary: '#4A72D4' },
   template2: { primary: '#000000' },
@@ -75,6 +77,7 @@ const buildTemplateColorStore = (templateId, colors, existingStore, currentDefau
   next[key] = { ...(colors || DEFAULT_COLORS[key] || DEFAULT_COLORS.template1) };
   return next;
 };
+
 const QUOTATION_PREVIEWS = {
   template1: '/templates/quotation1.svg',
   template2: '/templates/quotation2.svg',
@@ -225,25 +228,459 @@ export default function Templates() {
   };
 
   return (
-    <div>
+    <div className="templates-page">
+      <style>{`
+        .templates-page {
+          width: 100%;
+          max-width: 1500px;
+          margin: 0 auto;
+          padding: 0 12px 32px;
+          box-sizing: border-box;
+        }
+
+        .templates-page .page-header {
+          margin-bottom: 20px;
+        }
+
+        .templates-page .page-title {
+          font-size: clamp(1.15rem, 2.5vw, 1.6rem);
+          margin: 0;
+          word-break: break-word;
+        }
+
+        .templates-page .page-subtitle {
+          font-size: clamp(0.78rem, 1.5vw, 0.9rem);
+          margin: 4px 0 0;
+        }
+
+        .templates-page .doc-type-tabs {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 18px;
+          flex-wrap: wrap;
+        }
+
+        .templates-page .doc-type-tabs .btn {
+          flex: 1 1 auto;
+          min-width: 120px;
+          justify-content: center;
+          white-space: nowrap;
+        }
+
+        /* Responsive grid: mobile 2, sm 2, md 3, lg 4, xl 5 */
+        .templates-page .templates-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .templates-page .template-card {
+          background: var(--bg-card);
+          border-radius: 12px;
+          padding: 10px;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          cursor: pointer;
+          transition: opacity 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+          position: relative;
+          box-sizing: border-box;
+        }
+
+        .templates-page .template-card-preview {
+          width: 100%;
+          aspect-ratio: 5 / 7;
+          flex: 0 0 auto;
+          position: relative;
+          background: var(--bg-elevated);
+          border-radius: 8px;
+          margin-bottom: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-muted);
+          overflow: hidden;
+          border: none;
+        }
+
+        .templates-page .template-card-title {
+          min-width: 0;
+          margin: 0;
+          font-size: 0.82rem;
+          font-weight: 700;
+          color: var(--text-primary);
+          overflow-wrap: anywhere;
+          line-height: 1.25;
+        }
+
+        .templates-page .template-card-desc {
+          min-width: 0;
+          margin: 0;
+          font-size: 0.68rem;
+          color: var(--text-secondary);
+          line-height: 1.4;
+          overflow-wrap: anywhere;
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .templates-page .template-card-actions {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 6px;
+          margin-top: 10px;
+        }
+
+        .templates-page .template-card-actions .btn {
+          min-height: 32px;
+          font-size: 0.65rem;
+          padding: 4px 4px;
+          justify-content: center;
+          gap: 3px;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+
+        .templates-page .template-card-actions .btn svg {
+          flex-shrink: 0;
+        }
+
+        .templates-page .template-card-swatches {
+          display: flex;
+          justify-content: center;
+          gap: 5px;
+          margin-top: 6px;
+        }
+
+        /* Modal base */
+        .templates-page .modal-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 1000;
+          background: rgba(0,0,0,0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          backdrop-filter: blur(4px);
+          padding: 0;
+        }
+
+        .templates-page .modal-box {
+          background: var(--bg-card);
+          border-radius: 0;
+          width: 100vw;
+          height: 100vh;
+          max-width: none;
+          max-height: none;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
+        .templates-page .modal-header {
+          padding: 14px 16px;
+          border-bottom: 1px solid var(--border);
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 12px;
+          flex-shrink: 0;
+        }
+
+        .templates-page .modal-header h3 {
+          font-size: 1rem;
+          font-weight: 700;
+          margin: 0;
+          overflow-wrap: anywhere;
+        }
+
+        .templates-page .modal-header p {
+          font-size: 0.78rem;
+          color: var(--text-secondary);
+          margin: 4px 0 0;
+          overflow-wrap: anywhere;
+        }
+
+        .templates-page .modal-body {
+          flex: 1;
+          overflow: auto;
+          padding: 14px;
+          background-color: var(--bg-elevated);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .templates-page .modal-footer {
+          padding: 12px 14px;
+          border-top: 1px solid var(--border);
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+          gap: 8px;
+          background: var(--bg-card);
+          flex-shrink: 0;
+        }
+
+        .templates-page .modal-footer .btn {
+          flex: 1 1 auto;
+          justify-content: center;
+          min-width: 110px;
+          font-size: 0.82rem;
+        }
+
+        /* Color customization panel */
+        .templates-page .color-panel {
+          width: 100%;
+          max-width: 500px;
+          padding: 16px;
+          background: var(--bg-card);
+          border-radius: 12px;
+          border: 1px solid var(--border);
+          box-sizing: border-box;
+        }
+
+        .templates-page .color-panel-row {
+          display: flex;
+          gap: 18px;
+          flex-wrap: wrap;
+        }
+
+        /* Confirmation modal */
+        .templates-page .confirm-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 1100;
+          background: rgba(15, 23, 42, 0.62);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+          backdrop-filter: blur(4px);
+        }
+
+        .templates-page .confirm-box {
+          width: min(460px, 94vw);
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 18px;
+          box-shadow: 0 24px 70px rgba(0,0,0,0.24);
+          padding: 20px;
+          box-sizing: border-box;
+        }
+
+        .templates-page .confirm-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+          margin-top: 22px;
+          flex-wrap: wrap;
+        }
+
+        .templates-page .confirm-actions .btn {
+          flex: 1 1 auto;
+          justify-content: center;
+          min-width: 120px;
+        }
+
+        /* Very small mobile (<360px) — still 2 columns but tighter */
+        @media (max-width: 360px) {
+          .templates-page {
+            padding: 0 8px 24px;
+          }
+
+          .templates-page .templates-grid {
+            gap: 8px;
+          }
+
+          .templates-page .template-card {
+            padding: 8px;
+          }
+
+          .templates-page .template-card-title {
+            font-size: 0.76rem;
+          }
+
+          .templates-page .template-card-actions {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        /* Small mobile — 2 columns */
+        @media (min-width: 400px) {
+          .templates-page .templates-grid {
+            gap: 12px;
+          }
+
+          .templates-page .template-card {
+            padding: 12px;
+          }
+
+          .templates-page .template-card-title {
+            font-size: 0.88rem;
+          }
+
+          .templates-page .template-card-desc {
+            font-size: 0.72rem;
+          }
+
+          .templates-page .template-card-actions .btn {
+            font-size: 0.7rem;
+            min-height: 34px;
+          }
+        }
+
+        /* Tablet — 3 columns */
+        @media (min-width: 640px) {
+          .templates-page {
+            padding: 0 16px 32px;
+          }
+
+          .templates-page .doc-type-tabs .btn {
+            flex: 0 0 auto;
+          }
+
+          .templates-page .templates-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+          }
+
+          .templates-page .template-card {
+            padding: 14px;
+            border-radius: 14px;
+          }
+
+          .templates-page .template-card-preview {
+            margin-bottom: 12px;
+          }
+
+          .templates-page .template-card-title {
+            font-size: 0.95rem;
+          }
+
+          .templates-page .template-card-desc {
+            font-size: 0.78rem;
+            -webkit-line-clamp: 4;
+          }
+
+          .templates-page .template-card-actions .btn {
+            font-size: 0.72rem;
+            min-height: 36px;
+          }
+        }
+
+        /* Tablet landscape / small desktop — 4 columns */
+        @media (min-width: 900px) {
+          .templates-page {
+            padding: 0 20px 32px;
+          }
+
+          .templates-page .templates-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 18px;
+          }
+
+          .templates-page .modal-overlay {
+            padding: 24px;
+          }
+
+          .templates-page .modal-box {
+            width: auto;
+            height: auto;
+            border-radius: 16px;
+            max-width: 95vw;
+            max-height: 92vh;
+          }
+
+          .templates-page .modal-header {
+            padding: 20px 24px;
+          }
+
+          .templates-page .modal-header h3 {
+            font-size: 1.25rem;
+          }
+
+          .templates-page .modal-header p {
+            font-size: 0.9rem;
+          }
+
+          .templates-page .modal-body {
+            padding: 24px;
+          }
+
+          .templates-page .modal-footer {
+            padding: 20px 24px;
+            gap: 12px;
+          }
+
+          .templates-page .modal-footer .btn {
+            flex: 0 0 auto;
+            min-width: 0;
+            font-size: 0.9rem;
+          }
+        }
+
+        /* Desktop */
+        @media (min-width: 1024px) {
+          .templates-page {
+            padding: 0 32px 40px;
+          }
+
+          .templates-page .page-header {
+            margin-bottom: 24px;
+          }
+
+          .templates-page .templates-grid {
+            gap: 22px;
+          }
+
+          .templates-page .template-card {
+            padding: 16px;
+          }
+
+          .templates-page .template-card-title {
+            font-size: 1rem;
+          }
+
+          .templates-page .template-card-desc {
+            font-size: 0.8rem;
+          }
+        }
+
+        /* Large desktop — 5 columns */
+        @media (min-width: 1440px) {
+          .templates-page .templates-grid {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 24px;
+          }
+        }
+      `}</style>
+
       <div className="page-header">
         <div>
           <h1 className="page-title">Document Templates</h1>
           <p className="page-subtitle">Choose independent designs for invoices and quotations.</p>
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+
+      <div className="doc-type-tabs">
         {['invoice', 'quotation'].map((type) => (
-          <button key={type} type="button" className={`btn ${documentType === type ? 'btn-primary' : 'btn-ghost'}`} onClick={() => changeDocumentType(type)}>
+          <button
+            key={type}
+            type="button"
+            className={`btn ${documentType === type ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => changeDocumentType(type)}
+          >
             {type === 'invoice' ? 'Invoice designs' : 'Quotation designs'}
           </button>
         ))}
       </div>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-        gap: '24px'
-      }}>
+
+      <div className="templates-grid">
         {TEMPLATES.filter((tmpl) => !tmpl.type || tmpl.type === documentType).map((tmpl) => {
           const isActive = activeTemplate === tmpl.id;
           const isLocked = !FREE_TEMPLATES.includes(tmpl.id) && isFreePlan;
@@ -251,39 +688,18 @@ export default function Templates() {
           return (
             <div
               key={tmpl.id}
+              className="template-card"
               onClick={() => handleCardSelect(tmpl)}
               style={{
                 background: isActive ? 'var(--bg-card)' : 'rgba(248,250,252,0.92)',
                 border: isActive ? '2px solid var(--primary)' : '1px solid var(--border)',
-                borderRadius: '16px',
-                padding: isActive ? '19px' : '20px',
-                minWidth: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                cursor: 'pointer',
-                transition: 'opacity 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease',
                 transform: isActive ? 'translateY(-2px)' : 'none',
                 boxShadow: isActive ? '0 8px 24px -6px rgba(99,102,241,0.2)' : 'var(--shadow)',
-                position: 'relative',
                 opacity: isLocked ? 0.42 : (isActive ? 1 : 0.58),
                 filter: isActive ? 'none' : 'saturate(0.72)',
               }}
             >
-              <div style={{
-                width: '100%',
-                aspectRatio: '5 / 7',
-                flex: '0 0 auto',
-                position: 'relative',
-                background: 'var(--bg-elevated)',
-                borderRadius: '8px',
-                marginBottom: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--text-muted)',
-                overflow: 'hidden',
-                border: 'none'
-              }}>
+              <div className="template-card-preview">
                 <TemplatePreview
                   src={previewSrc}
                   templateId={tmpl.id}
@@ -313,53 +729,53 @@ export default function Templates() {
                         gap: 4,
                         background: '#fff',
                         color: '#111',
-                        fontSize: '0.7rem',
+                        fontSize: '0.62rem',
                         fontWeight: 700,
-                        padding: '5px 10px',
+                        padding: '4px 8px',
                         borderRadius: 20
                       }}
                     >
-                      <Lock size={12} />
+                      <Lock size={10} />
                       Upgrade
                     </span>
                   </div>
                 )}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <h3 style={{ minWidth: 0, margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', overflowWrap: 'anywhere' }}>{tmpl.name}</h3>
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6, marginBottom: 6 }}>
+                <h3 className="template-card-title">{tmpl.name}</h3>
                 {isActive && (
-                  <div style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center' }}>
-                    <CheckCircle2 size={20} fill="var(--primary-bg)" />
+                  <div style={{ color: 'var(--primary)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                    <CheckCircle2 size={16} fill="var(--primary-bg)" />
                   </div>
                 )}
               </div>
-              <p style={{ minWidth: 0, margin: 0, fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5, overflowWrap: 'anywhere' }}>
-                {tmpl.desc}
-              </p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14 }}>
+
+              <p className="template-card-desc">{tmpl.desc}</p>
+
+              <div className="template-card-actions">
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
                   onClick={(e) => { e.stopPropagation(); handleOpenPreview(tmpl, false); }}
-                  style={{ minHeight: 38, fontSize: '0.75rem' }}
                 >
-                  <Eye size={14} /> Preview
+                  <Eye size={12} /> Preview
                 </button>
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
                   onClick={(e) => { e.stopPropagation(); handleOpenPreview(tmpl, true); }}
-                  style={{ minHeight: 38, fontSize: '0.75rem' }}
                 >
-                  <Palette size={14} /> Custom Color
+                  <Palette size={12} /> Color
                 </button>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 5, marginTop: 8 }}>
+
+              <div className="template-card-swatches">
                 {(() => {
                   const colors = getTemplateColors(tmpl.id || currentTemplateKey, currentColorStore, currentTemplateKey);
                   return <>
-                    <span title={`Primary ${colors.primary}`} style={{ width: 13, height: 13, borderRadius: '50%', background: colors.primary, border: '1px solid var(--border)' }} />
-                    {colors.secondary && <span title={`Secondary ${colors.secondary}`} style={{ width: 13, height: 13, borderRadius: '50%', background: colors.secondary, border: '1px solid var(--border)' }} />}
+                    <span title={`Primary ${colors.primary}`} style={{ width: 11, height: 11, borderRadius: '50%', background: colors.primary, border: '1px solid var(--border)' }} />
+                    {colors.secondary && <span title={`Secondary ${colors.secondary}`} style={{ width: 11, height: 11, borderRadius: '50%', background: colors.secondary, border: '1px solid var(--border)' }} />}
                   </>;
                 })()}
               </div>
@@ -367,29 +783,35 @@ export default function Templates() {
           );
         })}
       </div>
+
       {/* Preview Modal */}
       {previewTemplate && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.8)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)'
-        }}>
-          <div style={{
-            background: 'var(--bg-card)', borderRadius: '16px', width: previewTemplate.colorsOnly ? '900px' : '760px',
-            maxWidth: '95vw', maxHeight: '92vh', display: 'flex', flexDirection: 'column', overflow: 'hidden'
-          }}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>{previewTemplate.name}</h3>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '4px' }}>{previewTemplate.desc}</p>
+        <div className="modal-overlay">
+          <div
+            className="modal-box"
+            style={{
+              maxWidth: previewTemplate.colorsOnly ? '900px' : '760px',
+              height: 'auto',
+              maxHeight: '92vh',
+            }}
+          >
+            <div className="modal-header">
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <h3>{previewTemplate.name}</h3>
+                <p>{previewTemplate.desc}</p>
               </div>
-              <button onClick={() => setPreviewTemplate(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                <X size={24} />
+              <button
+                onClick={() => setPreviewTemplate(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', flexShrink: 0 }}
+                aria-label="Close preview"
+              >
+                <X size={22} />
               </button>
             </div>
-            <div style={{ flex: 1, overflow: 'auto', padding: '24px', backgroundColor: 'var(--bg-elevated)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+
+            <div className="modal-body">
               <div style={{ position: 'relative', width: '100%', maxWidth: previewTemplate.colorsOnly ? '500px' : '650px' }}>
                 <div style={{ position: 'relative' }}>
-                  
                   <TemplatePreview
                     src={documentType === 'quotation' ? (QUOTATION_PREVIEWS[previewTemplate.id] || previewTemplate.img) : previewTemplate.img}
                     templateId={previewTemplate.id}
@@ -397,73 +819,72 @@ export default function Templates() {
                     seal={user?.businessSeal}
                     signature={user?.businessSignature}
                     alt={previewTemplate.name}
-                    // Preview must show only the template artwork.
-                    // It must not open the browser's PDF viewer.
                     templateColors={templateColors}
                     user={user}
                     isQuotation={documentType === 'quotation'}
-                    style={{ width: '100%', minHeight: 620, boxShadow: 'var(--shadow-lg)', borderRadius: '8px' }}
+                    style={{ width: '100%', minHeight: 500, boxShadow: 'var(--shadow-lg)', borderRadius: '8px' }}
                     imageStyle={{ height: 'auto' }}
                     isFreePlan={isFreePlan}
                   />
-
                 </div>
               </div>
+
               {/* Color Customization UI — shown only from "Custom Color" */}
               {previewTemplate.colorsOnly && (
-                <div style={{
-                  width: '100%', maxWidth: '500px', padding: '20px',
-                  background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--border)'
-                }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                  <div style={{ padding: 8, background: 'var(--primary-bg)', borderRadius: 8, color: 'var(--primary)' }}>
-                    <Palette size={18} />
-                  </div>
-                  <div>
-                    <h4 style={{ fontSize: '0.875rem', fontWeight: 700, margin: 0 }}>Template Colors</h4>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Configure default colors for this template</p>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Primary Color</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <input
-                        type="color"
-                        value={templateColors?.primary || DEFAULT_COLORS[previewTemplate.id]?.primary || '#000000'}
-                        onChange={(e) => setTemplateColors(c => ({ ...c, primary: e.target.value }))}
-                        style={{ width: 44, height: 44, padding: 0, border: 'none', borderRadius: 10, cursor: 'pointer', background: 'none' }}
-                      />
-                      <span style={{ fontSize: '0.85rem', fontFamily: 'monospace', fontWeight: 600 }}>{templateColors?.primary}</span>
+                <div className="color-panel">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                    <div style={{ padding: 8, background: 'var(--primary-bg)', borderRadius: 8, color: 'var(--primary)' }}>
+                      <Palette size={18} />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <h4 style={{ fontSize: '0.875rem', fontWeight: 700, margin: 0 }}>Template Colors</h4>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>Configure default colors for this template</p>
                     </div>
                   </div>
-                  {DEFAULT_COLORS[previewTemplate.id]?.secondary && (
+
+                  <div className="color-panel-row">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Secondary Color</label>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Primary Color</label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <input
                           type="color"
-                          value={templateColors?.secondary || DEFAULT_COLORS[previewTemplate.id]?.secondary || '#000000'}
-                          onChange={(e) => setTemplateColors(c => ({ ...c, secondary: e.target.value }))}
+                          value={templateColors?.primary || DEFAULT_COLORS[previewTemplate.id]?.primary || '#000000'}
+                          onChange={(e) => setTemplateColors(c => ({ ...c, primary: e.target.value }))}
                           style={{ width: 44, height: 44, padding: 0, border: 'none', borderRadius: 10, cursor: 'pointer', background: 'none' }}
                         />
-                        <span style={{ fontSize: '0.85rem', fontFamily: 'monospace', fontWeight: 600 }}>{templateColors?.secondary}</span>
+                        <span style={{ fontSize: '0.85rem', fontFamily: 'monospace', fontWeight: 600 }}>{templateColors?.primary}</span>
                       </div>
                     </div>
-                  )}
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    style={{ marginTop: 'auto', marginBottom: 6, fontSize: '0.75rem' }}
-                    onClick={() => setTemplateColors({ ...(DEFAULT_COLORS[previewTemplate.id] || DEFAULT_COLORS.template1) })}
-                  >
-                    Reset to Default
-                  </button>
+
+                    {DEFAULT_COLORS[previewTemplate.id]?.secondary && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Secondary Color</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <input
+                            type="color"
+                            value={templateColors?.secondary || DEFAULT_COLORS[previewTemplate.id]?.secondary || '#000000'}
+                            onChange={(e) => setTemplateColors(c => ({ ...c, secondary: e.target.value }))}
+                            style={{ width: 44, height: 44, padding: 0, border: 'none', borderRadius: 10, cursor: 'pointer', background: 'none' }}
+                          />
+                          <span style={{ fontSize: '0.85rem', fontFamily: 'monospace', fontWeight: 600 }}>{templateColors?.secondary}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      style={{ marginTop: 'auto', marginBottom: 6, fontSize: '0.75rem' }}
+                      onClick={() => setTemplateColors({ ...(DEFAULT_COLORS[previewTemplate.id] || DEFAULT_COLORS.template1) })}
+                    >
+                      Reset to Default
+                    </button>
+                  </div>
                 </div>
-              </div>
               )}
             </div>
-            <div style={{ padding: '20px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '12px', background: 'var(--bg-card)' }}>
+
+            <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setPreviewTemplate(null)}>Close</button>
               {previewTemplate.colorsOnly && (
                 <>
@@ -500,29 +921,12 @@ export default function Templates() {
           role="dialog"
           aria-modal="true"
           aria-labelledby="set-default-template-title"
+          className="confirm-overlay"
           onClick={() => !saving && setConfirmTemplate(null)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 1100,
-            background: 'rgba(15, 23, 42, 0.62)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 20,
-            backdropFilter: 'blur(4px)',
-          }}
         >
           <div
+            className="confirm-box"
             onClick={(event) => event.stopPropagation()}
-            style={{
-              width: 'min(460px, 94vw)',
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
-              borderRadius: 18,
-              boxShadow: '0 24px 70px rgba(0,0,0,0.24)',
-              padding: 24,
-            }}
           >
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
               <div
@@ -590,6 +994,7 @@ export default function Templates() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: 10,
+                flexWrap: 'wrap',
               }}
             >
               <span
@@ -600,6 +1005,7 @@ export default function Templates() {
                   borderRadius: '50%',
                   background: confirmTemplate.colors?.primary || '#000',
                   border: '1px solid var(--border)',
+                  flexShrink: 0,
                 }}
               />
               {confirmTemplate.colors?.secondary && (
@@ -611,22 +1017,16 @@ export default function Templates() {
                     borderRadius: '50%',
                     background: confirmTemplate.colors.secondary,
                     border: '1px solid var(--border)',
+                    flexShrink: 0,
                   }}
                 />
               )}
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', minWidth: 0 }}>
                 These template colors will also be saved for this default.
               </span>
             </div>
 
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: 10,
-                marginTop: 22,
-              }}
-            >
+            <div className="confirm-actions">
               <button
                 type="button"
                 className="btn btn-ghost"
