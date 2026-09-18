@@ -17,6 +17,45 @@ const INDIAN_STATES = [
   'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
   'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand',
   'West Bengal', 'Delhi', 'Jammu & Kashmir', 'Ladakh', 'Puducherry', 'Chandigarh']
+/**
+ * GSTIN validation
+ * GSTIN = 2-digit state code + 10-character PAN + entity number + Z + checksum.
+ * Supports all PAN holder/entity types; the 4th PAN character is intentionally
+ * not restricted so legitimate GSTINs are not rejected based on business type.
+ */
+const GSTIN_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+
+const GSTIN_CHARSET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+const isValidGSTIN = (value) => {
+  const gstin = String(value || '').replace(/\s+/g, '').toUpperCase();
+
+  if (!GSTIN_REGEX.test(gstin)) return false;
+
+  // GSTIN checksum validation (Mod-36 based).
+  const body = gstin.slice(0, 14);
+  const checkChar = gstin[14];
+  let factor = 1;
+  let total = 0;
+
+  for (let i = body.length - 1; i >= 0; i--) {
+    const codePoint = GSTIN_CHARSET.indexOf(body[i]);
+    if (codePoint < 0) return false;
+
+    const product = codePoint * factor;
+    total += Math.floor(product / 36) + (product % 36);
+    factor = factor === 1 ? 2 : 1;
+  }
+
+  const remainder = total % 36;
+  const expectedCheckChar = GSTIN_CHARSET[(36 - remainder) % 36];
+
+  return checkChar === expectedCheckChar;
+};
+
+const normalizeGSTIN = (value) =>
+  String(value || '').replace(/\s+/g, '').toUpperCase().slice(0, 15);
+
 const checkImageHasBackground = (file) => {
   return new Promise((resolve) => {
     // Check for transparent pixels (background) for all supported image formats
@@ -599,11 +638,20 @@ export default function ProfileEdit() {
                   </div>
                   <div className="form-group">
                     <label className="form-label">GSTIN</label>
-                    <input className={`form-control${errors.gstin ? ' error' : ''}`} placeholder="22AAAAA0000A1Z5"
+                    <input className={`form-control${errors.gstin ? ' error' : ''}`} placeholder="29ABCDE1234F1Z5"
+                      maxLength={15}
+                      autoComplete="off"
                       style={{ textTransform: 'uppercase' }}
                       {...register('gstin', {
-                        pattern: { value: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, message: 'Invalid GSTIN format (e.g. 22AAAAA0000A1Z5)' }
-                      })} />
+                        setValueAs: normalizeGSTIN,
+                        validate: (value) => {
+                          if (!value) return true;
+                          return isValidGSTIN(value) || 'Invalid GSTIN. Enter a valid 15-character GSTIN.';
+                        }
+                      })}
+                      onInput={(e) => {
+                        e.target.value = normalizeGSTIN(e.target.value);
+                      }} />
                     {errors.gstin && <p className="form-error">{errors.gstin.message}</p>}
                   </div>
                 </div>
