@@ -14,54 +14,7 @@ const INDIAN_STATES = [
   'West Bengal', 'Delhi', 'Jammu & Kashmir', 'Ladakh', 'Puducherry', 'Chandigarh',
 ];
 
-/*
- * GSTIN FORMAT
- *
- * GSTIN = 15 characters
- *
- * Character positions:
- * 1-2   : State code
- * 3-5   : PAN first 3 characters
- * 6     : PAN 4th character - Business Type
- * 7     : PAN 5th character
- * 8-11  : PAN number
- * 12    : PAN check character
- * 13    : Entity number
- * 14    : Always Z
- * 15    : GSTIN checksum
- *
- * Business Type / PAN 4th Character:
- *
- * P = Proprietorship / Individual
- * F = Partnership Firm / LLP
- * C = Private Limited / Public Limited Company
- * H = HUF
- * T = Trust
- * A = Association of Persons (AOP)
- * B = Body of Individuals (BOI)
- * G = Government
- * L = Local Authority
- * J = Artificial Juridical Person
- *
- * Examples:
- * Proprietorship : 29ABCPD1234E1Z5
- * Partnership    : 29AABFC1234D1Z5
- * LLP            : 29AABFA1234B1Z5
- * Pvt Ltd        : 29AABCC1234D1Z5
- * Public Ltd     : 29AAACC1234E1Z5
- * HUF            : 29AABHA1234F1Z5
- * Trust          : 29AABTA1234G1Z5
- * AOP            : 29AABAA1234H1Z5
- * BOI            : 29AABBA1234J1Z5
- * Government     : 29AABGA1234K1Z5
- * Local Authority: 29AABLA1234L1Z5
- * AJP            : 29AABJA1234M1Z5
- *
- * Allowed PAN 4th characters:
- * P, F, C, H, T, A, B, G, L, J
- */
-const GSTIN_REGEX =
-  /^[0-9]{2}[A-Z]{3}[PFCHTABGLJ][A-Z][0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+// GSTIN is no longer format-validated - any value entered is accepted as-is.
 
 export default function ProfileSetup() {
   const { user, updateUser } = useAuth();
@@ -112,15 +65,15 @@ export default function ProfileSetup() {
         },
         bankAccounts: values.accountNumber || values.bankName
           ? [{
-              label: 'Primary',
-              bankName: values.bankName,
-              accountName: values.accountName,
-              accountNumber: values.accountNumber,
-              ifscCode: values.ifscCode,
-              swiftCode: values.swiftCode,
-              branch: values.branch,
-              isPrimary: true,
-            }]
+            label: 'Primary',
+            bankName: values.bankName,
+            accountName: values.accountName,
+            accountNumber: values.accountNumber,
+            ifscCode: values.ifscCode,
+            swiftCode: values.swiftCode,
+            branch: values.branch,
+            isPrimary: true,
+          }]
           : [],
       };
 
@@ -299,13 +252,7 @@ export default function ProfileSetup() {
                 className={`form-control${errors.gstin ? ' error' : ''}`}
                 placeholder="29ABCPD1234E1Z5"
                 style={{ textTransform: 'uppercase' }}
-                {...register('gstin', {
-                  pattern: {
-                    value: GSTIN_REGEX,
-                    message:
-                      'Invalid GSTIN format. The 4th PAN character must match a valid business type (P, F, C, H, T, A, B, G, L, or J). Example: 29ABCPD1234E1Z5'
-                  }
-                })}
+                {...register('gstin')}
               />
 
               {errors.gstin && (
@@ -509,10 +456,6 @@ export default function ProfileSetup() {
                 style={{ textTransform: 'uppercase' }}
                 {...register('ifscCode', {
                   required: 'IFSC is required',
-                  pattern: {
-                    value: /^[A-Z]{4}0[A-Z0-9]{6}$/,
-                    message: 'Invalid IFSC format (e.g. HDFC0001234)'
-                  }
                 })}
               />
 

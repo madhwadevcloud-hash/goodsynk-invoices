@@ -252,10 +252,10 @@ export default function ClientForm() {
       returnTo || '/clients',
       returnTo
         ? {
-            state: {
-              formDraft,
-            },
-          }
+          state: {
+            formDraft,
+          },
+        }
         : undefined
     );
 
@@ -280,17 +280,7 @@ export default function ClientForm() {
       );
     }
 
-    // GSTIN validation
-    if (
-      form.gstin &&
-      !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(
-        form.gstin
-      )
-    ) {
-      return toast.error(
-        'Invalid GSTIN format (e.g. 29ABCDE1234F1Z5)'
-      );
-    }
+    // GSTIN is no longer format-validated - any value entered is accepted as-is.
 
     // PAN validation
     if (
@@ -351,7 +341,7 @@ export default function ClientForm() {
 
           label:
             form.specialAttention?.label ===
-            'Special Attention'
+              'Special Attention'
               ? 'Special Attention'
               : 'Kind Attention',
 
@@ -422,7 +412,7 @@ export default function ClientForm() {
       if (
         err.response?.status === 403 &&
         err.response?.data?.code ===
-          'PLAN_LIMIT_CLIENTS'
+        'PLAN_LIMIT_CLIENTS'
       ) {
         toast.error(
           err.response.data.message,
@@ -438,7 +428,7 @@ export default function ClientForm() {
 
       toast.error(
         err.response?.data?.message ||
-          'Failed to save client'
+        'Failed to save client'
       );
     } finally {
       setSaving(false);
