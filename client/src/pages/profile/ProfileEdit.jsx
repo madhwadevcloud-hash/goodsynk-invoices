@@ -17,6 +17,10 @@ const INDIAN_STATES = [
   'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
   'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand',
   'West Bengal', 'Delhi', 'Jammu & Kashmir', 'Ladakh', 'Puducherry', 'Chandigarh']
+// GSTIN is no longer format/checksum validated - any value is accepted as-is.
+const normalizeGSTIN = (value) =>
+  String(value || '').replace(/\s+/g, '').toUpperCase();
+
 const checkImageHasBackground = (file) => {
   return new Promise((resolve) => {
     // Check for transparent pixels (background) for all supported image formats
@@ -142,11 +146,11 @@ function BankCard({ bank, index, editing, onEdit, onDelete, onPrimary }) {
           </button>
           {editing && (
             <div style={{ display: 'flex', gap: 6 }}>
-            {!bank.isPrimary && <button type="button" className="btn btn-ghost btn-sm" onClick={() => onPrimary(index)}>Make Primary</button>}
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => onEdit(index)}><Pencil size={13} /></button>
-            <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => onDelete(index)}><Trash2 size={13} /></button>
+              {!bank.isPrimary && <button type="button" className="btn btn-ghost btn-sm" onClick={() => onPrimary(index)}>Make Primary</button>}
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => onEdit(index)}><Pencil size={13} /></button>
+              <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => onDelete(index)}><Trash2 size={13} /></button>
             </div>
-        )}
+          )}
         </div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px 18px', fontSize: '0.8rem' }}>
@@ -357,9 +361,6 @@ export default function ProfileEdit() {
     if (!bankModal.draft.bankName && !bankModal.draft.accountNumber) return toast.error('Bank name or account number is required');
     if (bankModal.draft.accountNumber && !/^[0-9]{9,18}$/.test(bankModal.draft.accountNumber)) {
       return toast.error('Account number must be 9 to 18 digits');
-    }
-    if (bankModal.draft.ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankModal.draft.ifscCode)) {
-      return toast.error('Invalid IFSC Code format (e.g. HDFC0001234)');
     }
     const rawNext = bankModal.index === null ? [...bankAccounts, bankModal.draft] : bankAccounts.map((bank, index) => index === bankModal.index ? bankModal.draft : bank);
     const next = bankModal.draft.isPrimary
@@ -599,11 +600,15 @@ export default function ProfileEdit() {
                   </div>
                   <div className="form-group">
                     <label className="form-label">GSTIN</label>
-                    <input className={`form-control${errors.gstin ? ' error' : ''}`} placeholder="22AAAAA0000A1Z5"
+                    <input className={`form-control${errors.gstin ? ' error' : ''}`} placeholder="29ABCDE1234F1Z5"
+                      autoComplete="off"
                       style={{ textTransform: 'uppercase' }}
                       {...register('gstin', {
-                        pattern: { value: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, message: 'Invalid GSTIN format (e.g. 22AAAAA0000A1Z5)' }
-                      })} />
+                        setValueAs: normalizeGSTIN,
+                      })}
+                      onInput={(e) => {
+                        e.target.value = normalizeGSTIN(e.target.value);
+                      }} />
                     {errors.gstin && <p className="form-error">{errors.gstin.message}</p>}
                   </div>
                 </div>
@@ -871,7 +876,7 @@ export default function ProfileEdit() {
               <div className="form-group"><label className="form-label">Bank Name</label><input className="form-control" value={bankModal.draft.bankName} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, bankName: e.target.value } }))} placeholder="HDFC Bank" /></div>
               <div className="form-group"><label className="form-label">Account Name</label><input className="form-control" value={bankModal.draft.accountName} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, accountName: e.target.value } }))} placeholder="Acme Solutions" /></div>
               <div className="form-group"><label className="form-label">Account Number</label><input className="form-control" value={bankModal.draft.accountNumber} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, accountNumber: e.target.value.replace(/[^0-9]/g, '') } }))} placeholder="50100XXXXXXX" /></div>
-              <div className="form-group"><label className="form-label">IFSC Code</label><input className="form-control" style={{ textTransform: 'uppercase' }} value={bankModal.draft.ifscCode} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, ifscCode: e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 11) } }))} placeholder="HDFC0001234" /></div>
+              <div className="form-group"><label className="form-label">IFSC Code</label><input className="form-control" style={{ textTransform: 'uppercase' }} value={bankModal.draft.ifscCode} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, ifscCode: e.target.value.toUpperCase() } }))} placeholder="HDFC0001234" /></div>
               <div className="form-group"><label className="form-label">SWIFT Code</label><input className="form-control" style={{ textTransform: 'uppercase' }} value={bankModal.draft.swiftCode} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, swiftCode: e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 11) } }))} placeholder="Optional" /></div>
               <div className="form-group"><label className="form-label">Branch</label><input className="form-control" value={bankModal.draft.branch} onChange={(e) => setBankModal((m) => ({ ...m, draft: { ...m.draft, branch: e.target.value } }))} placeholder="Koramangala" /></div>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 28, cursor: 'pointer' }}>
