@@ -10,6 +10,7 @@ import Template17 from './Template17';
 import Template18 from './Template18';
 import Template19 from './Template19';
 import Template20 from './Template20';
+import Restro from './Restro';
 import DocumentTemplate from './DocumentTemplate';
 
 import { getDocumentSettings } from '../../../utils/documentSettings';
@@ -27,8 +28,13 @@ const TEMPLATE_MAP = {
     template18: Template18,
     template19: Template19,
     template20: Template20,
+
+    // Restaurant template
+    restro: Restro,
+
     invoice12: (props) => <DocumentTemplate {...props} variant="invoice12" />,
     invoice14: (props) => <DocumentTemplate {...props} variant="invoice14" />,
+
     // Legacy fallbacks for removed templates so existing saved records don't break:
     template3: Template1,
     template4: Template1,
@@ -45,12 +51,14 @@ const TEMPLATE_MAP = {
 
 export default function TemplateResolver({ invoice }) {
     const docSettings = getDocumentSettings();
-    const isDiscColumnVisible = !docSettings.hideDiscount && docSettings.showDiscountColumn;
+    const isDiscColumnVisible =
+        !docSettings.hideDiscount && docSettings.showDiscountColumn;
 
     let processedInvoice = {
         ...invoice,
         watermarkImage: invoice?.watermarkImage || docSettings.watermarkImage,
     };
+
     if (!isDiscColumnVisible) {
         processedInvoice = {
             ...processedInvoice,
@@ -59,11 +67,20 @@ export default function TemplateResolver({ invoice }) {
             overallDiscTotal: 0,
             hideDiscount: true,
             hideDiscountColumn: true,
-            items: processedInvoice.items?.map((item) => ({ ...item, discount: 0 })),
+            items: processedInvoice.items?.map((item) => ({
+                ...item,
+                discount: 0,
+            })),
         };
     }
 
-    const key = (processedInvoice.template || processedInvoice._resolvedTemplate || 'template1').toLowerCase();
-    const Chosen = TEMPLATE_MAP[key] || Template1; // safe fallback if a key is ever missing
+    const key = (
+        processedInvoice.template ||
+        processedInvoice._resolvedTemplate ||
+        'template1'
+    ).toLowerCase();
+
+    const Chosen = TEMPLATE_MAP[key] || Template1;
+
     return <Chosen invoice={processedInvoice} />;
 }

@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { invoiceAPI, clientAPI, productAPI, quotationAPI } from '../../api/services';
 import toast from 'react-hot-toast';
-import { Plus, Trash2, Save, Download, Loader2, X, ChevronDown, Percent, Tag, Lock, Landmark, ArrowLeft, Eye, Settings } from 'lucide-react';
+import { Plus, Trash2, Save, Download, Loader2, X, ChevronDown, Percent, Tag, Palette, Lock, Landmark, ArrowLeft, Eye, Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import TemplatePreview from '../../components/TemplatePreview';
 import DocumentSettingsPanel from '../../components/DocumentSettingsPanel';
@@ -93,6 +93,35 @@ export function resolveTemplateColors(templateKey, storedColors) {
 
 // Templates available on the free plan — everything else shows an "Upgrade" lock
 const FREE_TEMPLATES = ['template1', 'template2', 'template5'];
+const getNextSequentialNumber = (value) => {
+  const input = String(value || '').trim();
+  const match = input.match(/^(.*?)(\d+)$/);
+  if (!match) return '';
+
+  const prefix = match[1];
+  const numericPart = match[2];
+  const nextNumber = String(Number(numericPart) + 1).padStart(numericPart.length, '0');
+
+  return `${prefix}${nextNumber}`;
+};
+
+// Returns the number immediately before an automatic sequence value.
+// This is only used for the small UI hint; the backend remains the source of truth.
+const getPreviousSequentialNumber = (value) => {
+  const input = String(value || '').trim();
+  const match = input.match(/^(.*?)(\d+)$/);
+  if (!match) return '';
+
+  const prefix = match[1];
+  const numericPart = match[2];
+  const currentNumber = Number(numericPart);
+
+  if (!Number.isFinite(currentNumber) || currentNumber <= 1) return '';
+
+  const previousNumber = String(currentNumber - 1).padStart(numericPart.length, '0');
+  return `${prefix}${previousNumber}`;
+};
+
 
 export default function InvoiceForm() {
   const { id } = useParams();
@@ -103,10 +132,14 @@ export default function InvoiceForm() {
   const docType = isQuotation ? 'quotation' : 'invoice';
   const docLabel = isQuotation ? 'Quotation' : 'Invoice';
   const basePath = isQuotation ? '/quotations' : '/invoices';
+  // IMPORTANT: invoices and quotations use separate CRUD endpoints.
+  // Both use MongoDB-backed InvoiceSequence numbering on the backend, but a
+  // quotation must be previewed/saved through /quotations, not /invoices.
   const docAPI = isQuotation ? quotationAPI : invoiceAPI;
   const DRAFT_KEY = isQuotation ? 'draft_quotation' : 'draft_invoice';
   const DRAFT_CLIENT_QUERY_KEY = isQuotation ? 'draft_quotation_clientQuery' : 'draft_invoice_clientQuery';
   const DRAFT_DISCOUNT_KEY = isQuotation ? 'draft_quotation_discountConfig' : 'draft_invoice_discountConfig';
+
 
 
   const [clients, setClients] = useState([]);
@@ -117,6 +150,28 @@ export default function InvoiceForm() {
   const [usage, setUsage] = useState(null);
   const [checkingLimit, setCheckingLimit] = useState(false);
   const { user: currentUser } = useAuth();
+
+  // Prevent mobile browsers from zooming the page when an input receives focus.
+  // Keeping form controls at 16px+ also avoids the common iOS input auto-zoom.
+  useEffect(() => {
+    let viewport = document.querySelector('meta[name="viewport"]');
+    if (!viewport) {
+      viewport = document.createElement('meta');
+      viewport.name = 'viewport';
+      document.head.appendChild(viewport);
+    }
+
+    const previousContent = viewport.getAttribute('content');
+    viewport.setAttribute(
+      'content',
+      'width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover'
+    );
+
+    return () => {
+      if (previousContent) viewport.setAttribute('content', previousContent);
+    };
+  }, []);
+
   const [showHsn, setShowHsn] = useState(true);
   const [lineSearchQuery, setLineSearchQuery] = useState('');
   const [lineSearchOpen, setLineSearchOpen] = useState(false);
@@ -129,6 +184,7 @@ export default function InvoiceForm() {
   const [showBankDetails, setShowBankDetails] = useState(false);
   const [isCustomNumber, setIsCustomNumber] = useState(false);
   const [customNumberInput, setCustomNumberInput] = useState('');
+  const [generatedNumber, setGeneratedNumber] = useState('');
 
   const updateNewItemDiscount = (val, mode, price, quantity) => {
     const rawVal = val === '' ? 0 : parseFloat(val) || 0;
@@ -305,8 +361,13 @@ export default function InvoiceForm() {
     roundOff: false,
     selectedBankIndex: 0,
     paymentInfo: '',
-    template: '',
-    templateColors: null,
+    // A brand-new invoice/quotation always starts with the account default
+    // selected in the Document Templates section.
+    template: ((isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) || 'template1').toLowerCase(),
+    templateColors: resolveTemplateColors(
+      ((isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) || 'template1').toLowerCase(),
+      isQuotation ? currentUser?.quotationTemplateColors : currentUser?.invoiceTemplateColors
+    ),
     items: [],
   });
 
@@ -315,31 +376,181 @@ export default function InvoiceForm() {
   const draftDiscountKeyRef = useRef(DRAFT_DISCOUNT_KEY);
 
   const [form, setForm] = useState(() => {
-    if (location.state?.formDraft) return location.state.formDraft;
+    if (location.state?.formDraft) {
+      const routedDraft = { ...location.state.formDraft };
+      // A routed new-document draft can contain an old automatic number.
+      // Never trust that value; the number must come from MongoDB below.
+      routedDraft.invoiceNumber = '';
+      return routedDraft;
+    }
+
     if (!isEdit) {
       try {
         const saved = localStorage.getItem(DRAFT_KEY);
-        if (saved) return JSON.parse(saved);
+        if (saved) {
+          const parsedDraft = JSON.parse(saved);
+          // Do not restore automatic numbering from localStorage.
+          parsedDraft.invoiceNumber = '';
+          return parsedDraft;
+        }
       } catch (err) {}
     }
+
     return createBlankForm();
   });
 
-
-  // Invoice and quotation forms share this component, so React can keep the
-  // component mounted while the route changes. Restore the correct draft when
-  // switching document types instead of carrying the previous form across.
+  // Restore the current draft when opening a new document.
+  // Invoice numbering is no longer read from localStorage; it comes from
+  // the MongoDB-backed numbering sequence below.
   useEffect(() => {
-    if (isEdit || location.state?.formDraft || location.state?.newClientId) return;
+    if (isEdit || location.state?.formDraft || location.state?.newClientId || !currentUser) return;
+
     try {
       const saved = localStorage.getItem(DRAFT_KEY);
-      setForm(saved ? JSON.parse(saved) : createBlankForm());
+      const restoredForm = saved ? JSON.parse(saved) : createBlankForm();
+      // Automatic document numbers must NEVER be restored from a local draft.
+      // The server/database is the only source of truth for the next automatic
+      // number. This prevents an old draft containing OO-008 from showing OO-008
+      // when OO-008 has already been created and the next number is OO-009.
+      // A custom number is handled separately by the custom-number toggle/input.
+      restoredForm.invoiceNumber = '';
+      setGeneratedNumber('');
+      setIsCustomNumber(false);
+      setCustomNumberInput('');
+
+      // Do not let an old local draft override the company's current
+      // template preference when starting a new document.
+      const defaultTemplate = (
+        (isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) ||
+        'template1'
+      ).toLowerCase();
+      restoredForm.template = defaultTemplate;
+      restoredForm.templateColors = resolveTemplateColors(
+        defaultTemplate,
+        isQuotation ? currentUser?.quotationTemplateColors : currentUser?.invoiceTemplateColors
+      );
+
+      setForm(restoredForm);
       setClientQuery(localStorage.getItem(DRAFT_CLIENT_QUERY_KEY) || '');
     } catch (err) {
-      setForm(createBlankForm());
+      const restoredForm = createBlankForm();
+      restoredForm.invoiceNumber = '';
+      setIsCustomNumber(false);
+      setCustomNumberInput('');
+      setGeneratedNumber('');
+
+      const defaultTemplate = (
+        (isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) ||
+        'template1'
+      ).toLowerCase();
+      restoredForm.template = defaultTemplate;
+      restoredForm.templateColors = resolveTemplateColors(
+        defaultTemplate,
+        isQuotation ? currentUser?.quotationTemplateColors : currentUser?.invoiceTemplateColors
+      );
+
+      setForm(restoredForm);
       setClientQuery('');
     }
-  }, [isQuotation]);
+  }, [DRAFT_KEY, DRAFT_CLIENT_QUERY_KEY, isEdit, isQuotation, currentUser, location.state?.formDraft, location.state?.newClientId]);
+
+  // Fetch the current automatic document number from MongoDB.
+  // This is read-only: it does not consume the number. The backend allocates
+  // the number only when the document is actually saved.
+  // IMPORTANT: quotations call quotationAPI.getAll(), while invoices call
+  // invoiceAPI.getAll(). This keeps quotation numbering separate from invoice
+  // numbering and prevents stale values such as KK-999 / KK-1000.
+  useEffect(() => {
+    if (isEdit || !currentUser || isCustomNumber) return;
+
+    let cancelled = false;
+
+    const loadNextDocumentNumber = async () => {
+      try {
+        const response = await docAPI.getAll({
+          nextNumber: true,
+          invoiceType: docType,
+          limit: 1,
+        });
+
+        const data = response?.data || {};
+        const nextNumber = String(data?.nextNumber || '').trim();
+
+        if (!cancelled && data?.success && nextNumber) {
+          setGeneratedNumber(nextNumber);
+          setForm((previous) => ({
+            ...previous,
+            invoiceNumber: nextNumber,
+          }));
+        }
+      } catch (error) {
+        console.error(
+          `Failed to load next ${docLabel.toLowerCase()} number:`,
+          error
+        );
+      }
+    };
+
+    loadNextDocumentNumber();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isEdit, isQuotation, docType, docLabel, currentUser, isCustomNumber, docAPI]);
+
+  useEffect(() => {
+    if (isEdit || !currentUser || isCustomNumber) return;
+
+    let cancelled = false;
+
+    const loadNextDocumentNumber = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const apiBase = String(import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
+        if (!apiBase) {
+          throw new Error('VITE_API_URL is not configured');
+        }
+
+        const response = await fetch(
+          `${apiBase}/invoices?nextNumber=true&invoiceType=${encodeURIComponent(docType)}&limit=1`,
+          {
+            method: 'GET',
+            headers: {
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to load next ${docLabel.toLowerCase()} number (${response.status})`);
+        }
+
+        const data = await response.json();
+        const nextNumber = String(data?.nextNumber || '').trim();
+
+        if (!cancelled && data?.success && nextNumber) {
+          // IMPORTANT: an automatic number is only a preview until Save.
+          // Never allow an old local draft number (for example OO-008) to
+          // override the fresh database preview (for example OO-009).
+          setGeneratedNumber(nextNumber);
+          setForm((previous) => ({
+            ...previous,
+            invoiceNumber: nextNumber,
+          }));
+        }
+      } catch (error) {
+        console.error(`Failed to load next ${docLabel.toLowerCase()} number:`, error);
+      }
+    };
+
+    loadNextDocumentNumber();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isEdit, isQuotation, docType, docLabel, currentUser, isCustomNumber]);
 
   useEffect(() => {
     if (isEdit) return;
@@ -454,13 +665,17 @@ export default function InvoiceForm() {
       // form doesn't already have a value — this preserves a restored draft's
       // choices instead of clobbering them every time this effect re-runs.
       setForm(f => {
-        const resolvedTemplate = f.template || (isQuotation ? currentUser.quotationTemplate : currentUser.invoiceTemplate) || 'template1';
-        const tptKey = resolvedTemplate.toLowerCase();
+        const resolvedTemplate = (
+          (isQuotation ? currentUser.quotationTemplate : currentUser.invoiceTemplate) ||
+          'template1'
+        ).toLowerCase();
+
         return {
           ...f,
+          // The account-level template is the default for every new document.
           template: resolvedTemplate,
-          templateColors: f.templateColors || resolveTemplateColors(
-            tptKey,
+          templateColors: resolveTemplateColors(
+            resolvedTemplate,
             isQuotation ? currentUser.quotationTemplateColors : currentUser.invoiceTemplateColors
           ),
           currency: f.currency || currentUser.currency || 'INR',
@@ -485,6 +700,32 @@ export default function InvoiceForm() {
   }, []);
 
   const setField = (key, val) => setForm((f) => ({ ...f, [key]: val }));
+
+  // Resolve the colors saved for a specific template. Supports both the
+  // current per-template store and the older flat { primary, secondary } format.
+  const getColorsForTemplate = (templateId) => {
+    const key = (
+      templateId ||
+      (isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) ||
+      'template1'
+    ).toLowerCase();
+
+    const storedColors = isQuotation
+      ? currentUser?.quotationTemplateColors
+      : currentUser?.invoiceTemplateColors;
+
+    const defaults = DEFAULT_COLORS[key] || DEFAULT_COLORS.template1;
+
+    if (storedColors?.[key] && typeof storedColors[key] === 'object') {
+      return { ...defaults, ...storedColors[key] };
+    }
+
+    if (storedColors?.primary || storedColors?.secondary) {
+      return { ...defaults, ...storedColors };
+    }
+
+    return { ...defaults };
+  };
 
   const setItem = (idx, key, val) =>
     setForm((f) => ({ ...f, items: f.items.map((item, i) => i === idx ? { ...item, [key]: val } : item) }));
@@ -672,6 +913,20 @@ export default function InvoiceForm() {
     }
   };
 
+  // Returns the number currently available for this new document.
+  // Priority is the value already visible/edited in the form, then the saved
+  // automatic sequence preview. This is used when switching to custom mode so
+  // the user never gets an unexpectedly blank field.
+  const getCurrentDocumentNumber = () => {
+    const fromCustomInput = String(customNumberInput || '').trim();
+    if (fromCustomInput) return fromCustomInput;
+
+    const fromGeneratedNumber = String(generatedNumber || '').trim();
+    if (fromGeneratedNumber) return fromGeneratedNumber;
+
+    return String(form.invoiceNumber || '').trim();
+  };
+
   const handleSubmit = async (e, shouldDownload = false) => {
     e.preventDefault();
     if (!form.client) return toast.error('Please select a client');
@@ -680,8 +935,21 @@ export default function InvoiceForm() {
     setSaving(true);
     if (shouldDownload) setDownloading(true);
 
+    const normalizedCustomNumber = isCustomNumber
+      ? String(customNumberInput || form.invoiceNumber || '').trim()
+      : '';
+
+    if (isCustomNumber && !normalizedCustomNumber) {
+      toast.error(`Please enter a ${docLabel.toLowerCase()} number`);
+      setSaving(false);
+      setDownloading(false);
+      return;
+    }
+
     const body = {
       ...form,
+      invoiceNumber: isCustomNumber ? normalizedCustomNumber : '',
+      isCustomNumber,
       notes: serializeNotes(form.notes.map((n) => n.trim()).filter(Boolean)),
       termsAndConditions: serializeNotes(form.termsAndConditions.map((t) => t.trim()).filter(Boolean)),
       selectedBankIndex: Number(form.selectedBankIndex || 0),
@@ -699,6 +967,18 @@ export default function InvoiceForm() {
         const res = await docAPI.create(body);
         savedInvoice = res.data.invoice;
         toast.success(`${docLabel} created`);
+
+        // The backend/database is the source of truth. Keep the number
+        // returned by the server only for the current UI state; the next
+        // New Invoice preview will be fetched from MongoDB again.
+        if (savedInvoice?.invoiceNumber) {
+          const serverNumber = String(savedInvoice.invoiceNumber).trim();
+          setGeneratedNumber(serverNumber);
+          setForm((prev) => ({
+            ...prev,
+            invoiceNumber: serverNumber,
+          }));
+        }
       }
 
       if (shouldDownload) {
@@ -711,14 +991,23 @@ export default function InvoiceForm() {
         localStorage.removeItem(DRAFT_CLIENT_QUERY_KEY);
         localStorage.removeItem(DRAFT_DISCOUNT_KEY);
       }
-      navigate(`${basePath}/${savedInvoice._id}`);
+      // Keep quotations inside the quotation section after saving.
+      // Quotation documents are stored through the shared invoice controller
+      // with invoiceType: 'quotation', so the quotation list is the correct
+      // destination after create/update. Invoices keep their existing detail
+      // page navigation.
+      if (isQuotation) {
+        navigate('/quotations');
+      } else {
+        navigate(`/invoices/${savedInvoice._id}`);
+      }
     } catch (err) {
       if (err.response?.status === 403 && err.response?.data?.code === 'PLAN_LIMIT_DOCUMENTS') {
         toast.error(err.response.data.message, { id: 'document-limit-toast' });
         navigate('/upgrade');
         return;
       }
-      toast.error(err.response?.data?.message || 'Failed to save invoice');
+      toast.error(err.response?.data?.message || `Failed to save ${docLabel.toLowerCase()}`);
     } finally {
       setSaving(false);
       setDownloading(false);
@@ -756,11 +1045,467 @@ export default function InvoiceForm() {
   const notePoints = form.notes || [];
   const termsPoints = form.termsAndConditions || [];
 
+  // Template 19 (Legal Services Boxed) has no 55-character restriction
+  // for Notes or Terms & Conditions. All other templates are limited to 55.
+  const isLegalServicesBoxed =
+    String(form.template || '').trim().toLowerCase() === 'template19';
+
   if (loading || checkingLimit) return <div className="flex-center" style={{ minHeight: '60vh' }}><div className="spinner" /></div>;
 
+  const responsiveStyles = `
+    .invoice-form-page-header {
+      gap: 16px;
+    }
+
+    .invoice-form-actions {
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .invoice-action-btn {
+      min-height: 42px;
+      white-space: nowrap;
+    }
+
+    .document-number-group {
+      min-width: 0;
+    }
+
+    .document-number-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+
+    .document-number-label {
+      display: block;
+    }
+
+    .document-number-helper {
+      margin: 4px 0 0;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      line-height: 1.45;
+      max-width: 420px;
+    }
+
+    .custom-number-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 44px;
+      cursor: pointer;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .custom-number-switch input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .custom-number-slider {
+      width: 46px;
+      height: 26px;
+      padding: 3px;
+      border-radius: 999px;
+      background: var(--border);
+      transition: background 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .custom-number-slider span {
+      display: block;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      transform: translateX(0);
+      transition: transform 0.2s ease;
+    }
+
+    .custom-number-switch input:checked + .custom-number-slider {
+      background: var(--primary);
+    }
+
+    .custom-number-switch input:checked + .custom-number-slider span {
+      transform: translateX(20px);
+    }
+
+    .custom-number-switch-text {
+      color: var(--text-primary);
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .custom-number-panel {
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg-elevated);
+    }
+
+    .custom-number-input-row {
+      display: flex;
+      width: 100%;
+    }
+
+    .custom-number-input-wrap {
+      position: relative;
+      width: 100%;
+    }
+
+    .custom-number-input {
+      min-height: 46px;
+      padding-left: 42px !important;
+      font-size: 16px !important;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .custom-number-input-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      background: var(--primary-bg);
+      color: var(--primary);
+      font-size: 0.78rem;
+      font-weight: 800;
+      pointer-events: none;
+    }
+
+    .custom-number-explanation {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+    }
+
+    .custom-number-example {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .custom-number-example > span:last-child {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .custom-number-example strong {
+      font-size: 0.76rem;
+      color: var(--text-primary);
+    }
+
+    .custom-number-example small {
+      margin-top: 2px;
+      color: var(--text-muted);
+      font-size: 0.68rem;
+      line-height: 1.35;
+    }
+
+    .sequence-step {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--primary-bg);
+      color: var(--primary);
+      font-size: 0.72rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .sequence-arrow {
+      color: var(--text-muted);
+      font-size: 1rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .custom-number-next-preview,
+    .custom-number-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 9px 10px;
+      border-radius: 9px;
+      font-size: 0.72rem;
+      line-height: 1.45;
+    }
+
+    .custom-number-next-preview {
+      color: var(--primary);
+      background: var(--primary-bg);
+    }
+
+    .custom-number-warning {
+      color: var(--text-secondary);
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+
+    .custom-number-next-preview strong,
+    .custom-number-warning strong {
+      font-weight: 800;
+    }
+
+    .next-preview-dot {
+      width: 8px;
+      height: 8px;
+      margin-top: 5px;
+      border-radius: 50%;
+      background: var(--primary);
+      flex-shrink: 0;
+    }
+
+    /* Compact automatic-number hint. It intentionally takes very little
+       vertical space so the Client and Number fields stay visually balanced. */
+    .auto-number-panel {
+      display: block;
+      min-height: 0;
+      padding: 3px 0 0;
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+    }
+
+    .auto-number-panel > div:last-child {
+      display: block;
+      min-width: 0;
+    }
+
+    .auto-number-panel .auto-number-text {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.68rem;
+      line-height: 1.35;
+      margin: 0;
+    }
+
+    .auto-number-panel .auto-number-text strong {
+      color: var(--text-primary);
+      font-size: inherit;
+      font-weight: 700;
+    }
+
+    .auto-number-panel .auto-number-separator {
+      display: inline;
+      margin: 0 5px;
+      color: var(--text-muted);
+    }
+
+    .client-select-wrap {
+      position: relative;
+      width: 100%;
+    }
+
+    .client-dropdown {
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 0;
+      width: 100%;
+      z-index: 100;
+      box-sizing: border-box;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      max-height: 280px;
+      overflow-y: auto;
+      box-shadow: var(--shadow);
+    }
+
+    .touch-target {
+      min-height: 44px !important;
+    }
+
+    /* Mobile form controls: 16px prevents browser input auto-zoom and makes
+       controls much easier to tap. */
+    .invoice-form-page-header input,
+    .invoice-form-page-header button,
+    .invoice-form-page-header select,
+    form .form-control {
+      font-size: 16px;
+    }
+
+    form button,
+    form select,
+    form input {
+      touch-action: manipulation;
+    }
+
+    @media (max-width: 900px) {
+      .invoice-form-page-header {
+        align-items: flex-start !important;
+        flex-direction: column;
+      }
+
+      .invoice-form-actions {
+        width: 100%;
+      }
+
+      .invoice-action-btn {
+        flex: 1;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .invoice-form-page-header {
+        padding-bottom: 4px;
+      }
+
+      .invoice-form-actions {
+        display: grid !important;
+        grid-template-columns: 1fr 1.35fr;
+        width: 100%;
+        gap: 8px !important;
+      }
+
+      .invoice-action-btn {
+        width: 100%;
+        min-height: 46px;
+        padding: 8px 10px !important;
+      }
+
+      .document-number-header {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .custom-number-switch {
+        width: 100%;
+        padding: 9px 10px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--bg-elevated);
+        justify-content: flex-start;
+      }
+
+      .custom-number-switch-text {
+        font-size: 0.8rem;
+      }
+
+      .custom-number-explanation {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .sequence-arrow {
+        display: none;
+      }
+
+      .custom-number-example {
+        padding: 8px;
+        border-radius: 8px;
+        background: var(--bg-elevated);
+      }
+
+      .custom-number-panel {
+        padding: 10px;
+      }
+
+      /* The line-item table remains horizontally scrollable rather than
+         shrinking tiny controls until they become unusable. */
+      .card > div[style*="overflowX"] {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+      }
+
+      .card > div[style*="overflowX"] table {
+        min-width: 980px;
+      }
+
+      .card-header {
+        gap: 10px;
+      }
+
+      .card-header .btn {
+        min-height: 44px;
+        padding: 8px 12px;
+      }
+
+      .form-grid,
+      .form-grid-3 {
+        grid-template-columns: 1fr !important;
+      }
+
+      .template-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      }
+
+      .document-number-input {
+        font-size: 16px !important;
+      }
+
+      .custom-number-slider {
+        width: 48px;
+        height: 28px;
+      }
+
+      .custom-number-slider span {
+        width: 22px;
+        height: 22px;
+      }
+
+      .custom-number-switch input:checked + .custom-number-slider span {
+        transform: translateX(20px);
+      }
+    }
+
+    @media (max-width: 420px) {
+      .invoice-action-btn {
+        font-size: 0.78rem !important;
+      }
+
+      .invoice-form-page-header .page-title {
+        font-size: 1.35rem;
+      }
+
+      .invoice-form-page-header .page-subtitle {
+        font-size: 0.76rem;
+      }
+
+      .custom-number-switch-text {
+        font-size: 0.75rem;
+      }
+
+      .custom-number-input {
+        min-height: 48px;
+      }
+
+      .card {
+        padding: 14px !important;
+      }
+    }
+  `;
+
   return (
+    <>
+      <style>{responsiveStyles}</style>
     <form onSubmit={handleSubmit}>
-      <div className="page-header">
+      <div className="page-header invoice-form-page-header">
         <div className="flex gap-3" style={{ alignItems: 'center' }}>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => navigate(basePath)}>
             <ArrowLeft size={16} />
@@ -770,10 +1515,10 @@ export default function InvoiceForm() {
             <p className="page-subtitle">{isEdit ? `Editing ${form.invoiceNumber}` : `Fill in the details to create a ${docLabel.toLowerCase()}`}</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 invoice-form-actions">
           <button
             type="button"
-            className="btn btn-secondary"
+            className="btn btn-secondary invoice-action-btn"
             disabled={saving || downloading}
             onClick={(e) => handleSubmit(e, false)}
           >
@@ -782,7 +1527,7 @@ export default function InvoiceForm() {
           </button>
           <button
             type="button"
-            className="btn btn-primary"
+            className="btn btn-primary invoice-action-btn"
             disabled={saving || downloading}
             onClick={(e) => handleSubmit(e, true)}
           >
@@ -808,27 +1553,23 @@ export default function InvoiceForm() {
 
         <div className="form-grid-3">
           {/* ── Client search-select ── */}
-          <div className="form-group" style={{ position: 'relative' }}>
+          <div className="form-group">
             <label className="form-label">Client *</label>
-            <input
-              className="form-control"
-              placeholder="Search customers by name, company, GSTIN, tags…"
-              value={clientQuery}
-              onChange={(e) => {
-                setClientQuery(e.target.value);
-                setField('client', '');
-                setClientDropdownOpen(true);
-              }}
-              onFocus={() => setClientDropdownOpen(true)}
-              onBlur={() => setTimeout(() => setClientDropdownOpen(false), 150)}
-            />
-            {clientDropdownOpen && (
-              <div style={{
-                position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 30,
-                background: 'var(--bg-card)', border: '1px solid var(--border)',
-                borderRadius: 10, marginTop: 4, maxHeight: 280, overflowY: 'auto',
-                boxShadow: 'var(--shadow)',
-              }}>
+            <div className="client-select-wrap">
+              <input
+                className="form-control"
+                placeholder="Search customers by name, company, GSTIN, tags…"
+                value={clientQuery}
+                onChange={(e) => {
+                  setClientQuery(e.target.value);
+                  setField('client', '');
+                  setClientDropdownOpen(true);
+                }}
+                onFocus={() => setClientDropdownOpen(true)}
+                onBlur={() => setTimeout(() => setClientDropdownOpen(false), 180)}
+              />
+              {clientDropdownOpen && (
+                <div className="client-dropdown">
                 {filteredClients.length === 0 ? (
                   <div style={{ padding: '12px 14px', fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center' }}>
                     No clients found{clientQuery ? ` for "${clientQuery}"` : ''}
@@ -854,88 +1595,169 @@ export default function InvoiceForm() {
                     </div>
                   ))
                 )}
-                <button
-                  type="button"
-                  onMouseDown={openNewClientModal}
-                  style={{
-                    width: '100%', textAlign: 'center', padding: '12px 14px',
-                    background: 'var(--bg-elevated)', border: 'none', borderTop: '1px solid var(--border)',
-                    cursor: 'pointer', color: 'var(--primary)', fontWeight: 700,
-                    fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                  }}
-                >
-                  <Plus size={14} /> Create Client
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="form-group">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-              <label className="form-label" style={{ marginBottom: 0 }}>{docLabel} #</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Custom No.</span>
-                <label style={{ position: 'relative', display: 'inline-block', width: 34, height: 18, cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={isCustomNumber}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      setIsCustomNumber(checked);
-                      if (!checked) {
-                        setCustomNumberInput('');
-                        setField('invoiceNumber', '');
-                      }
+                  <button
+                    type="button"
+                    onMouseDown={openNewClientModal}
+                    style={{
+                      width: '100%', textAlign: 'center', padding: '12px 14px',
+                      background: 'var(--bg-elevated)', border: 'none', borderTop: '1px solid var(--border)',
+                      cursor: 'pointer', color: 'var(--primary)', fontWeight: 700,
+                      fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                     }}
-                    style={{ opacity: 0, width: 0, height: 0 }}
-                  />
-                  <span style={{
-                    position: 'absolute', inset: 0,
-                    backgroundColor: isCustomNumber ? 'var(--primary)' : 'var(--border)',
-                    borderRadius: 18, transition: '0.2s',
-                  }}>
-                    <span style={{
-                      position: 'absolute', content: '""', height: 14, width: 14, left: isCustomNumber ? 17 : 2, bottom: 2,
-                      backgroundColor: '#fff', borderRadius: '50%', transition: '0.2s',
-                    }} />
-                  </span>
+                  >
+                    <Plus size={14} /> Create Client
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="form-group document-number-group">
+            <div className="document-number-header">
+              <div>
+                <label className="form-label document-number-label" style={{ marginBottom: 0 }}>
+                  {docLabel} Number
                 </label>
+                <p className="document-number-helper">
+                  {isCustomNumber
+                    ? 'Custom numbering is ON. Enter the starting number once; future numbers continue automatically.'
+                    : 'The next number is loaded from your database sequence.'}
+                </p>
               </div>
+
+              <label className="custom-number-switch" title={isCustomNumber ? 'Turn off custom numbering' : 'Turn on custom numbering'}>
+                <input
+                  type="checkbox"
+                  checked={isCustomNumber}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+
+                    if (checked) {
+                      // The exact automatic preview came from MongoDB.
+                      // Copy that value into the custom field when the user
+                      // switches custom numbering ON.
+                      const existingValue = getCurrentDocumentNumber();
+
+                      setIsCustomNumber(true);
+                      setCustomNumberInput(existingValue);
+
+                      if (existingValue) {
+                        setForm((prev) => ({
+                          ...prev,
+                          invoiceNumber: existingValue,
+                        }));
+                      }
+                    } else {
+                      // Return to automatic mode. Do not keep the manually
+                      // edited custom value as the automatic preview.
+                      setIsCustomNumber(false);
+                      setCustomNumberInput('');
+
+                      const automaticValue = String(
+                        generatedNumber || ''
+                      ).trim();
+
+                      if (automaticValue) {
+                        setForm((prev) => ({
+                          ...prev,
+                          invoiceNumber: automaticValue,
+                        }));
+                      }
+                    }
+                  }}
+                  aria-label={`Use custom ${docLabel.toLowerCase()} numbering`}
+                />
+                <span className="custom-number-slider" aria-hidden="true">
+                  <span />
+                </span>
+                <span className="custom-number-switch-text">
+                  {isCustomNumber ? 'Custom numbering ON' : 'Use custom number'}
+                </span>
+              </label>
             </div>
 
             {isCustomNumber ? (
-              <div style={{ display: 'flex', gap: 6 }}>
-                <input
-                  className="form-control"
-                  placeholder={`Enter ${docLabel.toLowerCase()} no. (e.g. ${isQuotation ? 'QT' : 'INV'}-2026-001)`}
-                  value={customNumberInput}
-                  onChange={(e) => setCustomNumberInput(e.target.value)}
-                />
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  style={{ padding: '0 14px', whiteSpace: 'nowrap' }}
-                  onClick={() => {
-                    if (!customNumberInput.trim()) {
-                      toast.error(`Please enter a ${docLabel.toLowerCase()} number`);
-                      return;
-                    }
-                    setField('invoiceNumber', customNumberInput.trim());
-                    toast.success(`${docLabel} number set to ${customNumberInput.trim()}`);
-                  }}
-                >
-                  OK
-                </button>
+              <div className="custom-number-panel">
+                <div className="custom-number-input-row">
+                  <div className="custom-number-input-wrap">
+                    <input
+                      className="form-control custom-number-input"
+                      placeholder={`Example: ${isQuotation ? 'QT' : 'INV'}-2026-001 or MUI-220`}
+                      value={customNumberInput}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setCustomNumberInput(value);
+                        setField('invoiceNumber', value.trim());
+                      }}
+                      inputMode="text"
+                      autoComplete="off"
+                      aria-label={`${docLabel} custom number`}
+                    />
+                    <span className="custom-number-input-icon">#</span>
+                  </div>
+                </div>
+
+                <div className="custom-number-explanation">
+                  <div className="custom-number-example">
+                    <span className="sequence-step">1</span>
+                    <span>
+                      <strong>Starting number</strong>
+                      <small>Type the number you want to use.</small>
+                    </span>
+                  </div>
+
+                  <div className="sequence-arrow">→</div>
+
+                  <div className="custom-number-example">
+                    <span className="sequence-step">2</span>
+                    <span>
+                      <strong>Next number</strong>
+                      <small>
+                        {getNextSequentialNumber(customNumberInput)
+                          ? `Automatically becomes ${getNextSequentialNumber(customNumberInput)}`
+                          : 'Use a number ending with digits to continue the sequence.'}
+                      </small>
+                    </span>
+                  </div>
+                </div>
+
+                {customNumberInput.trim() && !getNextSequentialNumber(customNumberInput) && (
+                  <div className="custom-number-warning">
+                    <span>!</span>
+                    <span>
+                      <strong>Sequence tip:</strong> End your number with digits, for example
+                      <strong> MUI-220</strong>. The next document can then become <strong>MUI-221</strong>.
+                    </span>
+                  </div>
+                )}
+
+                {getNextSequentialNumber(customNumberInput) && (
+                  <div className="custom-number-next-preview">
+                    <span className="next-preview-dot" />
+                    <span>
+                      After saving <strong>{customNumberInput.trim()}</strong>, the next new {docLabel.toLowerCase()} will start at{' '}
+                      <strong>{getNextSequentialNumber(customNumberInput)}</strong>.
+                    </span>
+                  </div>
+                )}
               </div>
             ) : (
-              <input
-                className="form-control"
-                placeholder="Auto-generated on save"
-                value={form.invoiceNumber}
-                disabled
-                readOnly
-                style={{ opacity: 0.7, cursor: 'not-allowed' }}
-              />
+              <div className="auto-number-panel">
+                <div>
+                  {String(generatedNumber || form.invoiceNumber || '').trim() ? (
+                    <span className="auto-number-text">
+                      Previous {docLabel.toLowerCase()}: <strong>{getPreviousSequentialNumber(generatedNumber || form.invoiceNumber) || '—'}</strong>
+                      <span className="auto-number-separator">·</span>
+                      This {docLabel.toLowerCase()}: <strong>{String(generatedNumber || form.invoiceNumber).trim()}</strong>
+                    </span>
+                  ) : (
+                    <span className="auto-number-text">
+                      Automatic {docLabel.toLowerCase()} number will be generated when you save.
+                    </span>
+                  )}
+                </div>
+              </div>
             )}
+          </div>
           </div>
           <div className="form-group">
             <label className="form-label">Currency *</label>
@@ -1008,7 +1830,6 @@ export default function InvoiceForm() {
           </button>
 
         </div>
-      </div>
 
       {showDocSettings && (
         <DocumentSettingsPanel onClose={() => setShowDocSettings(false)} />
@@ -1022,7 +1843,7 @@ export default function InvoiceForm() {
             {!showHsn && (
               <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: '0.75rem' }} onClick={() => setShowHsn(true)}>+ HSN</button>
             )}
-            <button type="button" className="btn btn-primary btn-sm" onClick={() => setAddItemMenuOpen((o) => !o)}><Plus size={14} /> Add Item <ChevronDown size={12} /></button>
+            <button type="button" className="btn btn-primary btn-sm touch-target" onClick={() => setAddItemMenuOpen((o) => !o)}><Plus size={14} /> Add Item <ChevronDown size={12} /></button>
             {addItemMenuOpen && (
               <div style={{ position: 'absolute', right: 0, top: '100%', zIndex: 40, marginTop: 6, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--shadow)', minWidth: 150, overflow: 'hidden' }}>
                 {['Product', 'Service'].map((type) => (
@@ -1535,15 +2356,36 @@ export default function InvoiceForm() {
                     value={point}
                     onChange={(e) => {
                       const next = [...notePoints];
-                      next[noteIdx] = e.target.value;
+                      let value = e.target.value;
+
+                      // Template 19 allows unlimited Notes.
+                      // Other templates are limited to 55 characters and
+                      // show a website notification when the limit is reached.
+                      if (!isLegalServicesBoxed && value.length > 55) {
+                        value = value.slice(0, 55);
+                        toast.error('Notes are limited to 55 characters for this template.', {
+                          id: `notes-limit-${noteIdx}`,
+                        });
+                      } else if (
+                        !isLegalServicesBoxed &&
+                        value.length === 55 &&
+                        notePoints[noteIdx]?.length < 55
+                      ) {
+                        toast.error('55 character limit reached for Notes.', {
+                          id: `notes-limit-${noteIdx}`,
+                        });
+                      }
+
+                      next[noteIdx] = value;
                       setField('notes', next);
                     }}
                     placeholder={`Point ${noteIdx + 1}`}
-                    maxLength={55}
                   />
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', minWidth: 40, textAlign: 'right' }}>
-                    {point.length}/55
-                  </span>
+                  {!isLegalServicesBoxed && (
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', minWidth: 40, textAlign: 'right' }}>
+                      {point.length}/55
+                    </span>
+                  )}
                   <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setField('notes', notePoints.filter((_, i) => i !== noteIdx))}><X size={14} /></button>
                 </div>
               ))}
@@ -1564,15 +2406,36 @@ export default function InvoiceForm() {
                     value={point}
                     onChange={(e) => {
                       const next = [...termsPoints];
-                      next[termIdx] = e.target.value;
+                      let value = e.target.value;
+
+                      // Template 19 allows unlimited Terms & Conditions.
+                      // Other templates are limited to 55 characters and
+                      // show a website notification when the limit is reached.
+                      if (!isLegalServicesBoxed && value.length > 55) {
+                        value = value.slice(0, 55);
+                        toast.error('Terms & Conditions are limited to 55 characters for this template.', {
+                          id: `terms-limit-${termIdx}`,
+                        });
+                      } else if (
+                        !isLegalServicesBoxed &&
+                        value.length === 55 &&
+                        termsPoints[termIdx]?.length < 55
+                      ) {
+                        toast.error('55 character limit reached for Terms & Conditions.', {
+                          id: `terms-limit-${termIdx}`,
+                        });
+                      }
+
+                      next[termIdx] = value;
                       setField('termsAndConditions', next);
                     }}
                     placeholder={`Term ${termIdx + 1}`}
-                    maxLength={55}
                   />
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', minWidth: 40, textAlign: 'right' }}>
-                    {point.length}/55
-                  </span>
+                  {!isLegalServicesBoxed && (
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', minWidth: 40, textAlign: 'right' }}>
+                      {point.length}/55
+                    </span>
+                  )}
                   <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setField('termsAndConditions', termsPoints.filter((_, i) => i !== termIdx))}><X size={14} /></button>
                 </div>
               ))}
@@ -1620,72 +2483,131 @@ export default function InvoiceForm() {
               { id: 'invoice14', name: 'Green Columns', img: TEMPLATE_IMGS.invoice14 },
             ];
             return (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '10px', marginTop: 8 }}>
+              <div className="template-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '10px', marginTop: 8 }}>
                 {TEMPLATES.map((t) => {
-                  const isSelected = (form.template || '') === t.id;
+                  const selectedKey = (form.template || defaultKey || 'template1').toLowerCase();
+                  // Highlight the actual template that will be used. The
+                  // Account Default tile is informational and is selected only
+                  // when the form has no explicit template value.
+                  const isSelected = t.id
+                    ? selectedKey === t.id.toLowerCase()
+                    : !form.template;
                   const isFreePlan = !currentUser?.plan || String(currentUser.plan).toLowerCase() === 'free';
                   const isLocked = Boolean(t.id) && !FREE_TEMPLATES.includes(t.id) && isFreePlan;
+
                   return (
-                    <button
+                    <div
                       key={t.id}
-                      type="button"
-                      onClick={() => {
-                        if (isLocked) {
-                          toast('Upgrade your plan to unlock this template', { icon: '🔒' });
-                          navigate('/upgrade');
-                          return;
-                        }
-                        setPreviewTemplate(t);
-                      }}
                       style={{
-                        border: '0',
-                        borderRadius: 8,
-                        padding: 0,
-                        background: '#fff',
-                        cursor: 'pointer',
+                        border: isSelected ? '2px solid var(--primary)' : '1px solid var(--border)',
+                        borderRadius: 10,
+                        padding: isSelected ? 0 : 1,
+                        background: isSelected ? 'var(--bg-card)' : 'rgba(255,255,255,0.72)',
+                        cursor: isLocked ? 'not-allowed' : 'default',
                         overflow: 'hidden',
                         minWidth: 0,
-                        boxShadow: isSelected ? '0 0 0 3px var(--primary)' : 'none',
-                        transition: 'border 0.15s, box-shadow 0.15s',
-                        opacity: isLocked ? 0.85 : 1,
+                        boxShadow: isSelected
+                          ? '0 0 0 3px var(--primary-bg), 0 8px 22px rgba(0,0,0,0.10)'
+                          : '0 2px 8px rgba(0,0,0,0.03)',
+                        transition: 'opacity 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease',
+                        opacity: isLocked ? 0.42 : (isSelected ? 1 : 0.56),
+                        filter: isSelected ? 'none' : 'saturate(0.72)',
                       }}
                     >
                       <div style={{ position: 'relative' }}>
-                        <TemplatePreview
-                          src={t.img}
-                          templateId={t.id || defaultKey}
-                          logo={currentUser?.businessLogo}
-                          seal={currentUser?.businessSeal}
-                          signature={currentUser?.businessSignature}
-                          alt={t.name}
-                          style={{ aspectRatio: '5/7' }}
-                          imageStyle={{ aspectRatio: '5/7' }}
-                          isFreePlan={isFreePlan}
-                        />
-                        {t.id === '' && (
-                          <span style={{
-                            position: 'absolute', top: 4, left: 4,
-                            background: 'var(--primary)', color: '#fff',
-                            fontSize: '0.6rem', fontWeight: 700,
-                            padding: '2px 5px', borderRadius: 4,
-                            }}>DEFAULT</span>
-                        )}
-                        {isLocked && (
-                          <div style={{
-                            position: 'absolute', inset: 0, background: 'rgba(20,20,30,0.45)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          }}>
+                        <button
+                          type="button"
+                          disabled={isLocked}
+                          onClick={() => setPreviewTemplate(t)}
+                          aria-label={`Preview ${t.name}`}
+                          style={{
+                            width: '100%',
+                            display: 'block',
+                            border: 0,
+                            padding: 0,
+                            background: '#fff',
+                            cursor: isLocked ? 'not-allowed' : 'pointer',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <TemplatePreview
+                            thumbnail
+                            src={t.img}
+                            templateId={t.id || defaultKey}
+                            templateColors={getColorsForTemplate(t.id || defaultKey)}
+                            user={currentUser}
+                            isQuotation={isQuotation}
+                            logo={currentUser?.businessLogo}
+                            seal={currentUser?.businessSeal}
+                            signature={currentUser?.businessSignature}
+                            alt={t.name}
+                            style={{ aspectRatio: '5/7' }}
+                            imageStyle={{ aspectRatio: '5/7' }}
+                            isFreePlan={isFreePlan}
+                          />
+
+                          {t.id === '' && (
                             <span style={{
-                              display: 'flex', alignItems: 'center', gap: 4,
-                              background: '#fff', color: '#111',
-                              fontSize: '0.62rem', fontWeight: 700,
-                              padding: '3px 8px', borderRadius: 20,
+                              position: 'absolute',
+                              top: 4,
+                              left: 4,
+                              background: 'var(--primary)',
+                              color: '#fff',
+                              fontSize: '0.6rem',
+                              fontWeight: 700,
+                              padding: '2px 5px',
+                              borderRadius: 4,
                             }}>
-                              <Lock size={10} /> Upgrade
+                              ACCOUNT DEFAULT
                             </span>
-                          </div>
-                        )}
+                          )}
+
+                          {isSelected && (
+                            <span style={{
+                              position: 'absolute',
+                              top: 4,
+                              right: 4,
+                              zIndex: 2,
+                              background: 'var(--primary)',
+                              color: '#fff',
+                              fontSize: '0.58rem',
+                              fontWeight: 800,
+                              letterSpacing: '0.03em',
+                              padding: '3px 6px',
+                              borderRadius: 5,
+                              boxShadow: '0 2px 7px rgba(0,0,0,0.16)',
+                            }}>
+                              SELECTED
+                            </span>
+                          )}
+
+                          {isLocked && (
+                            <div style={{
+                              position: 'absolute',
+                              inset: 0,
+                              background: 'rgba(20,20,30,0.45)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}>
+                              <span style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                background: '#fff',
+                                color: '#111',
+                                fontSize: '0.62rem',
+                                fontWeight: 700,
+                                padding: '3px 8px',
+                                borderRadius: 20,
+                              }}>
+                                <Lock size={10} /> Upgrade
+                              </span>
+                            </div>
+                          )}
+                        </button>
                       </div>
+
                       <div style={{
                         padding: '5px 6px',
                         fontSize: '0.72rem',
@@ -1698,11 +2620,48 @@ export default function InvoiceForm() {
                         justifyContent: 'center',
                         overflowWrap: 'anywhere',
                         wordBreak: 'normal',
-                        background: 'var(--bg-card)',
+                        background: isSelected ? 'var(--bg-card)' : 'rgba(248,250,252,0.92)',
                       }}>
                         {t.name}
                       </div>
-                    </button>
+
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: 6,
+                        padding: 6,
+                        background: 'var(--bg-card)',
+                      }}>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm"
+                          disabled={isLocked}
+                          onClick={() => setPreviewTemplate(t)}
+                          style={{ minHeight: 36, fontSize: '0.68rem', padding: '5px 6px' }}
+                        >
+                          <Eye size={13} /> Preview
+                        </button>
+
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          disabled={isLocked}
+                          onClick={() => {
+                            setPreviewTemplate({
+                              ...t,
+                              colorsOnly: true,
+                              templateColors: getColorsForTemplate(t.id || defaultKey),
+                            });
+                            document
+                              .querySelector('.template-color-section')
+                              ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }}
+                          style={{ minHeight: 36, fontSize: '0.68rem', padding: '5px 6px' }}
+                        >
+                          <Palette size={13} /> Custom Color
+                        </button>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -1768,8 +2727,12 @@ export default function InvoiceForm() {
                         navigate('/upgrade');
                         return;
                       }
-                      setField('template', previewTemplate.id);
-                      setField('templateColors', previewTemplate.id ? DEFAULT_COLORS[previewTemplate.id.toLowerCase()] : null);
+                      const selectedTemplateKey = (previewTemplate.id || 'template1').toLowerCase();
+                      setField('template', selectedTemplateKey);
+                      setField(
+                        'templateColors',
+                        getColorsForTemplate(selectedTemplateKey)
+                      );
                       setPreviewTemplate(null);
                     }}
                   >
@@ -1784,13 +2747,13 @@ export default function InvoiceForm() {
           {(() => {
             const effectiveTemplate = (form.template || (isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) || 'template1').toLowerCase();
             return (
-              <div style={{ marginTop: 24, padding: 16, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--bg-elevated)' }}>
+              <div className="template-color-section" style={{ marginTop: 24, padding: 16, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--bg-elevated)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                   <div style={{ padding: 8, background: 'var(--primary-bg)', borderRadius: 8, color: 'var(--primary)' }}>
-                    <Tag size={18} />
+                    <Palette size={18} />
                   </div>
                   <div>
-                    <h4 style={{ fontSize: '0.875rem', fontWeight: 700, margin: 0 }}>Customize Template Colors</h4>
+                    <h4 style={{ fontSize: '0.875rem', fontWeight: 700, margin: 0 }}>Custom Template Colors</h4>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0 }}>
                       {form.template
                         ? 'Tailor this specific invoice'
@@ -2050,5 +3013,6 @@ export default function InvoiceForm() {
 
 
     </form>
+    </>
   );
 }

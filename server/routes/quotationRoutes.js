@@ -1,10 +1,25 @@
 const express = require('express');
 const multer = require('multer');
-const upload = multer({ storage: multer.memoryStorage() });
-const router = express.Router();
-const { protect } = require('../middleware/authMiddleware');
-const { sendQuotationEmail } = require('../controllers/emailController');
-const { checkDocumentLimit } = require('../middleware/planLimitMiddleware');
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+});
+
+const router =
+  express.Router();
+
+const {
+  protect,
+} = require('../middleware/authMiddleware');
+
+const {
+  sendQuotationEmail,
+} = require('../controllers/emailController');
+
+const {
+  checkDocumentLimit,
+} = require('../middleware/planLimitMiddleware');
+
 const {
   getQuotations,
   getQuotation,
@@ -15,13 +30,77 @@ const {
   convertToInvoice,
 } = require('../controllers/quotationController');
 
+// ============================================================================
+// AUTHENTICATION
+// ============================================================================
+
 router.use(protect);
 
-router.route('/').get(getQuotations).post(createQuotation);
-router.route('/:id').get(getQuotation).put(updateQuotation).delete(deleteQuotation);
-router.route('/:id/status').patch(updateQuotationStatus);
-router.route('/:id/convert').post(convertToInvoice);
-router.post('/:id/send-email', upload.single('pdf'), sendQuotationEmail);
-router.post('/', protect, checkDocumentLimit, createQuotation);
+// ============================================================================
+// QUOTATIONS
+// ============================================================================
+
+// GET    /api/quotations
+// POST   /api/quotations
+
+router
+  .route('/')
+  .get(getQuotations)
+  .post(
+    checkDocumentLimit,
+    createQuotation
+  );
+
+// ============================================================================
+// SINGLE QUOTATION
+// ============================================================================
+
+// GET    /api/quotations/:id
+// PUT    /api/quotations/:id
+// DELETE /api/quotations/:id
+
+router
+  .route('/:id')
+  .get(getQuotation)
+  .put(updateQuotation)
+  .delete(deleteQuotation);
+
+// ============================================================================
+// UPDATE STATUS
+// ============================================================================
+
+// PATCH /api/quotations/:id/status
+
+router.patch(
+  '/:id/status',
+  updateQuotationStatus
+);
+
+// ============================================================================
+// CONVERT TO INVOICE
+// ============================================================================
+
+// POST /api/quotations/:id/convert
+
+router.post(
+  '/:id/convert',
+  convertToInvoice
+);
+
+// ============================================================================
+// SEND EMAIL
+// ============================================================================
+
+// POST /api/quotations/:id/send-email
+
+router.post(
+  '/:id/send-email',
+  upload.single('pdf'),
+  sendQuotationEmail
+);
+
+// ============================================================================
+// EXPORT
+// ============================================================================
 
 module.exports = router;

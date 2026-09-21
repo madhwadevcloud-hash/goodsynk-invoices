@@ -26,6 +26,7 @@
     "nodemailer": "^9.0.3",
     "razorpay": "^2.9.8",
     "react": "^19.2.7",
+    "resend": "^6.0.0",
     "streamifier": "^0.1.1"
   },
   "devDependencies": {

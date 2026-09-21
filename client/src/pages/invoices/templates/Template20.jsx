@@ -53,13 +53,80 @@ function numberToWords(num) {
   return words.trim();
 }
 
+function formatDate(value) {
+  if (!value) return '';
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return String(value);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = d.toLocaleString('en-US', { month: 'short' });
+  const year = d.getFullYear();
+  return `${day} ${month} ${year}`;
+}
+
+function parseTerms(termsValue) {
+  if (!termsValue) return [];
+  if (Array.isArray(termsValue)) {
+    return termsValue.map((t) => (typeof t === 'string' ? t.trim() : '')).filter(Boolean);
+  }
+  const str = String(termsValue).trim();
+  if (!str) return [];
+  if (str.includes('\n')) {
+    return str.split('\n').map(t => t.trim()).filter(Boolean);
+  }
+  const numbered = str.split(/(?=(?:^|\s)\d+[.)]\s)/g).map(t => t.trim()).filter(Boolean);
+  if (numbered.length > 1) return numbered;
+  if (str.includes(';')) {
+    return str.split(';').map(t => t.trim()).filter(Boolean);
+  }
+  return [str];
+}
+
+/**
+ * Resolve per-item tax rates from the correct DB fields.
+ * Product model uses: cgstRate, sgstRate, igstRate (per ProductList.jsx)
+ * Legacy/fallback: item.tax, item.gstRate, item.taxRate
+ */
+function resolveItemRates(item) {
+  const cgstRate = Number(item.cgstRate ?? item.cgst ?? 0) || 0;
+  const sgstRate = Number(item.sgstRate ?? item.sgst ?? 0) || 0;
+  const igstRate = Number(item.igstRate ?? item.igst ?? 0) || 0;
+  const legacyTax = Number(item.tax ?? item.gstRate ?? item.taxRate ?? 0) || 0;
+
+  // If product has explicit CGST/SGST/IGST rates, use those
+  if (cgstRate > 0 || sgstRate > 0 || igstRate > 0) {
+    const combined = cgstRate + sgstRate + igstRate;
+    return {
+      cgstRate,
+      sgstRate,
+      igstRate,
+      // Combined rate = CGST+SGST (intra) OR IGST (inter)
+      combinedRate: combined || igstRate || (cgstRate + sgstRate) || legacyTax,
+    };
+  }
+
+  // Fallback to legacy single "tax" field (treated as total GST %)
+  if (legacyTax > 0) {
+    // Split 50/50 for CGST/SGST
+    return {
+      cgstRate: legacyTax / 2,
+      sgstRate: legacyTax / 2,
+      igstRate: legacyTax,
+      combinedRate: legacyTax,
+    };
+  }
+
+  return { cgstRate: 0, sgstRate: 0, igstRate: 0, combinedRate: 0 };
+}
+
 const DEFAULT_TATA_ITEMS = [
   {
     name: 'Tata Nexon',
     hsn: '87038070',
     rate: 805000.00,
     quantity: 1,
-    tax: 18,
+    cgstRate: 9,
+    sgstRate: 9,
+    igstRate: 18,
     taxable: 805000.00,
     taxAmt: 144900.00,
     total: 949900.00
@@ -70,7 +137,9 @@ const DEFAULT_TATA_ITEMS = [
     hsn: '87089900',
     rate: 2117.80,
     quantity: 1,
-    tax: 18,
+    cgstRate: 9,
+    sgstRate: 9,
+    igstRate: 18,
     taxable: 2117.80,
     taxAmt: 381.20,
     total: 2499.00
@@ -86,8 +155,8 @@ export default function Template20({ invoice }) {
   const isQuotation = inv.invoiceType === 'quotation' || inv.documentType === 'quotation';
   const docTitle = isQuotation ? 'QUOTATION' : 'TAX INVOICE';
   const docNumber = isQuotation ? (inv.quotationNumber || inv.invoiceNumber || 'INV-1') : (inv.invoiceNumber || 'INV-1');
-  const docDate = inv.invoiceDate || inv.date || '17 Jun 2023';
-  const dueDate = inv.dueDate || '17 Jun 2023';
+  const docDate = formatDate(inv.issueDate || inv.invoiceDate || inv.date) || '17 Jun 2023';
+  const dueDate = formatDate(inv.dueDate) || '17 Jun 2023';
   const fmt = (n) => new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0);
 
   const bizName = (biz?.businessName || biz?.name || 'TATA MOTORS LIMITED').toUpperCase();
@@ -105,16 +174,49 @@ export default function Template20({ invoice }) {
   const shipAddrText = client?.shipAddress || getFullAddress(client?.address) || 'Survey 115/1, ISB Rd, Financial District\nGachibowli, Nanakramguda\nHyderabad, TELANGANA, 500032';
   const placeOfSupply = inv.placeOfSupply || client?.address?.state || '36-TELANGANA';
 
+  // Determine intra vs inter state
+  const bizState = (biz?.address?.state || '').toString().trim().toLowerCase();
+  const clientState = (client?.address?.state || '').toString().trim().toLowerCase();
+  const placeOfSupplyState = (inv.placeOfSupply || '').toString().trim().toLowerCase();
+  const supplyState = clientState || placeOfSupplyState;
+  const isInterState = bizState && supplyState && bizState !== supplyState;
+  const isIntraState = !isInterState;
+
   const rawItems = (inv.items && inv.items.length > 0) ? inv.items : DEFAULT_TATA_ITEMS;
 
+  // Compute per-item values using the CORRECT DB field names (cgstRate / sgstRate / igstRate)
   let computedItems = rawItems.map(item => {
     const qty = Number(item.quantity) || 1;
     const rate = Number(item.rate || item.price) || 0;
     const taxable = item.taxable !== undefined ? Number(item.taxable) : (qty * rate);
-    const taxPct = Number(item.tax) || 0;
-    const taxAmt = item.taxAmt !== undefined ? Number(item.taxAmt) : ((taxable * taxPct) / 100);
-    const total = item.total !== undefined ? Number(item.total) : (taxable + taxAmt);
-    return { ...item, qty, rate, taxable, taxPct, taxAmt, total };
+
+    const { cgstRate, sgstRate, igstRate, combinedRate } = resolveItemRates(item);
+
+    // Use intra-state rate if applicable, else inter-state rate
+    const effectiveRate = isIntraState
+      ? (cgstRate + sgstRate) || combinedRate
+      : igstRate || combinedRate;
+
+    const taxPct = effectiveRate;
+    const taxAmt = item.taxAmt !== undefined && Number(item.taxAmt) > 0
+      ? Number(item.taxAmt)
+      : ((taxable * effectiveRate) / 100);
+    const total = item.total !== undefined && Number(item.total) > 0
+      ? Number(item.total)
+      : (taxable + taxAmt);
+
+    return {
+      ...item,
+      qty,
+      rate,
+      taxable,
+      taxPct,
+      taxAmt,
+      total,
+      cgstRate,
+      sgstRate,
+      igstRate,
+    };
   });
 
   const totalQty = computedItems.reduce((acc, i) => acc + i.qty, 0);
@@ -123,10 +225,35 @@ export default function Template20({ invoice }) {
   const grandTotal = computedItems.reduce((acc, i) => acc + i.total, 0);
   const totalInWords = numberToWords(Math.floor(grandTotal));
 
-  // Group HSN/SAC summary
+  // Split tax into SGST+CGST or IGST based on the actual rates
+  const sgstAmt = computedItems.reduce((acc, i) => {
+    if (isIntraState) {
+      return acc + (i.taxable * i.sgstRate) / 100;
+    }
+    return acc;
+  }, 0);
+
+  const cgstAmt = computedItems.reduce((acc, i) => {
+    if (isIntraState) {
+      return acc + (i.taxable * i.cgstRate) / 100;
+    }
+    return acc;
+  }, 0);
+
+  const igstAmt = computedItems.reduce((acc, i) => {
+    if (isInterState) {
+      return acc + (i.taxable * i.igstRate) / 100;
+    }
+    return acc;
+  }, 0);
+
+  // Determine if ANY item has an HSN/SAC code — if none, hide that column
+  const hasHsn = computedItems.some(i => i.hsn && String(i.hsn).trim() !== '');
+
+  // Group HSN/SAC summary (only if any item has HSN)
   const hsnMap = {};
   computedItems.forEach(i => {
-    const code = i.hsn || '-';
+    const code = (i.hsn && String(i.hsn).trim()) || 'N/A';
     if (!hsnMap[code]) {
       hsnMap[code] = { hsn: code, taxable: 0, taxPct: i.taxPct, taxAmt: 0, totalTax: 0 };
     }
@@ -143,6 +270,28 @@ export default function Template20({ invoice }) {
 
   const paidAmount = inv.paidAmount || 0;
   const isPaid = paidAmount > 0 || inv.status === 'Paid';
+
+  // Dynamic Notes & Terms
+  const notesText = inv.notes || (inv.notesList && inv.notesList.length ? inv.notesList.join('\n') : '') || 'Thank you for the Business';
+  const termsSource =
+    inv.termsAndConditions ||
+    inv.terms ||
+    (inv.termsList && inv.termsList.length ? inv.termsList : null) ||
+    null;
+  const parsedTerms = parseTerms(termsSource);
+  const defaultTerms = [
+    'Goods once sold cannot be taken back or exchanged.',
+    'We are not the manufacturers; company will stand for warranty as per their terms and conditions.',
+    'Interest @24% p.a. will be charged for uncleared bills beyond 15 days.',
+    'Subject to local Jurisdiction.'
+  ];
+  const finalTerms = parsedTerms.length > 0 ? parsedTerms : defaultTerms;
+
+  // Signature / seal
+  const signatureSrc = biz?.businessSignature || inv.signatureImage || inv.signature || null;
+  const sealSrc = biz?.businessSeal || inv.sealImage || inv.seal || null;
+  const hasSignature = isRasterImage(signatureSrc);
+  const hasSeal = isRasterImage(sealSrc);
 
   const s = StyleSheet.create({
     page: { paddingTop: 20, paddingBottom: 35, paddingHorizontal: 25, fontFamily: 'Inter', color: '#111827', fontSize: 7.5 },
@@ -183,7 +332,8 @@ export default function Template20({ invoice }) {
     th: { fontSize: 6.5, fontFamily: B, color: '#111827', textAlign: 'center' },
 
     colNo: { width: '4%', borderRightWidth: 0.75, borderRightColor: '#374151' },
-    colItem: { width: '31%', textAlign: 'left', paddingLeft: 4, paddingRight: 4, borderRightWidth: 0.75, borderRightColor: '#374151' },
+    colItem: { width: '43%', textAlign: 'left', paddingLeft: 4, paddingRight: 4, borderRightWidth: 0.75, borderRightColor: '#374151' },
+    colItemNoHsn: { width: '55%', textAlign: 'left', paddingLeft: 4, paddingRight: 4, borderRightWidth: 0.75, borderRightColor: '#374151' },
     colHsn: { width: '12%', borderRightWidth: 0.75, borderRightColor: '#374151' },
     colRate: { width: '12%', textAlign: 'right', paddingRight: 4, borderRightWidth: 0.75, borderRightColor: '#374151' },
     colQty: { width: '6%', borderRightWidth: 0.75, borderRightColor: '#374151' },
@@ -241,7 +391,7 @@ export default function Template20({ invoice }) {
     notesCol: { width: '48%', paddingRight: 6 },
     termsCol: { width: '52%', borderLeftWidth: 0.75, borderLeftColor: '#374151', paddingLeft: 6 },
 
-    notesText: { fontSize: 6.5, color: '#374151', marginTop: 2 },
+    notesText: { fontSize: 6.5, color: '#374151', marginTop: 2, lineHeight: 1.3 },
     termItem: { fontSize: 6, color: '#4B5563', lineHeight: 1.25, marginBottom: 1 },
 
     pageFooter: { position: 'absolute', bottom: 12, left: 25, right: 25, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -250,7 +400,7 @@ export default function Template20({ invoice }) {
 
   return (
     <Document>
-      <Page size="A4" style={s.page}>
+      <Page size="A4" style={s.page} wrap>
         {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') ? (
           <View style={s.watermarkContainer} fixed>
             <Text style={s.watermarkText}>GoodSynk</Text>
@@ -330,8 +480,8 @@ export default function Template20({ invoice }) {
           <View style={s.table}>
             <View style={s.tHead}>
               <Text style={[s.th, s.colNo]}>#</Text>
-              <Text style={[s.th, s.colItem]}>Item</Text>
-              <Text style={[s.th, s.colHsn]}>HSN/SAC</Text>
+              <Text style={[s.th, hasHsn ? s.colItem : s.colItemNoHsn]}>Item</Text>
+              {hasHsn ? <Text style={[s.th, s.colHsn]}>HSN/SAC</Text> : null}
               <Text style={[s.th, s.colRate]}>Rated Item</Text>
               <Text style={[s.th, s.colQty]}>Qty</Text>
               <Text style={[s.th, s.colTaxable]}>Taxable Value</Text>
@@ -340,15 +490,15 @@ export default function Template20({ invoice }) {
             </View>
 
             {computedItems.map((item, idx) => (
-              <View key={idx} style={s.tRow}>
+              <View key={idx} style={s.tRow} wrap={false}>
                 <Text style={[s.td, s.colNo]}>{idx + 1}</Text>
-                <View style={s.colItem}>
+                <View style={hasHsn ? s.colItem : s.colItemNoHsn}>
                   <Text style={s.tdItemName}>{item.name || item.description}</Text>
                   {item.description && item.name ? (
                     <Text style={s.tdItemDesc}>{item.description}</Text>
                   ) : null}
                 </View>
-                <Text style={[s.td, s.colHsn]}>{item.hsn || '-'}</Text>
+                {hasHsn ? <Text style={[s.td, s.colHsn]}>{item.hsn || '-'}</Text> : null}
                 <Text style={[s.td, s.colRate]}>{fmt(item.rate)}</Text>
                 <Text style={[s.td, s.colQty]}>{item.qty}</Text>
                 <Text style={[s.td, s.colTaxable]}>{fmt(item.taxable)}</Text>
@@ -358,7 +508,7 @@ export default function Template20({ invoice }) {
             ))}
 
             {/* Table Summary Row */}
-            <View style={s.tableSummaryRow}>
+            <View style={s.tableSummaryRow} wrap={false}>
               <View style={s.sumLeftCol}>
                 <Text style={{ fontSize: 6.5, color: '#374151' }}>Total items / Qty : {computedItems.length} / {totalQty.toFixed(3)}</Text>
               </View>
@@ -367,10 +517,25 @@ export default function Template20({ invoice }) {
                   <Text style={{ fontSize: 6.5, color: '#4B5563' }}>Taxable Amount</Text>
                   <Text style={{ fontSize: 6.5, fontFamily: B, color: '#111827' }}>₹{fmt(totalTaxable)}</Text>
                 </View>
-                <View style={s.subTotRow}>
-                  <Text style={{ fontSize: 6.5, color: '#4B5563' }}>IGST 18.0%</Text>
-                  <Text style={{ fontSize: 6.5, fontFamily: B, color: '#111827' }}>₹{fmt(totalTaxAmt)}</Text>
-                </View>
+
+                {isIntraState ? (
+                  <>
+                    <View style={s.subTotRow}>
+                      <Text style={{ fontSize: 6.5, color: '#4B5563' }}>SGST @ 9.0%</Text>
+                      <Text style={{ fontSize: 6.5, fontFamily: B, color: '#111827' }}>₹{fmt(sgstAmt)}</Text>
+                    </View>
+                    <View style={s.subTotRow}>
+                      <Text style={{ fontSize: 6.5, color: '#4B5563' }}>CGST @ 9.0%</Text>
+                      <Text style={{ fontSize: 6.5, fontFamily: B, color: '#111827' }}>₹{fmt(cgstAmt)}</Text>
+                    </View>
+                  </>
+                ) : (
+                  <View style={s.subTotRow}>
+                    <Text style={{ fontSize: 6.5, color: '#4B5563' }}>IGST @ 18.0%</Text>
+                    <Text style={{ fontSize: 6.5, fontFamily: B, color: '#111827' }}>₹{fmt(igstAmt)}</Text>
+                  </View>
+                )}
+
                 <View style={s.grandTotRow}>
                   <Text style={s.grandTotText}>Total</Text>
                   <Text style={s.grandTotText}>₹{fmt(grandTotal)}</Text>
@@ -380,57 +545,61 @@ export default function Template20({ invoice }) {
           </View>
 
           {/* Total Amount in Words */}
-          <View style={s.wordsStrip}>
+          <View style={s.wordsStrip} wrap={false}>
             <Text>Total amount (in words): <Text style={{ fontFamily: B }}>INR {totalInWords} Only.</Text></Text>
           </View>
 
-          {/* HSN/SAC Breakdown Table */}
-          <View style={s.hsnTable}>
-            <View style={s.hsnHead}>
-              <Text style={[s.hsnTh, s.hsnCol1]}>HSN/SAC</Text>
-              <Text style={[s.hsnTh, s.hsnCol2]}>Taxable Value</Text>
-              <View style={[s.hsnCol3, { alignItems: 'center' }]}>
-                <Text style={[s.hsnTh, { borderBottomWidth: 0.5, borderBottomColor: '#374151', width: '100%', textAlign: 'center' }]}>Integrated Tax</Text>
-                <View style={{ flexDirection: 'row', width: '100%' }}>
-                  <Text style={[s.hsnTh, { width: '50%', borderRightWidth: 0.5, borderRightColor: '#374151' }]}>Rate</Text>
-                  <Text style={[s.hsnTh, { width: '50%' }]}>Amount</Text>
+          {/* HSN/SAC Breakdown Table — only render if any item has HSN */}
+          {hasHsn ? (
+            <View style={s.hsnTable} wrap={false}>
+              <View style={s.hsnHead}>
+                <Text style={[s.hsnTh, s.hsnCol1]}>HSN/SAC</Text>
+                <Text style={[s.hsnTh, s.hsnCol2]}>Taxable Value</Text>
+                <View style={[s.hsnCol3, { alignItems: 'center' }]}>
+                  <Text style={[s.hsnTh, { borderBottomWidth: 0.5, borderBottomColor: '#374151', width: '100%', textAlign: 'center' }]}>
+                    {isIntraState ? 'Central & State Tax' : 'Integrated Tax'}
+                  </Text>
+                  <View style={{ flexDirection: 'row', width: '100%' }}>
+                    <Text style={[s.hsnTh, { width: '50%', borderRightWidth: 0.5, borderRightColor: '#374151' }]}>Rate</Text>
+                    <Text style={[s.hsnTh, { width: '50%' }]}>Amount</Text>
+                  </View>
                 </View>
+                <Text style={[s.hsnTh, s.hsnCol4]}>Total Tax Amount</Text>
               </View>
-              <Text style={[s.hsnTh, s.hsnCol4]}>Total Tax Amount</Text>
-            </View>
 
-            {hsnList.map((row, idx) => (
-              <View key={idx} style={s.hsnRow}>
-                <Text style={[s.hsnTd, s.hsnCol1]}>{row.hsn}</Text>
-                <Text style={[s.hsnTd, s.hsnCol2]}>{fmt(row.taxable)}</Text>
+              {hsnList.map((row, idx) => (
+                <View key={idx} style={s.hsnRow} wrap={false}>
+                  <Text style={[s.hsnTd, s.hsnCol1]}>{row.hsn}</Text>
+                  <Text style={[s.hsnTd, s.hsnCol2]}>{fmt(row.taxable)}</Text>
+                  <View style={[s.hsnCol3, { flexDirection: 'row' }]}>
+                    <Text style={[s.hsnTd, { width: '50%', borderRightWidth: 0.5, borderRightColor: '#374151' }]}>{row.taxPct}%</Text>
+                    <Text style={[s.hsnTd, { width: '50%', textAlign: 'right', paddingRight: 4 }]}>{fmt(row.taxAmt)}</Text>
+                  </View>
+                  <Text style={[s.hsnTd, s.hsnCol4]}>{fmt(row.totalTax)}</Text>
+                </View>
+              ))}
+
+              <View style={s.hsnTotRow} wrap={false}>
+                <Text style={[s.hsnTd, s.hsnCol1, { fontFamily: B }]}>TOTAL</Text>
+                <Text style={[s.hsnTd, s.hsnCol2, { fontFamily: B }]}>{fmt(totalTaxable)}</Text>
                 <View style={[s.hsnCol3, { flexDirection: 'row' }]}>
-                  <Text style={[s.hsnTd, { width: '50%', borderRightWidth: 0.5, borderRightColor: '#374151' }]}>{row.taxPct}%</Text>
-                  <Text style={[s.hsnTd, { width: '50%', textAlign: 'right', paddingRight: 4 }]}>{fmt(row.taxAmt)}</Text>
+                  <Text style={[s.hsnTd, { width: '50%', borderRightWidth: 0.5, borderRightColor: '#374151' }]}></Text>
+                  <Text style={[s.hsnTd, { width: '50%', fontFamily: B, textAlign: 'right', paddingRight: 4 }]}>{fmt(totalTaxAmt)}</Text>
                 </View>
-                <Text style={[s.hsnTd, s.hsnCol4]}>{fmt(row.totalTax)}</Text>
-              </View>
-            ))}
+                <Text style={[s.hsnTd, s.hsnCol4, { fontFamily: B }]}>{fmt(totalTaxAmt)}</Text>
 
-            <View style={s.hsnTotRow}>
-              <Text style={[s.hsnTd, s.hsnCol1, { fontFamily: B }]}>TOTAL</Text>
-              <Text style={[s.hsnTd, s.hsnCol2, { fontFamily: B }]}>{fmt(totalTaxable)}</Text>
-              <View style={[s.hsnCol3, { flexDirection: 'row' }]}>
-                <Text style={[s.hsnTd, { width: '50%', borderRightWidth: 0.5, borderRightColor: '#374151' }]}></Text>
-                <Text style={[s.hsnTd, { width: '50%', fontFamily: B, textAlign: 'right', paddingRight: 4 }]}>{fmt(totalTaxAmt)}</Text>
+                {isPaid ? (
+                  <View style={s.paidBadgeBox}>
+                    <View style={s.paidDot} />
+                    <Text style={s.paidBadgeText}>Amount Paid</Text>
+                  </View>
+                ) : null}
               </View>
-              <Text style={[s.hsnTd, s.hsnCol4, { fontFamily: B }]}>{fmt(totalTaxAmt)}</Text>
-
-              {isPaid ? (
-                <View style={s.paidBadgeBox}>
-                  <View style={s.paidDot} />
-                  <Text style={s.paidBadgeText}>Amount Paid</Text>
-                </View>
-              ) : null}
             </View>
-          </View>
+          ) : null}
 
           {/* Bottom Grid: Bank, UPI QR, Signature & Seal */}
-          <View style={s.bottomGrid}>
+          <View style={s.bottomGrid} wrap={false}>
             <View style={s.bankCol}>
               <Text style={s.sectionLabelBold}>Bank Details:</Text>
               <View style={s.bankRow}><Text style={s.bankKey}>Bank:</Text><Text style={s.bankVal}>{bankName}</Text></View>
@@ -447,43 +616,60 @@ export default function Template20({ invoice }) {
             </View>
 
             <View style={s.sigCol}>
-              <Text style={{ fontSize: 6.5, color: '#374151', marginBottom: 2 }}>For {bizName}</Text>
-              {isRasterImage(biz?.businessSignature || inv.signatureImage) ? (
-                <Image src={biz.businessSignature || inv.signatureImage} style={{ width: 70, height: 25, objectFit: 'contain', marginVertical: 2 }} />
+              <Text style={{ fontSize: 6.5, color: '#374151', marginBottom: 2, alignSelf: 'flex-start' }}>For {bizName}</Text>
+
+              {hasSignature ? (
+                <Image
+                  src={signatureSrc}
+                  style={{ width: 80, height: 30, objectFit: 'contain', marginTop: 4 }}
+                />
               ) : null}
-              {isRasterImage(biz?.businessSeal || inv.sealImage) ? (
-                <Image src={biz.businessSeal || inv.sealImage} style={{ width: 44, height: 44, objectFit: 'contain', marginVertical: 2 }} />
+
+              {hasSeal ? (
+                <Image
+                  src={sealSrc}
+                  style={{ width: 50, height: 50, objectFit: 'contain', marginTop: 2 }}
+                />
               ) : null}
-              {!isRasterImage(biz?.businessSignature || inv.signatureImage) && !isRasterImage(biz?.businessSeal || inv.sealImage) ? (
+
+              {!hasSignature && !hasSeal ? (
                 <View style={s.sigBoxCircle}>
                   <Text style={s.sigTextSmall}>SIGNATURE</Text>
                   <Text style={[s.sigTextSmall, { fontSize: 4.5 }]}>GOODSYNK</Text>
                 </View>
               ) : null}
-              <Text style={{ fontSize: 6, fontFamily: B, color: '#374151', marginTop: 2 }}>Authorised Signatory</Text>
+
+              <Text style={{ fontSize: 6, fontFamily: B, color: '#374151', marginTop: 4, alignSelf: 'flex-end' }}>
+                Authorised Signatory
+              </Text>
             </View>
           </View>
 
           {/* Notes & Terms Section */}
-          <View style={s.notesTermsGrid}>
+          <View style={s.notesTermsGrid} wrap={false}>
             <View style={s.notesCol}>
               <Text style={s.sectionLabelBold}>Notes:</Text>
-              <Text style={s.notesText}>{inv.notes || 'Thank you for the Business'}</Text>
+              <Text style={s.notesText}>{notesText}</Text>
             </View>
 
             <View style={s.termsCol}>
               <Text style={s.sectionLabelBold}>Terms and Conditions:</Text>
-              <Text style={s.termItem}>1. Goods once sold cannot be taken back or exchanged.</Text>
-              <Text style={s.termItem}>2. We are not the manufacturers; company will stand for warranty as per their terms and conditions.</Text>
-              <Text style={s.termItem}>3. Interest @24% p.a. will be charged for uncleared bills beyond 15 days.</Text>
-              <Text style={s.termItem}>4. Subject to local Jurisdiction.</Text>
+              {finalTerms.map((term, idx) => (
+                <Text key={idx} style={s.termItem}>
+                  {/^\d+[.)]/.test(term) ? term : `${idx + 1}. ${term}`}
+                </Text>
+              ))}
             </View>
           </View>
         </View>
 
-        {/* Page Footer */}
+        {/* Page Footer with dynamic page numbers */}
         <View style={s.pageFooter} fixed>
-          <Text style={s.footerText}>Page 1 / 1</Text>
+          <Text
+            style={s.footerText}
+            render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`}
+            fixed
+          />
           <Text style={s.footerText}>Powered by GoodSynk<Text style={{ fontSize: 5, fontFamily: 'Helvetica' }}>™</Text></Text>
           <Text style={s.footerText}>This is a digitally signed document.</Text>
         </View>
@@ -491,3 +677,6 @@ export default function Template20({ invoice }) {
     </Document>
   );
 }
+
+
+/*Corporate Matrix*/
