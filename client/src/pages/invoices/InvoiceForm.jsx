@@ -332,7 +332,7 @@ export default function InvoiceForm() {
       taxType: 'gst_india',
       placeOfSupply: form.placeOfSupply || 'Other Territory',
       gstType: form.isInterstate ? 'igst' : 'cgst_sgst',
-      reverseCharge: false,
+      reverseCharge: form.reverseCharge || false,
     });
     setTaxModal(true);
   };
@@ -341,6 +341,9 @@ export default function InvoiceForm() {
     setField('isInterstate', taxDraft.gstType === 'igst');
     setField('placeOfSupply', taxDraft.placeOfSupply);
     setField('taxType', taxDraft.taxType);
+    // Persisting this flag lets TemplateResolver auto-append the mandatory
+    // GST reverse-charge note to the generated invoice/quotation.
+    setField('reverseCharge', taxDraft.reverseCharge);
     if (taxDraft.taxType === 'none') {
       setForm(f => ({ ...f, items: f.items.map(item => ({ ...item, cgstRate: 0, sgstRate: 0, igstRate: 0, vatRate: 0 })) }));
     }
@@ -355,6 +358,7 @@ export default function InvoiceForm() {
     dueDate: '',
     isInterstate: false,
     taxType: 'gst_india',
+    reverseCharge: false,
     notes: [],
     termsAndConditions: [],
     currency: currentUser?.currency || 'INR',
@@ -643,6 +647,7 @@ export default function InvoiceForm() {
           dueDate: inv.dueDate ? new Date(inv.dueDate).toISOString().split('T')[0] : '',
           isInterstate: inv.isInterstate || false,
           taxType: inv.taxType || 'gst_india',
+          reverseCharge: inv.reverseCharge || false,
           notes: inv.notes ? inv.notes.split('\n') : [],
           termsAndConditions: inv.termsAndConditions ? inv.termsAndConditions.split('\n') : [],
           currency: inv.currency || currentUser?.currency || 'INR',
@@ -2880,6 +2885,11 @@ export default function InvoiceForm() {
                 />
                 Is Reverse Charge Applicable?
               </label>
+              {taxDraft.reverseCharge && (
+                <p style={{ marginTop: 6, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  The mandatory GST reverse-charge note will be automatically added to this {docLabel.toLowerCase()}.
+                </p>
+              )}
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>

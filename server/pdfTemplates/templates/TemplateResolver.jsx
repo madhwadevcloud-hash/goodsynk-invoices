@@ -11,6 +11,7 @@ import Template18 from './Template18';
 import Template19 from './Template19';
 import Template20 from './Template20';
 import DocumentTemplate from './DocumentTemplate';
+import { withReverseChargeNote } from './reverseChargeNote';
 
 // Central registry — active templates and safe fallbacks for removed templates.
 const TEMPLATE_MAP = {
@@ -44,5 +45,8 @@ const TEMPLATE_MAP = {
 export default function TemplateResolver({ invoice }) {
     const key = (invoice.template || invoice._resolvedTemplate || 'template1').toLowerCase();
     const Chosen = TEMPLATE_MAP[key] || Template1; // safe fallback if a key is ever missing
-    return <Chosen invoice={invoice} />;
+    // Auto-inject the mandatory GST reverse-charge note into the notes field
+    // for every template when reverseCharge is enabled on the invoice.
+    const invoiceWithNotes = withReverseChargeNote(invoice);
+    return <Chosen invoice={invoiceWithNotes} />;
 }
