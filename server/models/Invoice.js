@@ -87,6 +87,9 @@ const invoiceSchema = new mongoose.Schema(
     taxType: { type: String, default: 'gst_india' },
     isInterstate: { type: Boolean, default: false },
     placeOfSupply: { type: String, default: '' },
+    // When true, the mandatory GST reverse-charge note is auto-appended to
+    // the generated invoice/quotation notes (see TemplateResolver.jsx).
+    reverseCharge: { type: Boolean, default: false },
     roundOff: { type: Boolean, default: false },
     selectedBankIndex: { type: Number, default: 0 },
 

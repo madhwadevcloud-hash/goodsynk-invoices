@@ -14,6 +14,7 @@ import Restro from './Restro';
 import DocumentTemplate from './DocumentTemplate';
 
 import { getDocumentSettings } from '../../../utils/documentSettings';
+import { withReverseChargeNote } from './reverseChargeNote';
 
 // Central registry — active templates and safe fallbacks for removed templates.
 const TEMPLATE_MAP = {
@@ -58,6 +59,10 @@ export default function TemplateResolver({ invoice }) {
         ...invoice,
         watermarkImage: invoice?.watermarkImage || docSettings.watermarkImage,
     };
+
+    // Auto-inject the mandatory GST reverse-charge note into the notes field
+    // for every template when reverseCharge is enabled on the invoice.
+    processedInvoice = withReverseChargeNote(processedInvoice);
 
     if (!isDiscColumnVisible) {
         processedInvoice = {

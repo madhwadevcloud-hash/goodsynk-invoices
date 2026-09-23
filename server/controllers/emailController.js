@@ -4,7 +4,7 @@ const Quotation = require('../models/Quotation');
 const { generateShareToken } = require('../utils/shareToken');
 const { buildDocumentEmailHTML, CURRENCY_SYMBOLS } = require('../utils/emailTemplates');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || 're_placeholder');
 
 const FROM_EMAIL = 'no-reply@goodsynk.com';
 
