@@ -211,7 +211,18 @@ export default function ProfileEdit() {
     defaultValues: {
       name: user?.name || '',
       businessName: user?.businessName || '',
+      signatoryName: user?.signatoryName || '',
+      designation: user?.designation || '',
       phone: user?.phone || '',
+      alternateEmail: user?.alternateEmail || '',
+      alternatePhone: user?.alternatePhone || '',
+      invoiceEmailChoice: user?.invoiceContactPreference?.email || 'primary',
+      invoicePhoneChoice: user?.invoiceContactPreference?.phone || 'primary',
+      invoiceAddressChoice: user?.invoiceContactPreference?.address || 'primary',
+      alternateStreet: user?.alternateAddress?.street || '',
+      alternateCity: user?.alternateAddress?.city || '',
+      alternateState: user?.alternateAddress?.state || '',
+      alternatePincode: user?.alternateAddress?.pincode || '',
       gstin: user?.gstin || '',
       street: user?.address?.street || '',
       city: user?.address?.city || '',
@@ -289,7 +300,19 @@ export default function ProfileEdit() {
       const payload = {
         name: values.name,
         businessName: values.businessName,
+        signatoryName: values.signatoryName,
+        designation: values.designation,
         phone: values.phone,
+        alternateEmail: values.alternateEmail,
+        alternatePhone: values.alternatePhone,
+        alternateAddress: {
+          street: values.alternateStreet, city: values.alternateCity,
+          state: values.alternateState, pincode: values.alternatePincode, country: 'India',
+        },
+        invoiceContactPreference: {
+          email: values.invoiceEmailChoice, phone: values.invoicePhoneChoice,
+          address: values.invoiceAddressChoice,
+        },
         gstin: values.gstin,
         businessLogo: avatarPreview || '',
         address: {
@@ -393,7 +416,16 @@ export default function ProfileEdit() {
     reset({
       name: user?.name || '',
       businessName: user?.businessName || '',
+      signatoryName: user?.signatoryName || '',
+      designation: user?.designation || '',
       phone: user?.phone || '',
+      alternateEmail: user?.alternateEmail || '',
+      alternatePhone: user?.alternatePhone || '',
+      invoiceEmailChoice: user?.invoiceContactPreference?.email || 'primary',
+      invoicePhoneChoice: user?.invoiceContactPreference?.phone || 'primary',
+      invoiceAddressChoice: user?.invoiceContactPreference?.address || 'primary',
+      alternateStreet: user?.alternateAddress?.street || '', alternateCity: user?.alternateAddress?.city || '',
+      alternateState: user?.alternateAddress?.state || '', alternatePincode: user?.alternateAddress?.pincode || '',
       gstin: user?.gstin || '',
       street: user?.address?.street || '',
       city: user?.address?.city || '',
@@ -594,6 +626,16 @@ export default function ProfileEdit() {
                 </div>
                 <div className="form-grid">
                   <div className="form-group">
+                    <label className="form-label">Signatory name</label>
+                    <input className="form-control" placeholder="Name printed beside the signature" {...register('signatoryName')} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Designation</label>
+                    <input className="form-control" placeholder="e.g. Director" {...register('designation')} />
+                  </div>
+                </div>
+                <div className="form-grid">
+                  <div className="form-group">
                     <label className="form-label">Phone <span style={{ color: 'var(--danger)' }}>*</span></label>
                     <input className={`form-control${errors.phone ? ' error' : ''}`} placeholder="9876543210" {...register('phone', { required: 'Phone is required', pattern: { value: /^[0-9]{10}$/, message: 'Phone must be exactly 10 digits' } })} />
                     {errors.phone && <p className="form-error">{errors.phone.message}</p>}
@@ -637,6 +679,22 @@ export default function ProfileEdit() {
                   </div>
                 </div>
 
+                <SectionHeading icon={Mail} label="Invoice contact details" />
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: 12 }}>Add an optional second contact detail and choose which one appears on invoices.</p>
+                <div className="form-grid">
+                  <div className="form-group"><label className="form-label">Additional email</label><input type="email" className="form-control" placeholder="billing@example.com" {...register('alternateEmail')} /></div>
+                  <div className="form-group"><label className="form-label">Email shown on invoices</label><select className="form-control" {...register('invoiceEmailChoice')}><option value="primary">Account email ({user?.email || 'primary'})</option><option value="alternate">Additional email</option></select></div>
+                  <div className="form-group"><label className="form-label">Additional phone</label><input className="form-control" placeholder="9876543210" {...register('alternatePhone')} /></div>
+                  <div className="form-group"><label className="form-label">Phone shown on invoices</label><select className="form-control" {...register('invoicePhoneChoice')}><option value="primary">Primary phone</option><option value="alternate">Additional phone</option></select></div>
+                </div>
+                <div className="form-grid">
+                  <div className="form-group"><label className="form-label">Additional street / area</label><input className="form-control" {...register('alternateStreet')} /></div>
+                  <div className="form-group"><label className="form-label">Additional city</label><input className="form-control" {...register('alternateCity')} /></div>
+                  <div className="form-group"><label className="form-label">Additional state</label><input className="form-control" {...register('alternateState')} /></div>
+                  <div className="form-group"><label className="form-label">Additional pincode</label><input className="form-control" {...register('alternatePincode')} /></div>
+                  <div className="form-group"><label className="form-label">Address shown on invoices</label><select className="form-control" {...register('invoiceAddressChoice')}><option value="primary">Primary address</option><option value="alternate">Additional address</option></select></div>
+                </div>
+
                 <SectionHeading icon={Landmark} label="Banking Information" />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Manage multiple bank accounts. The primary account is mirrored to legacy bank details.</p>
@@ -668,6 +726,8 @@ export default function ProfileEdit() {
                   </button>
                 </div>
                 <InfoRow icon={Building2} label="Business Name" value={user?.businessName} />
+                <InfoRow icon={User} label="Signatory Name" value={user?.signatoryName} />
+                <InfoRow icon={FileText} label="Designation" value={user?.designation} />
                 <InfoRow icon={Phone} label="Phone" value={user?.phone} />
                 <InfoRow icon={FileText} label="GSTIN" value={user?.gstin} />
                 <InfoRow icon={MapPin} label="Address" value={addr || null} />

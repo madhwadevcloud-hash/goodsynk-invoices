@@ -1,3 +1,4 @@
+import SignatoryDetails from './SignatoryDetails';
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image, Link } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
@@ -276,6 +277,7 @@ export default function Template2({ invoice }) {
               <Image src={biz.businessSignature} style={{ width: 160, height: 55, objectFit: 'contain', marginBottom: 4 }} />
             )}
             <View style={s.signatureLine}>
+              <SignatoryDetails biz={biz} />
               <Text style={{ fontSize: 9, fontFamily: M }}>Authorised Signature</Text>
             </View>
             {biz?.businessSeal && (

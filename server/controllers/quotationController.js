@@ -901,7 +901,7 @@ const getQuotation = async (
         .populate('client')
         .populate(
           'user',
-          'name email businessName businessLogo businessSignature businessSeal address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan'
+          'name email businessName signatoryName designation businessLogo businessSignature businessSeal address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan'
         );
 
     if (!quotation) {
@@ -1112,7 +1112,7 @@ const createQuotation = async (
 
     await quotation.populate(
       'user',
-      'name email businessName businessLogo businessSignature businessSeal address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan'
+      'name email businessName signatoryName designation businessLogo businessSignature businessSeal address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan'
     );
 
     // ========================================================
@@ -1365,7 +1365,7 @@ const updateQuotation = async (
         )
         .populate(
           'user',
-          'name email businessName businessLogo businessSignature businessSeal address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan'
+          'name email businessName signatoryName designation businessLogo businessSignature businessSeal address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan'
         );
 
     // ========================================================

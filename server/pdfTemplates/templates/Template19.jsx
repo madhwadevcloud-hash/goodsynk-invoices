@@ -277,8 +277,8 @@ export default function Template19({ invoice }) {
                 {isRasterImage(biz?.businessSignature) ? (
                   <Image src={biz.businessSignature} style={{ width: 60, height: 22, objectFit: 'contain', marginTop: 2 }} />
                 ) : null}
-                <Text style={{ fontSize: 7.5, color: '#111827' }}>Name: {biz?.signatoryName || 'Ananth Sripadarao'}</Text>
-                <Text style={{ fontSize: 7, color: '#4B5563' }}>Designation: {biz?.designation || 'Head – Brand Protection & Litigation'}</Text>
+                {biz?.signatoryName && <Text style={{ fontSize: 7.5, color: '#111827' }}>Name: {biz.signatoryName}</Text>}
+                {biz?.designation && <Text style={{ fontSize: 7, color: '#4B5563' }}>Designation: {biz.designation}</Text>}
                 {isRasterImage(biz?.businessSeal) ? (
                   <Image src={biz.businessSeal} style={{ width: 45, height: 45, marginTop: 4, objectFit: 'contain' }} />
                 ) : (

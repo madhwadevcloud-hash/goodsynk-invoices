@@ -1,4 +1,5 @@
 import React from 'react';
+import SignatoryDetails from './SignatoryDetails';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
 import { isRasterImage } from './watermarkUtils';
@@ -441,6 +442,7 @@ export default function Template1({ invoice }) {
         {biz?.businessSignature && (
           <Image src={biz.businessSignature} style={s.signatureImg} />
         )}
+        <SignatoryDetails biz={biz} />
 
         {/* Footer lines */}
         {biz?.fssai && <Text style={s.footerLine}>FSSAI Lic No. {biz.fssai}</Text>}

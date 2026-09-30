@@ -7,6 +7,18 @@ const Quotation = require('../models/Quotation');
 const TemplateResolver =
     require('../pdfTemplates/templates/TemplateResolver.jsx').default;
 
+const applyInvoiceContactPreference = (user) => {
+    if (!user) return user;
+    const preference = user.invoiceContactPreference || {};
+    return {
+        ...user,
+        email: preference.email === 'alternate' && user.alternateEmail ? user.alternateEmail : user.email,
+        phone: preference.phone === 'alternate' && user.alternatePhone ? user.alternatePhone : user.phone,
+        address: preference.address === 'alternate' && (user.alternateAddress?.street || user.alternateAddress?.city)
+            ? user.alternateAddress : user.address,
+    };
+};
+
 
 /*
 |--------------------------------------------------------------------------
@@ -458,6 +470,10 @@ const streamDocumentPdf = async (
                 businessSignature
                 businessSeal
                 address
+                alternateEmail
+                alternatePhone
+                alternateAddress
+                invoiceContactPreference
                 gstin
                 phone
                 pan
@@ -657,6 +673,10 @@ const getPublicDocument = async (
                 businessSignature
                 businessSeal
                 address
+                alternateEmail
+                alternatePhone
+                alternateAddress
+                invoiceContactPreference
                 gstin
                 phone
                 pan
@@ -698,6 +718,7 @@ const getPublicDocument = async (
         */
         const out =
             doc.toObject();
+        out.user = applyInvoiceContactPreference(out.user);
 
 
         /*

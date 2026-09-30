@@ -1,4 +1,5 @@
 import React from 'react';
+import SignatoryDetails from './SignatoryDetails';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
 import { getAddressStreet, getAddressCityLine, getFullAddress } from './addressUtils';
@@ -642,6 +643,7 @@ export default function Template20({ invoice }) {
               <Text style={{ fontSize: 6, fontFamily: B, color: '#374151', marginTop: 4, alignSelf: 'flex-end' }}>
                 Authorised Signatory
               </Text>
+              <SignatoryDetails biz={biz} />
             </View>
           </View>
 

@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import TemplatePreview from '../../components/TemplatePreview';
 import DocumentSettingsPanel from '../../components/DocumentSettingsPanel';
 import { getDocumentSettings } from '../../utils/documentSettings';
+import invoiceContactDetails from '../../utils/invoiceContactDetails';
 
 const defaultItem = () => ({
   productId: null, itemType: 'Product', name: '', description: '', hsn: '', quantity: 1, unit: 'pcs',
@@ -870,7 +871,7 @@ export default function InvoiceForm() {
       let invoiceForPDF = {
         ...invoiceData,
         template: resolvedTpt,
-        user: { ...currentUser, bankDetails: normalizeBankAccounts(currentUser)[invoiceData.selectedBankIndex ?? form.selectedBankIndex ?? 0] || currentUser?.bankDetails },
+        user: { ...invoiceContactDetails(currentUser), bankDetails: normalizeBankAccounts(currentUser)[invoiceData.selectedBankIndex ?? form.selectedBankIndex ?? 0] || currentUser?.bankDetails },
         invoiceType: docType,
         templateColors: resolveTemplateColors(
           resolvedTpt,
@@ -2540,7 +2541,7 @@ export default function InvoiceForm() {
                             src={t.img}
                             templateId={t.id || defaultKey}
                             templateColors={getColorsForTemplate(t.id || defaultKey)}
-                            user={currentUser}
+                            user={invoiceContactDetails(currentUser)}
                             isQuotation={isQuotation}
                             logo={currentUser?.businessLogo}
                             seal={currentUser?.businessSeal}

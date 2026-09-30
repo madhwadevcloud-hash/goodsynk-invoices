@@ -41,6 +41,8 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    signatoryName: { type: String, trim: true, default: '' },
+    designation: { type: String, trim: true, default: '' },
     businessLogo: {
       type: String,
       default: '',
@@ -63,6 +65,18 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
       default: '',
+    },
+    alternateEmail: { type: String, lowercase: true, trim: true, default: '' },
+    alternatePhone: { type: String, trim: true, default: '' },
+    alternateAddress: {
+      street: { type: String, default: '' }, city: { type: String, default: '' },
+      state: { type: String, default: '' }, pincode: { type: String, default: '' },
+      country: { type: String, default: 'India' },
+    },
+    invoiceContactPreference: {
+      email: { type: String, enum: ['primary', 'alternate'], default: 'primary' },
+      phone: { type: String, enum: ['primary', 'alternate'], default: 'primary' },
+      address: { type: String, enum: ['primary', 'alternate'], default: 'primary' },
     },
     gstin: {
       type: String,

@@ -339,6 +339,7 @@ export default function Template18({ invoice }) {
               <Image src={biz.businessSeal} style={s.sealImg} />
             ) : null}
             <Text style={s.sigName}>{biz?.signatoryName || 'Authorised Signatory'}</Text>
+            {biz?.designation && <Text style={{ fontSize: 7, textAlign: 'right' }}>{biz.designation}</Text>}
           </View>
         </View>
 

@@ -9,6 +9,7 @@ import { isProfileComplete, getMissingProfileField } from '../../utils/profileVa
 import { getInvoiceMessage } from '../../utils/whatsappTemplates';
 import EmailComposeModal from '../../components/EmailComposeModal';
 import DocumentSettingsPanel from '../../components/DocumentSettingsPanel';
+import invoiceContactDetails from '../../utils/invoiceContactDetails';
 
 const fmtCurrency = (n, currency = 'INR') =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency, maximumFractionDigits: 2 }).format(n || 0);
@@ -108,7 +109,7 @@ export default function InvoiceList() {
     // account default (inv.user.invoiceTemplate), NOT the currently logged-in
     // user's preference — so the selected template is always honoured.
     const resolvedTpt = (inv.template || inv.user?.invoiceTemplate || currentUser?.invoiceTemplate || 'template1').toLowerCase();
-    let userForPdf = currentUser;
+    let userForPdf = invoiceContactDetails(currentUser);
     if (currentUser?.businessLogo) {
       try {
         const jpgUrl = currentUser.businessLogo.includes('cloudinary.com')

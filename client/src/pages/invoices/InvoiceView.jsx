@@ -6,6 +6,7 @@ import { Pencil, ArrowLeft, CheckCircle, Send, Download, FileText, Loader2 } fro
 import { DEFAULT_COLORS } from './InvoiceForm';
 
 import { useAuth } from '../../context/AuthContext';
+import invoiceContactDetails from '../../utils/invoiceContactDetails';
 
 const PdfPane = lazy(() => import('./PdfPane'));
 
@@ -107,12 +108,12 @@ export default function InvoiceView() {
     (invoice.template ? (DEFAULT_COLORS[invoice.template.toLowerCase()] || null) : (isQuotation ? invoice.user?.quotationTemplateColors : invoice.user?.invoiceTemplateColors)) ||
     DEFAULT_COLORS[(effectiveTemplate || 'template1').toLowerCase()];
 
-  const userForPDF = {
+  const userForPDF = invoiceContactDetails({
     ...currentUser,
     ...invoice.user,
     ...(logoBase64 ? { businessLogo: logoBase64 } : {}),
     businessSeal: invoice.user?.businessSeal || currentUser?.businessSeal || '',
-  };
+  });
 
   const invoiceForPDF = {
     ...invoice,
