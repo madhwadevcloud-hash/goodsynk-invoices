@@ -52,6 +52,12 @@ const normalizeBankAccounts = (user) => {
 const serializeNotes = (points) => points.join('\n');
 const parseNotes = (notes) => (notes || '').split('\n').map((point) => point.trim()).filter(Boolean);
 
+// Exact note automatically inserted when "Is Reverse Charge Applicable?" is enabled.
+// This is a normal Notes entry: the user can edit it or delete it.
+// It is intentionally the same for every invoice/quotation template.
+const REVERSE_CHARGE_NOTE =
+  'Services Provided by the firm of advocates by way of legal services, directly or indirectly is to be paid by the recipient of the service 100%, on REVERSE CHARGE basis in India as per GST Law. The applicable GST is 18% which would amount to SGST@9%  and CGST@9% .';
+
 export const DEFAULT_COLORS = {
   template1: { primary: '#4A72D4' },
   template2: { primary: '#000000' },
@@ -342,8 +348,9 @@ export default function InvoiceForm() {
     setField('isInterstate', taxDraft.gstType === 'igst');
     setField('placeOfSupply', taxDraft.placeOfSupply);
     setField('taxType', taxDraft.taxType);
-    // Persisting this flag lets TemplateResolver auto-append the mandatory
-    // GST reverse-charge note to the generated invoice/quotation.
+    // This flag drives the automatic Notes entry for every template.
+    // The inserted note remains a normal Notes item, so the user can edit
+    // or delete it before saving.
     setField('reverseCharge', taxDraft.reverseCharge);
     if (taxDraft.taxType === 'none') {
       setForm(f => ({ ...f, items: f.items.map(item => ({ ...item, cgstRate: 0, sgstRate: 0, igstRate: 0, vatRate: 0 })) }));
@@ -706,6 +713,46 @@ export default function InvoiceForm() {
   }, []);
 
   const setField = (key, val) => setForm((f) => ({ ...f, [key]: val }));
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Reverse Charge → automatic Notes entry
+  //
+  // When Reverse Charge is enabled, add the exact legal note to the Notes
+  // section for EVERY template. It is a normal editable/deletable note.
+  //
+  // Important: this effect depends only on template/reverseCharge, not on
+  // form.notes. That means if the user edits or deletes the automatically
+  // inserted note, we do NOT keep forcing it back into the Notes field.
+  // ─────────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    setForm((previous) => {
+      const currentNotes = Array.isArray(previous.notes) ? previous.notes : [];
+      const noteIndex = currentNotes.findIndex(
+        (note) => String(note || '').trim() === REVERSE_CHARGE_NOTE
+      );
+
+      if (previous.reverseCharge) {
+        // Already present — do not duplicate it.
+        if (noteIndex !== -1) return previous;
+
+        return {
+          ...previous,
+          notes: [...currentNotes, REVERSE_CHARGE_NOTE],
+        };
+      }
+
+      // Reverse Charge is OFF. Remove only the untouched automatic note.
+      // Any note the user manually wrote/edited is left alone.
+      if (noteIndex !== -1) {
+        return {
+          ...previous,
+          notes: currentNotes.filter((_, index) => index !== noteIndex),
+        };
+      }
+
+      return previous;
+    });
+  }, [form.reverseCharge]);
 
   // Resolve the colors saved for a specific template. Supports both the
   // current per-template store and the older flat { primary, secondary } format.
@@ -2346,7 +2393,7 @@ export default function InvoiceForm() {
         </div>
       )}
 
-      {/* Notes */}
+      {/* Notes — Reverse Charge note is automatically inserted here for all templates when enabled. */}
       <div className="card">
         <h2 className="card-title mb-4" style={{ marginBottom: '16px' }}>Additional Info</h2>
         <div className="form-grid">
@@ -2888,7 +2935,7 @@ export default function InvoiceForm() {
               </label>
               {taxDraft.reverseCharge && (
                 <p style={{ marginTop: 6, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  The mandatory GST reverse-charge note will be automatically added to this {docLabel.toLowerCase()}.
+                  The reverse-charge legal note will be automatically added to Notes. You can edit or delete it before saving.
                 </p>
               )}
             </div>
@@ -3009,7 +3056,7 @@ export default function InvoiceForm() {
               >
                 Clients page
               </button>
-
+                
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
