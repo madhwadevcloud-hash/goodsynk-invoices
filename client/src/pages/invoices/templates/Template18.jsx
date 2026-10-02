@@ -27,6 +27,32 @@ const hexToRgba = (hex, alpha) => {
 const MAX_INLINE_IMAGE_LENGTH = 2_000_000;
 const isRasterImage = (url) => typeof url === 'string' && url.trim().length > 0 && url.trim().length <= MAX_INLINE_IMAGE_LENGTH && !url.trim().startsWith('data:image/svg') && !url.includes('OFFICIAL WATERMARK');
 
+// Normalizes terms & conditions coming from the DB into a flat array of strings.
+// Supports: array of strings, array of objects ({ text } / { term } / { value }),
+// a single string with newlines, or a single string with numbered items.
+function normalizeTerms(terms) {
+  if (!terms) return [];
+  let list = [];
+
+  if (Array.isArray(terms)) {
+    list = terms.map((t) => {
+      if (typeof t === 'string') return t.trim();
+      if (t && typeof t === 'object') {
+        return String(t.text || t.term || t.value || t.description || '').trim();
+      }
+      return '';
+    });
+  } else if (typeof terms === 'string') {
+    list = terms.split(/\r?\n/).map((t) => t.trim());
+  }
+
+  return list
+    .filter(Boolean)
+    // strip any leading "1.", "1)", "-", "•" so we can re-number cleanly
+    .map((t) => t.replace(/^\s*(?:\d+[\.\)]|[-•*])\s*/, '').trim())
+    .filter(Boolean);
+}
+
 function numberToWords(num) {
   if (!num) return 'Zero';
   const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
@@ -79,6 +105,16 @@ export default function Template18({ invoice }) {
   const paidAmount = inv.paidAmount || 0;
   const balanceDue = Math.max((inv.total || 0) - paidAmount, 0);
   const isFullyPaid = !isQuotation && paidAmount > 0 && balanceDue <= 0.01;
+
+  // Pull terms & conditions from invoice first, then fall back to business profile.
+  const termsList = normalizeTerms(
+    inv.termsAndConditions ||
+    inv.terms ||
+    inv.termsList ||
+    biz?.termsAndConditions ||
+    biz?.terms ||
+    biz?.termsList
+  );
 
   const s = StyleSheet.create({
     page: { paddingTop: 25, paddingBottom: 50, paddingHorizontal: 30, fontFamily: 'Inter', color: '#111827', fontSize: 8 },
@@ -321,11 +357,14 @@ export default function Template18({ invoice }) {
                 <Text style={s.termItem}>{inv.notes}</Text>
               </View>
             ) : null}
-            <Text style={s.sectionTitle}>Terms and Conditions:</Text>
-            <Text style={s.termItem}>1. Goods once sold cannot be taken back or exchanged.</Text>
-            <Text style={s.termItem}>2. We are not the manufacturers, company will stand for warranty as per their terms and conditions.</Text>
-            <Text style={s.termItem}>3. Interest @24% p.a. will be charged for uncleared bills beyond 15 days.</Text>
-            <Text style={s.termItem}>4. Subject to local Jurisdiction.</Text>
+            {termsList.length > 0 ? (
+              <View>
+                <Text style={s.sectionTitle}>Terms and Conditions:</Text>
+                {termsList.map((term, i) => (
+                  <Text key={i} style={s.termItem}>{i + 1}. {term}</Text>
+                ))}
+              </View>
+            ) : null}
           </View>
 
           <View style={s.sigCol}>
