@@ -203,6 +203,19 @@ export default function Template19({ invoice }) {
   // Category with Legal Services default
   const categoryText = inv.category || 'Legal Services';
 
+  // ---- Ref Line Logic (Terms & Conditions connected here) ----
+  // 1. Prefer explicit reference field, fallback to Terms & Conditions
+  // 2. Limit to 100 chars to ensure it fits on one line
+  // 3. Replace newlines with spaces to keep it on one line
+  const rawRefText = inv.reference || termsText || '';
+  const cleanRefText = rawRefText.replace(/\n/g, ' ').trim();
+  const displayRefText = cleanRefText.length > 100 
+    ? cleanRefText.substring(0, 100) + '...' 
+    : cleanRefText;
+  
+  // If the Terms text was used in the Ref line, don't show it again at the bottom
+  const showTermsBlock = termsText && inv.reference;
+
   const s = StyleSheet.create({
     page: { paddingTop: 25, paddingBottom: 50, paddingHorizontal: 30, fontFamily: 'Inter', color: '#111827', fontSize: 8 },
     watermarkContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: -100 },
@@ -228,7 +241,15 @@ export default function Template19({ invoice }) {
     metaCol1: { width: '45%', padding: 6, borderRightWidth: 1, borderRightColor: '#111827' },
     metaCol2: { width: '25%', padding: 6, borderRightWidth: 1, borderRightColor: '#111827' },
     metaCol3: { width: '30%', padding: 6 },
-    refText: { marginHorizontal: 12, fontSize: 8.5, color: '#111827', marginBottom: 10 },
+    refText: { 
+      marginHorizontal: 12, 
+      fontSize: 8.5, 
+      color: '#111827', 
+      marginBottom: 10,
+      lineHeight: 1.2,
+      flexWrap: 'nowrap', // Prevent wrapping to keep it one line
+      overflow: 'hidden'   // Hide overflow if it exceeds width
+    },
     table: { marginHorizontal: 12, borderWidth: 1, borderColor: '#111827', marginBottom: 10 },
     tHead: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#111827', backgroundColor: '#F9FAFB', paddingVertical: 5 },
     thSno: { width: '8%', paddingLeft: 6, fontSize: 9, fontFamily: B, color: '#111827', borderRightWidth: 1, borderRightColor: '#111827' },
@@ -345,9 +366,10 @@ export default function Template19({ invoice }) {
             </View>
           </View>
 
-          {inv.reference ? (
+          {/* Ref Line: Connected to Terms & Conditions, limited to one line */}
+          {displayRefText ? (
             <Text style={s.refText}>
-              <Text style={{ fontFamily: B }}>Ref:</Text> {inv.reference}
+              <Text style={{ fontFamily: B }}>Ref:</Text> {displayRefText}
             </Text>
           ) : null}
 
@@ -428,7 +450,8 @@ export default function Template19({ invoice }) {
             </View>
           ) : null}
 
-          {termsText ? (
+          {/* Only show Terms block if it wasn't used in the Ref line above */}
+          {showTermsBlock ? (
             <View style={s.termsBlock} wrap={false}>
               <Text style={s.termsTitle}>Terms & Conditions:</Text>
               <Text style={s.termsText}>{termsText}</Text>
