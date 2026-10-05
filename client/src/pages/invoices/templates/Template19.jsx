@@ -91,6 +91,13 @@ function formatDateOnly(value) {
   return `${day}-${month}-${year}`;
 }
 
+function wrapEmailAddress(email) {
+  // Email addresses are treated as one unbreakable word by the PDF renderer.
+  // Add zero-width break opportunities at common email separators so long
+  // addresses wrap inside the contact column without changing their display.
+  return String(email || '').replace(/([@._+-])/g, '$1\u200B');
+}
+
 // Common pricing calculation — mirrors InvoiceForm.jsx logic exactly.
 function computeLine(item, isInterstate, taxType = 'gst_india', isDiscColumnVisible = true) {
   const lineSubtotal = (item.price || 0) * (item.quantity || 0);
@@ -320,7 +327,7 @@ export default function Template19({ invoice }) {
             <View style={s.headerCol3}>
               <Text style={s.contactText}>Ph: {biz?.phone || ''}</Text>
               <Text style={s.contactText}>Email:</Text>
-              <Text style={s.linkText}>{biz?.email || ''}</Text>
+              <Text style={s.linkText}>{wrapEmailAddress(biz?.email)}</Text>
             </View>
           </View>
 
