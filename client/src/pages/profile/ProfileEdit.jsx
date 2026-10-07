@@ -801,6 +801,39 @@ export default function ProfileEdit() {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 16 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ width: 28, height: 28, background: 'var(--primary-bg)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <PenLine size={14} style={{ color: 'var(--primary)' }} />
+                      </div>
+                      <h4 style={{ fontSize: '0.9rem', fontWeight: 700 }}>Signatures</h4>
+                    </div>
+                    <button className="btn btn-secondary btn-sm" onClick={() => setEditing(true)}><PenLine size={13} /> {businessSignatures.length ? 'Manage' : 'Add Signature'}</button>
+                  </div>
+                  {businessSignatures.length ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
+                      {businessSignatures.map((signature) => {
+                        const activeId = user?.invoiceContactPreference?.signature || businessSignatures[0]?.id;
+                        const isActive = signature.id === activeId;
+                        return (
+                          <div key={signature.id} style={{ border: `1px solid ${isActive ? 'var(--primary)' : 'var(--border)'}`, borderRadius: 10, padding: 12, background: 'var(--bg-card)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+                              <strong style={{ fontSize: '0.8rem' }}>{signature.label}</strong>
+                              {isActive && <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--primary)' }}>Used on documents</span>}
+                            </div>
+                            <div style={{ height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', borderRadius: 6, border: '1px dashed var(--border)' }}>
+                              <img src={signature.image} alt={signature.label} style={{ maxHeight: 48, maxWidth: '90%', objectFit: 'contain' }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No signature added yet.</p>
+                  )}
+                </div>
+
+                <div style={{ marginTop: 24, padding: '20px', background: 'var(--bg-elevated)', borderRadius: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 16 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: 28, height: 28, background: 'var(--primary-bg)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Landmark size={14} style={{ color: 'var(--primary)' }} />
                       </div>
                       <h4 style={{ fontSize: '0.9rem', fontWeight: 700 }}>Banking Details</h4>

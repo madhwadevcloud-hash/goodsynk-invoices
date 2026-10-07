@@ -271,8 +271,8 @@ export default function Template6({ invoice }) {
           <View style={s.paymentInfoBlock}>
             <Text style={s.detailsTitle}>Details :</Text>
             <View style={s.detailsRow}><Text style={s.detailsLabel}>{isQuotation ? 'Quotation No' : 'Invoice No'}</Text><Text style={s.detailsColon}>:</Text><Text style={s.detailsVal}>{invoice.invoiceNumber || invoice.quotationNumber}</Text></View>
-            <View style={s.detailsRow}><Text style={s.detailsLabel}>Date of Issue</Text><Text style={s.detailsColon}>:</Text><Text style={s.detailsVal}>{new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text></View>
-            <View style={s.detailsRow}><Text style={s.detailsLabel}>Due Date</Text><Text style={s.detailsColon}>:</Text><Text style={s.detailsVal}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US') : 'Upon Receipt'}</Text></View>
+            <View style={s.detailsRow}><Text style={s.detailsLabel}>Date of Issue</Text><Text style={s.detailsColon}>:</Text><Text style={s.detailsVal}>{new Date(invoice.issueDate).toLocaleDateString('en-GB')}</Text></View>
+            <View style={s.detailsRow}><Text style={s.detailsLabel}>{isQuotation ? 'Valid Until' : 'Due Date'}</Text><Text style={s.detailsColon}>:</Text><Text style={s.detailsVal}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-GB') : (isQuotation ? '-' : 'Upon Receipt')}</Text></View>
           </View>
         </View>
 

@@ -167,10 +167,10 @@ export default function Template5({ invoice }) {
               <Text style={[s.metaVal, { fontFamily: B, marginBottom: 10 }]}>{invoice.invoiceNumber || invoice.quotationNumber}</Text>
 
               <Text style={s.metaLabel}>Date of Issue</Text>
-              <Text style={[s.metaVal, { marginBottom: 10 }]}>{new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text>
+              <Text style={[s.metaVal, { marginBottom: 10 }]}>{new Date(invoice.issueDate).toLocaleDateString('en-GB')}</Text>
 
-              <Text style={s.metaLabel}>Due Date</Text>
-              <Text style={s.metaVal}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US') : 'Upon Receipt'}</Text>
+              <Text style={s.metaLabel}>{isQuotation ? 'Valid Until' : 'Due Date'}</Text>
+              <Text style={s.metaVal}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-GB') : (isQuotation ? '-' : 'Upon Receipt')}</Text>
             </View>
           </View>
 
@@ -195,7 +195,7 @@ export default function Template5({ invoice }) {
         {/* Billed To */}
         <View style={s.metaSection}>
           <View style={s.metaCol}>
-            <Text style={s.metaLabel}>Billed To:</Text>
+            <Text style={s.metaLabel}>{isQuotation ? 'Prepared For:' : 'Billed To:'}</Text>
             <Text style={[s.metaVal, { fontFamily: B, marginBottom: 4 }]}>{client?.name}</Text>
             <Text style={s.metaVal}>
               {client?.address?.street && `${client.address.street}\n`}

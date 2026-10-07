@@ -280,12 +280,12 @@ export default function Template10({ invoice }) {
              <Text style={s.cardHeader}>Details</Text>
              <View style={s.metaRow}>
                <Text style={s.metaLabel}>Date of Issue:</Text>
-               <Text style={s.metaVal}>{new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text>
+               <Text style={s.metaVal}>{new Date(invoice.issueDate).toLocaleDateString('en-GB')}</Text>
              </View>
              {invoice.dueDate && (
                <View style={s.metaRow}>
-                 <Text style={s.metaLabel}>Due Date:</Text>
-                 <Text style={s.metaVal}>{new Date(invoice.dueDate).toLocaleDateString('en-US')}</Text>
+                 <Text style={s.metaLabel}>{isQuotation ? 'Valid Until:' : 'Due Date:'}</Text>
+                 <Text style={s.metaVal}>{new Date(invoice.dueDate).toLocaleDateString('en-GB')}</Text>
                </View>
              )}
 
