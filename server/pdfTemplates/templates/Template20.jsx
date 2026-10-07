@@ -320,8 +320,8 @@ export default function Template20({ invoice }) {
     docMetaGrid: { flexDirection: 'row', borderBottomWidth: 0.75, borderBottomColor: '#374151' },
     docMetaCol1: { width: '50%', padding: 4, minWidth: 0, borderRightWidth: 0.75, borderRightColor: '#374151' },
     docMetaCol2: { width: '50%', padding: 4, minWidth: 0 },
-    metaLabel: { fontSize: 6.5, color: '#4B5563' },
-    metaVal: { fontSize: 7, fontFamily: B, color: '#111827' },
+    metaLabel: { fontSize: 7, color: '#4B5563' },
+    metaVal: { fontSize: 7.5, fontFamily: B, color: '#111827' },
 
     shipAddressBox: { padding: 4 },
     sectionLabelBold: { fontSize: 7, fontFamily: B, color: '#111827', marginBottom: 1.5 },
@@ -333,7 +333,7 @@ export default function Template20({ invoice }) {
 
     table: { borderBottomWidth: 0.75, borderBottomColor: '#374151' },
     tHead: { flexDirection: 'row', borderBottomWidth: 0.75, borderBottomColor: '#374151', backgroundColor: '#FFFFFF', paddingVertical: 3 },
-    th: { fontSize: 6.5, fontFamily: B, color: '#111827', textAlign: 'center' },
+    th: { fontSize: 7, fontFamily: B, color: '#111827', textAlign: 'center' },
 
     colNo: { width: '4%', borderRightWidth: 0.75, borderRightColor: '#374151' },
     colItem: { width: '43%', textAlign: 'left', paddingLeft: 4, paddingRight: 4, borderRightWidth: 0.75, borderRightColor: '#374151' },
@@ -346,9 +346,9 @@ export default function Template20({ invoice }) {
     colAmount: { width: '12%', textAlign: 'right', paddingRight: 4 },
 
     tRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#E5E7EB', paddingVertical: 4, minHeight: 18 },
-    td: { fontSize: 6.5, color: '#111827', textAlign: 'center' },
+    td: { fontSize: 7, color: '#111827', textAlign: 'center' },
     tdItemName: { fontFamily: B, color: '#111827' },
-    tdItemDesc: { fontSize: 6, color: '#4B5563', marginTop: 1, lineHeight: 1.2 },
+    tdItemDesc: { fontSize: 6.5, color: '#4B5563', marginTop: 1, lineHeight: 1.2 },
 
     tableSummaryRow: { flexDirection: 'row', borderTopWidth: 0.75, borderTopColor: '#374151', borderBottomWidth: 0.75, borderBottomColor: '#374151' },
     sumLeftCol: { width: '65%', padding: 4, justifyContent: 'center', borderRightWidth: 0.75, borderRightColor: '#374151' },
@@ -361,14 +361,14 @@ export default function Template20({ invoice }) {
 
     hsnTable: { borderBottomWidth: 0.75, borderBottomColor: '#374151' },
     hsnHead: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#374151', paddingVertical: 2 },
-    hsnTh: { fontSize: 6, fontFamily: B, color: '#111827', textAlign: 'center' },
+    hsnTh: { fontSize: 6.5, fontFamily: B, color: '#111827', textAlign: 'center' },
     hsnCol1: { width: '25%', borderRightWidth: 0.5, borderRightColor: '#374151' },
     hsnCol2: { width: '25%', textAlign: 'right', paddingRight: 4, borderRightWidth: 0.5, borderRightColor: '#374151' },
     hsnCol3: { width: '28%', borderRightWidth: 0.5, borderRightColor: '#374151' },
     hsnCol4: { width: '22%', textAlign: 'right', paddingRight: 4 },
 
     hsnRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#E5E7EB', paddingVertical: 2.5 },
-    hsnTd: { fontSize: 6, color: '#111827', textAlign: 'center' },
+    hsnTd: { fontSize: 6.5, color: '#111827', textAlign: 'center' },
 
     hsnTotRow: { flexDirection: 'row', borderTopWidth: 0.75, borderTopColor: '#374151', paddingVertical: 2.5, backgroundColor: '#F9FAFB' },
 
@@ -445,14 +445,14 @@ export default function Template20({ invoice }) {
                 <View style={s.docMetaCol1}>
                   <Text style={s.metaLabel}>{isQuotation ? 'Quotation #:' : 'Invoice #:'}</Text>
                   <Text style={s.metaVal}>{docNumber}</Text>
-                  <Text style={[s.metaLabel, { marginTop: 4 }]}>Place of Supply:</Text>
+                  <Text style={[s.metaLabel, { marginTop: 8 }]}>Place of Supply:</Text>
                   <Text style={s.metaVal}>{placeOfSupply}</Text>
                 </View>
 
                 <View style={s.docMetaCol2}>
                   <Text style={s.metaLabel}>{isQuotation ? 'Quotation Date:' : 'Invoice Date:'}</Text>
                   <Text style={s.metaVal}>{docDate}</Text>
-                  <Text style={[s.metaLabel, { marginTop: 4 }]}>{isQuotation ? 'Validity:' : 'Due Date:'}</Text>
+                  <Text style={[s.metaLabel, { marginTop: 8 }]}>{isQuotation ? 'Validity:' : 'Due Date:'}</Text>
                   <Text style={s.metaVal}>{dueDate}</Text>
                 </View>
               </View>
@@ -683,6 +683,3 @@ export default function Template20({ invoice }) {
     </Document>
   );
 }
-
-
-/*Corporate Matrix*/

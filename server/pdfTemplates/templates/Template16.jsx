@@ -182,7 +182,7 @@ export default function Template16({ invoice }) {
             <View style={s.brandRow}>
               {biz?.businessLogo && <Image src={biz.businessLogo} style={s.logo} />}
               <View style={s.bizInfo}>
-                <Text style={s.bizName}>{bizName}</Text>
+                <Text numberOfLines={1} style={s.bizName}>{bizName}</Text>
                 {biz?.gstin && <Text style={s.bizText}>GSTIN: {biz.gstin}</Text>}
                 {biz?.address?.street && <Text style={s.bizText}>{biz.address.street}</Text>}
                 {biz?.address?.city && <Text style={s.bizText}>{biz.address.city}, {biz.address.state} {biz.address.pincode}</Text>}
@@ -362,5 +362,3 @@ export default function Template16({ invoice }) {
     </Document>
   );
 }
-
-/*Formal Tax Invoice*/

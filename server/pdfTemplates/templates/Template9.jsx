@@ -43,7 +43,7 @@ export default function Template9({ invoice }) {
     topRight: { width: '65%', padding: 30, paddingLeft: 40, color: '#FFF', justifyContent: 'space-between' },
     brandRow: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0 },
     brandText: { width: 230, flexShrink: 1 },
-    topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0, backgroundColor: '#FFF', padding: 2, borderRadius: 2 },
+    topLogo: { maxWidth: 140, maxHeight: 52, objectFit: 'contain', marginRight: 8, flexShrink: 0, backgroundColor: '#FFF', padding: 2, borderRadius: 2 },
     bizName: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#FFF', textTransform: 'uppercase', marginBottom: 4, letterSpacing: 1 },
     bizText: { fontSize: scaled.bizSubTextFontSize, color: '#FFF', opacity: 0.7, lineHeight: scaled.bizSubTextLineHeight },
     
@@ -92,12 +92,11 @@ export default function Template9({ invoice }) {
     sigLine: { width: '100%', height: 2, backgroundColor: PRIMARY, marginBottom: 6 },
     sigText: { fontSize: 8, fontFamily: B, color: '#111', textTransform: 'uppercase', letterSpacing: 1 },
 
-    // Footer: Dark Block
-    footerBox: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#111', paddingVertical: 15, paddingHorizontal: 30, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    footerLeftText: { fontSize: 8, color: '#FFF', opacity: 0.8 },
-    footerRightText: { fontSize: 8, color: '#FFF', opacity: 0.8, textAlign: 'right' },
-    footerAccent: { fontFamily: B, color: PRIMARY, letterSpacing: 1, textTransform: 'uppercase' },
-    footerLink: { fontFamily: B, color: PRIMARY, textDecoration: 'none' }
+    // Footer
+    footer: { position: 'absolute', bottom: 25, left: 30, right: 30, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#DDD', paddingTop: 10 },
+    footerBrand: { fontSize: 8, fontFamily: B, color: '#111', letterSpacing: 1, textTransform: 'uppercase' },
+    footerPowered: { fontSize: 7, color: '#888' },
+    footerLink: { fontSize: 7, fontFamily: B, color: PRIMARY, textDecoration: 'underline' }
   });
 
   const currency = invoice._currency || invoice.currency || 'INR';
@@ -134,7 +133,7 @@ export default function Template9({ invoice }) {
           <View style={s.topLeft}>
             <View>
               <Text style={s.topLeftTitle}>Billed To</Text>
-              <Text style={s.clientName}>{client?.name}</Text>
+              <Text numberOfLines={1} style={s.clientName}>{client?.name}</Text>
               {client?.address?.street && <Text style={s.clientText}>{client.address.street}</Text>}
               {client?.address?.city && <Text style={s.clientText}>{client.address.city}, {client.address.state} {client.address.pincode}</Text>}
               {client?.phone && <Text style={s.clientText}>P: {client.phone}</Text>}
@@ -164,11 +163,11 @@ export default function Template9({ invoice }) {
             <View style={s.brandRow}>
               {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
               <View style={s.brandText}>
-              <Text style={s.bizName}>{bizName}</Text>
+                <Text numberOfLines={1} wrap={false} style={s.bizName}>{bizName}</Text>
               {biz?.address?.street && <Text style={s.bizText}>{String(biz.address.street).replace(/\s+,/g, ',').replace(/,(?=\S)/g, ', ').trim()}</Text>}
               {biz?.address?.city && <Text style={s.bizText}>{[[biz?.address?.city, biz?.address?.state].map((v) => String(v || '').trim().replace(/[-,\s]+$/, '')).filter(Boolean).join(', '), String(biz?.address?.pincode || '').trim()].filter(Boolean).join(' ')}</Text>}
               {biz?.phone && <Text style={s.bizText}>P: {biz.phone}</Text>}
-              {biz?.email && <Text style={s.bizText}>E: {biz.email}</Text>}
+              {biz?.email && <Text wrap={false} style={s.bizText}>E: {biz.email}</Text>}
               {biz?.gstin && <Text style={[s.bizText, { marginTop: 6, fontFamily: B, color: PRIMARY }]}>GSTIN: {biz.gstin}</Text>}
               </View>
             </View>
@@ -264,20 +263,11 @@ export default function Template9({ invoice }) {
           </View>
         </View>
 
-        <View style={s.footerBox} fixed>
-          <View>
-            <Text style={s.footerLeftText}>
-              <Text style={s.footerAccent}>Contact: </Text>
-              {biz?.phone && `${biz.phone}  `}
-              {biz?.email && `${biz.email}`}
-              {!biz?.phone && !biz?.email && 'Thank you for your business'}
-            </Text>
-          </View>
-          <View>
-            <Text style={s.footerRightText}>
-              POWERED BY <Text style={s.footerAccent}>GOODSYNK<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text></Text>
-            </Text>
-            <Link style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
+        <View style={s.footer} fixed>
+          <Text style={s.footerBrand}>{bizName}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={s.footerPowered}>POWERED BY </Text>
+            <Link style={s.footerLink} src="https://invoice.goodsynk.com">GOODSYNK</Link><Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text>
           </View>
         </View>
         <Text

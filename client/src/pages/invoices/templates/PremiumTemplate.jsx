@@ -89,7 +89,7 @@ export default function PremiumTemplate({ invoice, variant }) {
           </View>
         </View>
         <View style={styles.infoGrid}>
-          <View style={styles.infoBlock}><Text style={styles.label}>Prepared For</Text><Text style={styles.clientName}>{client?.name || 'Client'}</Text>{client?.companyName && <Text style={styles.small}>{client.companyName}</Text>}{client?.email && <Text style={styles.small}>{client.email}</Text>}{client?.phone && <Text style={styles.small}>{client.phone}</Text>}</View>
+          <View style={styles.infoBlock}><Text style={styles.label}>Prepared For</Text><Text numberOfLines={1} style={styles.clientName}>{client?.name || 'Client'}</Text>{client?.companyName && <Text style={styles.small}>{client.companyName}</Text>}{client?.email && <Text style={styles.small}>{client.email}</Text>}{client?.phone && <Text style={styles.small}>{client.phone}</Text>}</View>
           <View style={styles.infoBlock}><Text style={styles.label}>Document Date</Text><Text style={styles.small}>{date(invoice.issueDate)}</Text><Text style={[styles.label, { marginTop: 9 }]}>{isQuotation ? 'Valid Until' : 'Due Date'}</Text><Text style={styles.small}>{date(invoice.dueDate)}</Text></View>
           <View style={[styles.infoBlock, styles.infoLast]}><Text style={styles.label}>Reference</Text><Text style={styles.small}>{isQuotation ? 'Quotation' : 'Invoice'} #{invoice.invoiceNumber || invoice.quotationNumber || 'Draft'}</Text><Text style={[styles.label, { marginTop: 9 }]}>Currency</Text><Text style={styles.small}>{currency}</Text></View>
         </View>
@@ -101,9 +101,13 @@ export default function PremiumTemplate({ invoice, variant }) {
           <View style={styles.notes}><Text style={styles.label}>Notes & Terms</Text><Text style={styles.small}>{invoice.notes || 'Thank you for your business.'}</Text>{invoice.termsAndConditions && <Text style={[styles.small, { marginTop: 8 }]}>{invoice.termsAndConditions}</Text>}{isQuotation && invoice.paymentInfo && <><Text style={[styles.label, { marginTop: 12 }]}>Payment Details</Text><Text style={styles.small}>{invoice.paymentInfo}</Text></>}</View>
           <View style={styles.totals}><View style={styles.totalLine}><Text style={styles.small}>Subtotal</Text><Text style={styles.small}>{currency} {fmt(invoice.subtotal)}</Text></View>{invoice.discountAmount > 0 && <View style={styles.totalLine}><Text style={styles.small}>Discount</Text><Text style={styles.small}>- {fmt(invoice.discountAmount)}</Text></View>}{invoice.taxTotal > 0 && <View style={styles.totalLine}><Text style={styles.small}>Tax</Text><Text style={styles.small}>{fmt(invoice.taxTotal)}</Text></View>}<View style={[styles.totalLine, styles.grand]}><Text>Total</Text><Text>{currency} {fmt(invoice.total)}</Text></View></View>
         </View>
-        <View style={styles.footer} fixed><Text style={styles.small}>Powered by <Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text>Goodsynk Invoices</Text><View style={styles.signature}>{biz?.businessSignature && <Image src={biz.businessSignature} style={{ height: 28, objectFit: 'contain' }} />
-}<SignatoryDetails biz={biz} />
-              <Text style={styles.small}>Authorised signature</Text>{biz?.businessSeal && <Image src={biz.businessSeal} style={{ height: 40, width: 40, objectFit: 'contain', marginTop: 2 }} />}</View></View>
+        <View style={{ marginTop: 10, paddingHorizontal: 36, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }} wrap={false}>
+          {biz?.businessSeal && <Image src={biz.businessSeal} style={{ height: 50, width: 50, objectFit: 'contain', marginRight: 12 }} />}
+          <SignatoryDetails biz={biz} color={accent} />
+        </View>
+        <View style={styles.footer} fixed>
+          <Text style={styles.small}>Powered by GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text> | invoice.goodsynk.com</Text>
+        </View>
       </Page>
     </Document>
   );

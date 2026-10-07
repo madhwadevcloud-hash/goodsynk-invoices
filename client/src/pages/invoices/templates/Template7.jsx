@@ -103,7 +103,7 @@ export default function Template7({ invoice }) {
     bizName: { fontFamily: B, fontSize: headerScale.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
     brandRow: { flexDirection: 'row', alignItems: 'flex-start', minWidth: 0 },
     brandText: { width: 230, flexShrink: 1 },
-    topLogoSafe: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
+    topLogoSafe: { maxWidth: 140, maxHeight: 52, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizText: { fontSize: headerScale.bizSubTextFontSize, color: '#444', marginBottom: 1, lineHeight: headerScale.bizSubTextLineHeight },
     boldText: { fontFamily: B, color: '#000' },
     originalText: { fontSize: 6.5, color: '#666', textTransform: 'uppercase', textAlign: 'right', marginBottom: 10, fontFamily: B },
@@ -210,7 +210,7 @@ export default function Template7({ invoice }) {
             <View style={s.brandRow}>
               {biz?.businessLogo && <Image style={s.topLogoSafe} src={biz.businessLogo} />}
               <View style={s.brandText}>
-                <Text style={s.bizName}>{bizName}</Text>
+                <Text numberOfLines={1} wrap={false} style={s.bizName}>{bizName}</Text>
                 {biz?.gstin && <Text style={s.bizText}>GSTIN <Text style={s.boldText}>{biz.gstin}</Text></Text>}
             {biz?.address?.street && <Text style={s.bizText}>{biz.address.street}</Text>}
             {biz?.address?.city && (
@@ -218,12 +218,8 @@ export default function Template7({ invoice }) {
                 {biz.address.city}, {biz.address.state}, {biz.address.pincode}
               </Text>
             )}
-            {(biz?.phone || biz?.email) && (
-              <Text style={s.bizText}>
-                {biz?.phone && <Text><Text style={s.boldText}>Mobile</Text> {biz.phone}   </Text>}
-                {biz?.email && <Text><Text style={s.boldText}>Email</Text> {biz.email}</Text>}
-              </Text>
-            )}
+            {biz?.phone && <Text style={s.bizText}><Text style={s.boldText}>Mobile</Text> {biz.phone}</Text>}
+            {biz?.email && <Text wrap={false} style={s.bizText}><Text style={s.boldText}>Email</Text> {biz.email}</Text>}
             {biz?.website && <Text style={s.bizText}><Text style={s.boldText}>Website</Text> {biz.website}</Text>}
               </View>
             </View>
@@ -338,11 +334,7 @@ export default function Template7({ invoice }) {
           </View>
           <View style={s.sigCol}>
             <Text style={s.sigText}>For {bizName}</Text>
-            {biz?.businessSignature && (
-              <Image src={biz.businessSignature} style={{ width: 100, height: 40, objectFit: 'contain', marginBottom: 4 }} />
-            )}
-            <SignatoryDetails biz={biz} />
-              <Text style={s.sigLine}>Authorized Signatory</Text>
+            <SignatoryDetails biz={biz} showLabel={false} />
             {biz?.businessSeal && (
               <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />
             )}
@@ -358,7 +350,7 @@ export default function Template7({ invoice }) {
             <Text
               style={s.footerTrustLine}
               render={({ pageNumber, totalPages }) =>
-                `Page ${pageNumber} / ${totalPages}  •  This is a digitally signed document.`
+                `Page ${pageNumber} / ${totalPages}  •  This is a computer generated document and does not require a physical signature.`
               }
             />
           </View>

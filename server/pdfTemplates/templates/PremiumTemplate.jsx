@@ -52,27 +52,63 @@ export default function PremiumTemplate({ invoice, variant }) {
     cell: { fontSize: 8, color: theme.ink },
     headCell: { fontSize: 7, color: '#FFFFFF', fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
     number: { width: '7%' }, desc: { width: '45%' }, qty: { width: '13%', textAlign: 'center' }, price: { width: '17%', textAlign: 'right' }, total: { width: '18%', textAlign: 'right' },
-    lower: { flexDirection: 'row', marginTop: 18, justifyContent: 'space-between' }, notes: { width: '53%', paddingRight: 22 }, totals: { width: '40%', backgroundColor: theme.soft, padding: 12 },
-    totalLine: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 }, grand: { borderTop: `1pt solid ${theme.accent}`, marginTop: 5, paddingTop: 7, fontFamily: 'Helvetica-Bold', fontSize: 12 },
-    footer: { position: 'absolute', bottom: 25, left: 38, right: 38, borderTop: `2pt solid ${theme.accent}`, paddingTop: 8, flexDirection: 'row', justifyContent: 'space-between' }, signature: { textAlign: 'right', width: 170 },
+    lower: { flexDirection: 'row', marginTop: 18, justifyContent: 'space-between' },
+    notes: { width: '53%', paddingRight: 22 },
+    totals: { width: '40%', backgroundColor: theme.soft, padding: 12 },
+    totalLine: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 },
+    grand: { borderTop: `1pt solid ${theme.accent}`, marginTop: 5, paddingTop: 7, fontFamily: 'Helvetica-Bold', fontSize: 12 },
+    footer: { position: 'absolute', bottom: 25, left: 38, right: 38, borderTop: `2pt solid ${theme.accent}`, paddingTop: 8, flexDirection: 'row', justifyContent: 'space-between' },
+    signature: { textAlign: 'right', width: 170 },
   });
   return (
-    <Document><Page size="A4" style={styles.page}>
+    <Document>
+      <Page size="A4" style={styles.page}>
+
         {/* Watermark */}
         {(!biz?.plan || String(biz.plan).toLowerCase() === 'free') && (
           <View style={styles.watermarkContainer} pointerEvents="none" fixed>
             <Text style={styles.watermarkText}>GoodSynk</Text>
           </View>
         )}
-
-      <View style={styles.topBand}><Text style={styles.topBandTitle}>{theme.title}</Text><View><Text style={styles.topBandMeta}>{isQuotation ? 'Prepared for your approval' : 'Payment document'}</Text><Text style={styles.topBandMeta}>{invoice.invoiceNumber || invoice.quotationNumber || 'Draft'}</Text></View></View>
-      <View style={styles.business}><View>{biz?.businessLogo && <Image src={biz.businessLogo} style={styles.logo} />}<Text style={styles.businessName}>{biz?.businessName || biz?.name || ''}</Text>{biz?.gstin && <Text style={styles.small}>GSTIN: {biz.gstin}</Text>}</View><View style={styles.address}>{biz?.address?.street && <Text style={styles.small}>{biz.address.street}</Text>}{biz?.address?.city && <Text style={styles.small}>{biz.address.city}, {biz.address.state} {biz.address.pincode}</Text>}{biz?.phone && <Text style={styles.small}>{biz.phone}</Text>}</View></View>
-      <View style={styles.infoGrid}><View style={styles.infoBlock}><Text style={styles.label}>Prepared For</Text><Text style={styles.clientName}>{client?.name || 'Client'}</Text>{client?.companyName && <Text style={styles.small}>{client.companyName}</Text>}{client?.email && <Text style={styles.small}>{client.email}</Text>}{client?.phone && <Text style={styles.small}>{client.phone}</Text>}</View><View style={styles.infoBlock}><Text style={styles.label}>Document Date</Text><Text style={styles.small}>{date(invoice.issueDate)}</Text><Text style={[styles.label, { marginTop: 9 }]}>{isQuotation ? 'Valid Until' : 'Due Date'}</Text><Text style={styles.small}>{date(invoice.dueDate)}</Text></View><View style={[styles.infoBlock, styles.infoLast]}><Text style={styles.label}>Reference</Text><Text style={styles.small}>{isQuotation ? 'Quotation' : 'Invoice'} #{invoice.invoiceNumber || invoice.quotationNumber || 'Draft'}</Text><Text style={[styles.label, { marginTop: 9 }]}>Currency</Text><Text style={styles.small}>{currency}</Text></View></View>
-      <View style={styles.table}><View style={styles.head}><Text style={[styles.headCell, styles.number]}>#</Text><Text style={[styles.headCell, styles.desc]}>Description</Text><Text style={[styles.headCell, styles.qty]}>Qty</Text><Text style={[styles.headCell, styles.price]}>Unit Price</Text><Text style={[styles.headCell, styles.total]}>Amount</Text></View>{(invoice.items || []).map((item, index) => <View style={styles.row} key={index}><Text style={[styles.cell, styles.number]}>{index + 1}</Text><View style={styles.desc}><Text style={[styles.cell, { fontFamily: 'Helvetica-Bold' }]}>{item.name || 'Item'}</Text>{item.description && <Text style={[styles.small, { marginTop: 2 }]}>{item.description}</Text>}</View><Text style={[styles.cell, styles.qty]}>{item.itemType === 'Service' ? '-' : item.quantity}</Text><Text style={[styles.cell, styles.price]}>{fmt(item.price)}</Text><Text style={[styles.cell, styles.total]}>{fmt(item.total)}</Text></View>)}</View>
-      <View style={styles.lower}><View style={styles.notes}><Text style={styles.label}>Notes &amp; Terms</Text><Text style={styles.small}>{invoice.notes || 'Thank you for your business.'}</Text>{invoice.termsAndConditions && <Text style={[styles.small, { marginTop: 8 }]}>{invoice.termsAndConditions}</Text>}{isQuotation && invoice.paymentInfo && <><Text style={[styles.label, { marginTop: 12 }]}>Payment Details</Text><Text style={styles.small}>{invoice.paymentInfo}</Text></>}</View><View style={styles.totals}><View style={styles.totalLine}><Text style={styles.small}>Subtotal</Text><Text style={styles.small}>{currency} {fmt(invoice.subtotal)}</Text></View>{invoice.discountAmount > 0 && <View style={styles.totalLine}><Text style={styles.small}>Discount</Text><Text style={styles.small}>- {fmt(invoice.discountAmount)}</Text></View>}{invoice.taxTotal > 0 && <View style={styles.totalLine}><Text style={styles.small}>Tax</Text><Text style={styles.small}>{fmt(invoice.taxTotal)}</Text></View>}<View style={[styles.totalLine, styles.grand]}><Text>Total</Text><Text>{currency} {fmt(invoice.total)}</Text></View></View></View>
-      <View style={styles.footer} fixed><Text style={styles.small}>Powered by <Text style={{ fontSize: 8, fontFamily: 'Helvetica' }}>™</Text>Goodsynk Invoices</Text><View style={styles.signature}>{biz?.businessSignature && <Image src={biz.businessSignature} style={{ height: 28, objectFit: 'contain' }} />
-}<SignatoryDetails biz={biz} />
-              <Text style={styles.small}>Authorised signature</Text>{biz?.businessSeal && <Image src={biz.businessSeal} style={{ height: 40, width: 40, objectFit: 'contain', marginTop: 2 }} />}</View></View>
-    </Page></Document>
+        <View style={styles.topBand}>
+          <Text style={styles.topBandTitle}>{theme.title}</Text>
+          <View><Text style={styles.topBandMeta}>{isQuotation ? 'Prepared for your approval' : 'Payment document'}</Text><Text style={styles.topBandMeta}>{invoice.invoiceNumber || invoice.quotationNumber || 'Draft'}</Text></View>
+        </View>
+        <View style={styles.business}>
+          <View style={styles.brand}>
+            {biz?.businessLogo && <Image src={biz.businessLogo} style={styles.logo} />}
+            <View style={styles.brandText}>
+            <Text style={styles.businessName}>{biz?.businessName || biz?.name || ''}</Text>
+            {biz?.gstin && <Text style={styles.small}>GSTIN: {biz.gstin}</Text>}
+            </View>
+          </View>
+          <View style={styles.address}>
+            {biz?.address?.street && <Text style={styles.small}>{biz.address.street}</Text>}
+            {biz?.address?.city && <Text style={styles.small}>{biz.address.city}, {biz.address.state} {biz.address.pincode}</Text>}
+            {biz?.phone && <Text style={styles.small}>{biz.phone}</Text>}
+          </View>
+        </View>
+        <View style={styles.infoGrid}>
+          <View style={styles.infoBlock}><Text style={styles.label}>Prepared For</Text><Text numberOfLines={1} style={styles.clientName}>{client?.name || 'Client'}</Text>{client?.companyName && <Text style={styles.small}>{client.companyName}</Text>}{client?.email && <Text style={styles.small}>{client.email}</Text>}{client?.phone && <Text style={styles.small}>{client.phone}</Text>}</View>
+          <View style={styles.infoBlock}><Text style={styles.label}>Document Date</Text><Text style={styles.small}>{date(invoice.issueDate)}</Text><Text style={[styles.label, { marginTop: 9 }]}>{isQuotation ? 'Valid Until' : 'Due Date'}</Text><Text style={styles.small}>{date(invoice.dueDate)}</Text></View>
+          <View style={[styles.infoBlock, styles.infoLast]}><Text style={styles.label}>Reference</Text><Text style={styles.small}>{isQuotation ? 'Quotation' : 'Invoice'} #{invoice.invoiceNumber || invoice.quotationNumber || 'Draft'}</Text><Text style={[styles.label, { marginTop: 9 }]}>Currency</Text><Text style={styles.small}>{currency}</Text></View>
+        </View>
+        <View style={styles.table}>
+          <View style={styles.head}><Text style={[styles.headCell, styles.number]}>#</Text><Text style={[styles.headCell, styles.desc]}>Description</Text><Text style={[styles.headCell, styles.qty]}>Qty</Text><Text style={[styles.headCell, styles.price]}>Unit Price</Text><Text style={[styles.headCell, styles.total]}>Amount</Text></View>
+          {(invoice.items || []).map((item, index) => <View style={styles.row} key={index}><Text style={[styles.cell, styles.number]}>{index + 1}</Text><View style={styles.desc}><Text style={[styles.cell, { fontFamily: 'Helvetica-Bold' }]}>{item.name || 'Item'}</Text>{item.description && <Text style={[styles.small, { marginTop: 2 }]}>{item.description}</Text>}</View><Text style={[styles.cell, styles.qty]}>{item.itemType === 'Service' ? '-' : item.quantity}</Text><Text style={[styles.cell, styles.price]}>{fmt(item.price)}</Text><Text style={[styles.cell, styles.total]}>{fmt(item.total)}</Text></View>)}
+        </View>
+        <View style={styles.lower}>
+          <View style={styles.notes}><Text style={styles.label}>Notes & Terms</Text><Text style={styles.small}>{invoice.notes || 'Thank you for your business.'}</Text>{invoice.termsAndConditions && <Text style={[styles.small, { marginTop: 8 }]}>{invoice.termsAndConditions}</Text>}{isQuotation && invoice.paymentInfo && <><Text style={[styles.label, { marginTop: 12 }]}>Payment Details</Text><Text style={styles.small}>{invoice.paymentInfo}</Text></>}</View>
+          <View style={styles.totals}><View style={styles.totalLine}><Text style={styles.small}>Subtotal</Text><Text style={styles.small}>{currency} {fmt(invoice.subtotal)}</Text></View>{invoice.discountAmount > 0 && <View style={styles.totalLine}><Text style={styles.small}>Discount</Text><Text style={styles.small}>- {fmt(invoice.discountAmount)}</Text></View>}{invoice.taxTotal > 0 && <View style={styles.totalLine}><Text style={styles.small}>Tax</Text><Text style={styles.small}>{fmt(invoice.taxTotal)}</Text></View>}<View style={[styles.totalLine, styles.grand]}><Text>Total</Text><Text>{currency} {fmt(invoice.total)}</Text></View></View>
+        </View>
+        <View style={{ marginTop: 10, paddingHorizontal: 36, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }} wrap={false}>
+          {biz?.businessSeal && <Image src={biz.businessSeal} style={{ height: 50, width: 50, objectFit: 'contain', marginRight: 12 }} />}
+          <SignatoryDetails biz={biz} color={accent} />
+        </View>
+        <View style={styles.footer} fixed>
+          <Text style={styles.small}>Powered by GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text> | invoice.goodsynk.com</Text>
+        </View>
+      </Page>
+    </Document>
   );
 }

@@ -82,7 +82,7 @@ export default function Template1({ invoice }) {
     bizInfoTop: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0, justifyContent: 'flex-end' },
     titleCol: { flexShrink: 0, marginRight: 24 },
     brandText: { maxWidth: 250, flexShrink: 1 },
-    topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
+    topLogo: { maxWidth: 140, maxHeight: 52, objectFit: 'contain', marginRight: 10, flexShrink: 0 },
     bizNameTop: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 4, textAlign: 'right' },
     bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight, textAlign: 'right' },
 
@@ -93,8 +93,8 @@ export default function Template1({ invoice }) {
     detailsValue: { fontSize: 9.5, fontFamily: M, color: '#000' },
 
     table: { width: '100%', marginTop: 12 },
-    tHeadRow: { flexDirection: 'row', borderBottom: `1pt solid ${PRIMARY}`, paddingBottom: 8, marginBottom: 8 },
-    tRow: { flexDirection: 'row', borderBottom: `0.5pt solid ${PRIMARY}`, paddingVertical: 10 },
+    tHeadRow: { flexDirection: 'row', borderBottom: `1pt solid ${PRIMARY}`, paddingBottom: 6, marginBottom: 6 },
+    tRow: { flexDirection: 'row', borderBottom: `0.5pt solid ${PRIMARY}`, paddingVertical: 6 },
     th: { fontSize: Math.min(9.5, cellSize + 0.5), fontFamily: B, color: '#000' },
     td: { fontSize: cellSize, color: '#000' },
 
@@ -110,19 +110,19 @@ export default function Template1({ invoice }) {
     thTotal: { fontSize: Math.min(9.5, cellSize + 0.5), fontFamily: B, color: PRIMARY, textAlign: 'right' },
     tdTotal: { fontSize: cellSize, color: PRIMARY, textAlign: 'right', fontFamily: M },
 
-    totalsBox: { marginTop: 16, alignItems: 'flex-end' },
-    totalRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 5 },
+    totalsBox: { marginTop: 12, alignItems: 'flex-end' },
+    totalRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 4 },
     totalLabel: { fontSize: 9, color: '#000', width: totLabW, textAlign: 'right', paddingRight: 8 },
     totalVal: { fontSize: 9, fontFamily: M, width: totValW, textAlign: 'right', color: PRIMARY },
-    grandTotalLabel: { fontSize: 11, fontFamily: B, width: totLabW, textAlign: 'right', paddingRight: 8, color: '#000', marginTop: 8 },
-    grandTotalVal: { fontSize: 11, fontFamily: B, width: totValW, textAlign: 'right', color: PRIMARY, marginTop: 8 },
+    grandTotalLabel: { fontSize: 11, fontFamily: B, width: totLabW, textAlign: 'right', paddingRight: 8, color: '#000', marginTop: 6 },
+    grandTotalVal: { fontSize: 11, fontFamily: B, width: totValW, textAlign: 'right', color: PRIMARY, marginTop: 6 },
 
-    infoBlock: { flexDirection: 'row', marginTop: 24, justifyContent: 'space-between' },
+    infoBlock: { flexDirection: 'row', marginTop: 16, justifyContent: 'space-between' },
     infoCol: { width: '30%', minWidth: 0 },
-    infoTitle: { fontFamily: B, fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, paddingBottom: 5, borderBottom: `1pt solid ${PRIMARY}` },
-    infoText: { fontSize: 8.5, color: '#333', marginBottom: 3, lineHeight: 1.5 },
+    infoTitle: { fontFamily: B, fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, paddingBottom: 4, borderBottom: `1pt solid ${PRIMARY}` },
+    infoText: { fontSize: 8.5, color: '#333', marginBottom: 2, lineHeight: 1.4 },
 
-    footerBox: { position: 'absolute', bottom: 15, left: 40, right: 40, borderTopWidth: 1, borderTopColor: PRIMARY, borderTopStyle: 'solid', flexDirection: 'row', alignItems: 'stretch', paddingVertical: 10 },
+    footerBox: { position: 'absolute', bottom: 15, left: 40, right: 40, borderTopWidth: 1, borderTopColor: PRIMARY, borderTopStyle: 'solid', flexDirection: 'row', alignItems: 'stretch', paddingVertical: 8 },
     footerLeft: { width: '38%', justifyContent: 'center', paddingRight: 8 },
     footerCenter: { width: '32%', justifyContent: 'center', alignItems: 'center', borderLeftWidth: 0.5, borderLeftColor: '#E0E0E0', borderLeftStyle: 'solid', borderRightWidth: 0.5, borderRightColor: '#E0E0E0', borderRightStyle: 'solid', paddingHorizontal: 8 },
     footerRight: { width: '30%', justifyContent: 'center', alignItems: 'flex-end', paddingLeft: 8 },
@@ -149,9 +149,9 @@ export default function Template1({ invoice }) {
     footerContactLabel: { fontSize: 6.5, fontFamily: B, color: PRIMARY, letterSpacing: 0.5, marginBottom: 2, textTransform: 'uppercase' },
     footerBrandLine: { fontSize: 7.5, fontFamily: B, color: PRIMARY, letterSpacing: 0.3, textAlign: 'center' },
     footerLink: { fontSize: 7.5, fontFamily: B, color: PRIMARY, letterSpacing: 0.3, textDecoration: 'underline' },
-    footerTrustLine: { fontSize: 6, color: '#666', textAlign: 'right', lineHeight: 1.5 },
-    footerTagline: { fontSize: 6.5, color: '#444', textAlign: 'center', marginTop: 2 },
-    poweredByContainer: { alignItems: 'center', marginTop: 4 },
+    footerTrustLine: { fontSize: 6, color: '#666', textAlign: 'right', lineHeight: 1.4 },
+    footerTagline: { fontSize: 6.5, color: '#444', textAlign: 'center', marginTop: 1 },
+    poweredByContainer: { alignItems: 'center', marginTop: 2 },
     poweredByLabel: { fontSize: 5.5, color: '#888', letterSpacing: 0.5 },
     poweredByValue: { fontSize: 8.5, fontFamily: B, color: '#000', letterSpacing: 0.5, marginTop: 1 },
   });
@@ -181,33 +181,29 @@ export default function Template1({ invoice }) {
           <View style={s.bizInfoTop}>
             {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
             <View style={s.brandText}>
-            <Text style={s.bizNameTop}>{bizName}</Text>
-            {biz?.address?.street && <Text style={s.bizSubText}>{String(biz.address.street).replace(/\s+,/g, ',').replace(/,(?=\S)/g, ', ').trim()}</Text>}
-            {(biz?.address?.city || biz?.address?.state || biz?.address?.pincode) && (
-              <Text style={s.bizSubText}>
-                {[[biz?.address?.city, biz?.address?.state]
-                    .map((v) => String(v || '').trim().replace(/[-,\s]+$/, ''))
-                    .filter(Boolean).join(', '),
-                  String(biz?.address?.pincode || '').trim()].filter(Boolean).join(' ')}
-              </Text>
-            )}
-            {biz?.gstin && <Text style={[s.bizSubText, { color: PRIMARY, fontFamily: B, marginTop: 4 }]}>GSTIN: {biz.gstin}</Text>}
-          
+              <Text style={s.bizNameTop} numberOfLines={1}>{bizName}</Text>
+              {biz?.address?.street && <Text style={s.bizSubText}>{String(biz.address.street).replace(/\s+,/g, ',').replace(/,(?=\S)/g, ', ').trim()}</Text>}
+              {(biz?.address?.city || biz?.address?.state || biz?.address?.pincode) && (
+                <Text style={s.bizSubText}>
+                  {[[biz?.address?.city, biz?.address?.state]
+                      .map((v) => String(v || '').trim().replace(/[-,\s]+$/, ''))
+                      .filter(Boolean).join(', '),
+                    String(biz?.address?.pincode || '').trim()].filter(Boolean).join(' ')}
+                </Text>
+              )}
+              {biz?.gstin && <Text style={[s.bizSubText, { color: PRIMARY, fontFamily: B, marginTop: 2 }]}>GSTIN: {biz.gstin}</Text>}
             </View>
           </View>
         </View>
 
         <View style={s.blueBar} />
 
-
-
         <View style={s.container}>
-
           {/* Info Blocks */}
           <View style={s.infoBlock}>
             <View style={s.infoCol}>
-              <Text style={s.infoTitle}>{isQuotation ? 'Prepared For' : 'Billed To'}</Text>
-              <Text style={[s.infoText, { fontFamily: B }]}>{client?.name}</Text>
+              <Text style={s.infoTitle}>Billed To</Text>
+              <Text style={[s.infoText, { fontFamily: B }]} numberOfLines={1}>{client?.name}</Text>
               {client?.address?.street && <Text style={s.infoText}>{client.address.street}</Text>}
               {client?.address?.city && <Text style={s.infoText}>{client.address.city}, {client.address.state} {client.address.pincode}</Text>}
               {client?.phone && <Text style={s.infoText}>{client.phone}</Text>}
@@ -218,23 +214,19 @@ export default function Template1({ invoice }) {
               <Text style={s.infoText}>Date of Issue: <Text style={{ fontFamily: B }}>{new Date(invoice.issueDate).toLocaleDateString('en-GB')}</Text></Text>
               <Text style={s.infoText}>{isQuotation ? 'Valid Until' : 'Due Date'}: <Text style={{ fontFamily: B }}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-GB') : (isQuotation ? '-' : 'Upon Receipt')}</Text></Text>
             </View>
-            {(
-              <View style={s.infoCol}>
-                <Text style={s.infoTitle}>{isQuotation ? 'Bank Details' : 'Payment Details'}</Text>
-                {biz?.bankDetails?.accountNumber ? (
-                  <>
-                    {biz.bankDetails.bankName && <Text style={s.infoText}>Bank: {biz.bankDetails.bankName}</Text>}
-                    <Text style={s.infoText}>Account: {biz.bankDetails.accountNumber}</Text>
-                    {biz.bankDetails.ifscCode && <Text style={s.infoText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
-                    {biz.bankDetails.branch && <Text style={s.infoText}>Branch: {biz.bankDetails.branch}</Text>}
-                  </>
-                ) : (
-                  <>
-                    {invoice.paymentInfo && <Text style={s.infoText}>{invoice.paymentInfo}</Text>}
-                  </>
-                )}
-              </View>
-            )}
+            <View style={s.infoCol}>
+              <Text style={s.infoTitle}>Payment Details</Text>
+              {biz?.bankDetails?.accountNumber ? (
+                <>
+                  {biz.bankDetails.bankName && <Text style={s.infoText}>Bank: {biz.bankDetails.bankName}</Text>}
+                  <Text style={s.infoText}>Account: {biz.bankDetails.accountNumber}</Text>
+                  {biz.bankDetails.ifscCode && <Text style={s.infoText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
+                  {biz.bankDetails.branch && <Text style={s.infoText}>Branch: {biz.bankDetails.branch}</Text>}
+                </>
+              ) : (
+                <Text style={s.infoText}>{invoice.paymentInfo || '—'}</Text>
+              )}
+            </View>
           </View>
 
           {/* Table */}
@@ -258,7 +250,7 @@ export default function Template1({ invoice }) {
                 <Text style={[s.td, s.colNo]}>{i + 1}</Text>
                 <View style={[s.colDesc]}>
                   <Text style={{ fontFamily: B, fontSize: cellSize }}>{item.name}</Text>
-                  {item.description && <Text style={{ fontSize: 7.5, color: '#555', marginTop: 2 }}>{item.description}</Text>}
+                  {item.description && <Text style={{ fontSize: 7.5, color: '#555', marginTop: 1 }}>{item.description}</Text>}
                 </View>
                 {hasHsn && <Text style={[s.td, s.colHsn]}>{item.hsn || '—'}</Text>}
                 <Text style={[s.td, s.colQty]}>{qtyText(item)}</Text>
@@ -287,71 +279,50 @@ export default function Template1({ invoice }) {
             </View>
           </View>
 
-
           {/* Notes */}
           {invoice.notes && (
-            <View style={{ marginTop: 20 }}>
+            <View style={{ marginTop: 12 }}>
               <Text style={{ fontSize: 9, fontFamily: B }}>Notes</Text>
-              <Text style={{ fontSize: 8.5, color: '#000', marginTop: 4 }}>{invoice.notes}</Text>
+              <Text style={{ fontSize: 8.5, color: '#000', marginTop: 2 }}>{invoice.notes}</Text>
             </View>
           )}
 
           {/* Terms & Conditions */}
           {invoice.termsAndConditions && (
-            <View style={{ marginTop: 15 }}>
+            <View style={{ marginTop: 10 }}>
               <Text style={{ fontSize: 9, fontFamily: B }}>Terms & Conditions</Text>
-              <Text style={{ fontSize: 8, color: '#444', marginTop: 4, lineHeight: 1.4 }}>{invoice.termsAndConditions}</Text>
+              <Text style={{ fontSize: 8, color: '#444', marginTop: 2, lineHeight: 1.3 }}>{invoice.termsAndConditions}</Text>
             </View>
           )}
-
         </View>
 
-        {/* Signature + stamp: side by side so the block stays short and never strands alone on a new page */}
-        <View style={{ marginTop: 14, paddingHorizontal: 40, flexDirection: 'row', justifyContent: isQuotation ? 'space-between' : 'flex-end', alignItems: 'flex-end' }} wrap={false}>
-          {isQuotation && (
-            <View style={{ width: 170 }}>
-              <Text style={{ fontSize: 7.5, fontFamily: B, color: '#666', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 22 }}>Accepted by (Client)</Text>
-              <View style={{ borderTopWidth: 0.5, borderTopColor: '#1a3a6b', borderTopStyle: 'solid', paddingTop: 2 }}>
-                <Text style={{ fontSize: 8, color: '#1a3a6b' }}>Signature, name & date</Text>
-              </View>
-            </View>
-          )}
+        {/* Signature + stamp: right side, centered items */}
+        <View style={{ marginTop: 10, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }} wrap={false}>
           {biz?.businessSeal && (
-            <Image src={biz.businessSeal} style={{ width: 64, height: 64, objectFit: 'contain', marginRight: 18 }} />
+            <Image src={biz.businessSeal} style={{ width: 55, height: 55, objectFit: 'contain', marginRight: 16 }} />
           )}
-          <View style={{ width: 150, alignItems: 'center' }}>
-            {biz?.businessSignature && (
-              <Image src={biz.businessSignature} style={{ width: 130, height: 38, objectFit: 'contain', marginBottom: 2 }} />
-            )}
-            <View style={{ width: 150, borderTopWidth: 0.5, borderTopColor: '#1a3a6b', borderTopStyle: 'solid', paddingTop: 2, alignItems: 'center' }}>
-              <SignatoryDetails biz={biz} align="center" />
-              <Text style={{ fontSize: 8, color: '#1a3a6b', textAlign: 'center' }}>Authorised Signature</Text>
-            </View>
-          </View>
+          <SignatoryDetails biz={biz} color={PRIMARY} />
         </View>
 
-        {/* Footer: 3-column layout — contact | brand | trust */}
+        {/* Footer: 3-column layout */}
         <View style={s.footerBox} fixed>
-          {/* Left — Contact */}
           <View style={s.footerLeft}>
             <Text style={s.footerContactLabel}>CONTACT</Text>
-            {biz?.phone && <Text style={[s.footerText, { fontSize: footPhoneSize }]}>{phoneTxt}</Text>}
-            {biz?.email && <Text style={[s.footerText, { fontSize: footEmailSize }]}>{emailTxt}</Text>}
+            {biz?.phone && <Text style={[s.footerText, { fontSize: footPhoneSize }]} numberOfLines={1}>{phoneTxt}</Text>}
+            {biz?.email && <Text style={[s.footerText, { fontSize: footEmailSize }]} numberOfLines={1}>{emailTxt}</Text>}
           </View>
-          {/* Center — Brand */}
           <View style={s.footerCenter}>
             <View style={s.poweredByContainer}>
               <Text style={s.poweredByLabel}>Powered By</Text>
               <Text style={s.poweredByValue}>GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text></Text>
             </View>
             <Text style={s.footerTagline}>Simple Invoicing, Billing & Quotations</Text>
-            <Text style={[s.footerTagline, { marginTop: 3 }]}>Invoice Banega, Payment Badega.</Text>
+            <Text style={[s.footerTagline, { marginTop: 2 }]}>Invoice Banega, Payment Badega.</Text>
           </View>
-          {/* Right — Trust */}
           <View style={s.footerRight}>
             <Text style={s.footerTrustLine}>Generated securely by</Text>
             <Text style={s.footerTrustLine}>GoodSynk<Text style={{ fontSize: 6, fontFamily: 'Helvetica' }}>™</Text>.</Text>
-            <Text style={[s.footerTrustLine, { marginTop: 3 }]}>
+            <Text style={[s.footerTrustLine, { marginTop: 2 }]}>
               <Link style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
             </Text>
           </View>

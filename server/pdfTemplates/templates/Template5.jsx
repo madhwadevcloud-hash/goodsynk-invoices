@@ -52,6 +52,7 @@ export default function Template5({ invoice }) {
   const FOOT_A_W = A4_WIDTH * (1.7 / 4.4) - 28;
   const footPhoneSize = fitFont(biz?.phone || '', 7.5, FOOT_A_W, 6);
   const footEmailSize = fitFont(biz?.email || '', 7.5, FOOT_A_W, 6);
+  const notesText = Array.isArray(invoice.notes) ? invoice.notes.filter(Boolean).join('\n') : invoice.notes;
 
   const s = StyleSheet.create({
     page: { paddingTop: 32, paddingBottom: footerReserve(biz, 75) + 5, paddingHorizontal: 40, fontFamily: 'Inter', color: '#000' },
@@ -64,7 +65,7 @@ export default function Template5({ invoice }) {
 
     bizInfo: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-start', marginTop: 8, minWidth: 0 },
     brandText: { width: 230, flexShrink: 1 },
-    topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
+    topLogo: { maxWidth: 180, maxHeight: 68, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizText: { fontSize: scaled.bizSubTextFontSize, color: '#444', textAlign: 'right', lineHeight: scaled.bizSubTextLineHeight },
     bizName: { fontSize: scaled.bizNameFontSize, fontFamily: B, color: '#000', marginBottom: 2, textAlign: 'right' },
 
@@ -178,13 +179,13 @@ export default function Template5({ invoice }) {
               <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center' }}>
                 {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
                 <View style={s.brandText}>
-                <Text style={s.bizName}>{bizName}</Text>
+                <Text numberOfLines={1} wrap={false} style={s.bizName}>{bizName}</Text>
                 <Text style={s.bizText}>
                   {biz?.address?.street && `${biz.address.street}\n`}
                   {biz?.address?.city && `${biz.address.city}, ${biz.address.state} ${biz.address.pincode || ''}\n`}
-                  {biz?.email && `${biz.email}\n`}
                   {biz?.phone && `${biz.phone}`}
                 </Text>
+                {biz?.email && <Text wrap={false} style={[s.bizText, { fontSize: fitFont(biz.email, scaled.bizSubTextFontSize, 230, 5) }]}>{biz.email}</Text>}
                 </View>
               </View>
             </View>
@@ -262,10 +263,10 @@ export default function Template5({ invoice }) {
           <View style={s.leftBottom}>
 
 
-            {invoice.notes && (
+            {notesText && (
               <View style={{ marginBottom: 15 }}>
                 <Text style={s.metaLabel}>Notes</Text>
-                <Text style={s.metaVal}>{invoice.notes}</Text>
+                <Text style={s.metaVal}>{notesText}</Text>
               </View>
             )}
             {invoice.termsAndConditions && (
@@ -288,19 +289,11 @@ export default function Template5({ invoice }) {
         </View>
 
         {/* Signature + stamp side by side (stays short, never strands on its own page) */}
-        <View style={{ marginTop: 16, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }} wrap={false}>
+        <View style={{ marginTop: 10, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }} wrap={false}>
           {biz?.businessSeal && (
-            <Image src={biz.businessSeal} style={{ width: 64, height: 64, objectFit: 'contain', marginRight: 18 }} />
+            <Image src={biz.businessSeal} style={{ width: 55, height: 55, objectFit: 'contain', marginRight: 16 }} />
           )}
-          <View style={{ width: 150, alignItems: 'center' }}>
-            {biz?.businessSignature && (
-              <Image src={biz.businessSignature} style={{ width: 130, height: 42, objectFit: 'contain', marginBottom: 3 }} />
-            )}
-            <View style={{ width: 150, borderTopWidth: 2, borderTopColor: '#0A66C2', borderTopStyle: 'solid', paddingTop: 4, alignItems: 'center' }}>
-              <SignatoryDetails biz={biz} align="center" />
-              <Text style={{ fontSize: 8, color: '#0A66C2', textAlign: 'center' }}>Authorised Signature</Text>
-            </View>
-          </View>
+          <SignatoryDetails biz={biz} color={'#1a3a6b'} />
         </View>
 
         {/* Footer: 3-segment edge-to-edge strip */}
@@ -309,7 +302,7 @@ export default function Template5({ invoice }) {
           <View style={s.footerSegmentA}>
             <Text style={s.footerSectionTitle}>Contact</Text>
             {biz?.phone && <Text style={[s.footerText, { fontSize: footPhoneSize }]}>{biz.phone}</Text>}
-            {biz?.email && <Text style={[s.footerText, { fontSize: footEmailSize }]}>{biz.email}</Text>}
+              {biz?.email && <Text wrap={false} style={[s.footerText, { fontSize: footEmailSize }]}>{biz.email}</Text>}
           </View>
           <View style={s.footerVRule} />
           {/* Segment B — Brand */}

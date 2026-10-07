@@ -683,6 +683,3 @@ export default function Template20({ invoice }) {
     </Document>
   );
 }
-
-
-/*Corporate Matrix*/

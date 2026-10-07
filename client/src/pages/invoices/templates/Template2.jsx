@@ -61,28 +61,28 @@ export default function Template2({ invoice }) {
     topHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
     bizBox: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0 },
     brandText: { maxWidth: 250, flexShrink: 1 },
-    topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
+    topLogo: { maxWidth: 140, maxHeight: 52, objectFit: 'contain', marginRight: 10, flexShrink: 0 },
     bizName: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
     bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight },
     titleBox: { alignItems: 'flex-end', flexShrink: 0, marginLeft: 16 },
     headerText: { fontFamily: M, fontSize: 26, letterSpacing: 4, textTransform: 'uppercase', color: '#000' },
 
-    headerLine: { width: '100%', height: 1, backgroundColor: PRIMARY, marginVertical: 10 },
+    headerLine: { width: '100%', height: 1, backgroundColor: PRIMARY, marginVertical: 8 },
 
-    detailsRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, marginBottom: 25 },
+    detailsRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, marginBottom: 16 },
     detailsItem: { flex: 1 },
     detailsLabel: { fontSize: 7.5, fontFamily: B, textTransform: 'uppercase', color: '#666', marginBottom: 2 },
     detailsValue: { fontSize: 9.5, color: '#000' },
 
-    metaGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
+    metaGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
     metaColumn: { width: '31%', minWidth: 0 },
-    metaTitle: { fontFamily: B, fontSize: 8.5, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6, color: '#333' },
-    metaText: { fontSize: 8.5, color: '#444', marginBottom: 3, lineHeight: 1.4 },
+    metaTitle: { fontFamily: B, fontSize: 8.5, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4, color: '#333' },
+    metaText: { fontSize: 8.5, color: '#444', marginBottom: 2, lineHeight: 1.3 },
     clientName: { fontSize: 11, fontFamily: B, color: '#000', marginBottom: 2 },
 
-    table: { width: '100%', marginBottom: 10 },
-    tHeadRow: { flexDirection: 'row', borderBottom: `1pt solid ${PRIMARY}`, paddingBottom: 8, marginBottom: 12 },
-    tRow: { flexDirection: 'row', marginBottom: 10 },
+    table: { width: '100%', marginBottom: 8 },
+    tHeadRow: { flexDirection: 'row', borderBottom: `1pt solid ${PRIMARY}`, paddingBottom: 6, marginBottom: 8 },
+    tRow: { flexDirection: 'row', marginBottom: 6 },
     th: { fontSize: Math.min(9, cellSize), fontFamily: B, letterSpacing: 0.6, textTransform: 'uppercase' },
     td: { fontSize: cellSize, color: '#000' },
 
@@ -95,16 +95,15 @@ export default function Template2({ invoice }) {
     colTax: { flexShrink: 0, textAlign: 'center' },
     colTotal: { width: cw.total, flexShrink: 0, textAlign: 'right' },
 
-    totalsArea: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 5, borderTop: `1pt solid ${PRIMARY}`, paddingTop: 8 },
+    totalsArea: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, borderTop: `1pt solid ${PRIMARY}`, paddingTop: 6 },
     notesArea: { flex: 1, minWidth: 0, paddingRight: 16 },
     calcArea: { width: tw.lab + tw.val + 8, flexShrink: 0 },
 
-    calcRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 6 },
+    calcRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 4 },
     calcLabel: { fontFamily: B, fontSize: 9, textTransform: 'uppercase', width: tw.lab, textAlign: 'right', paddingRight: 8 },
     calcVal: { fontSize: 9.5, fontFamily: B, width: tw.val, textAlign: 'right' },
 
-    signatureArea: { marginTop: 14, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' },
-    signatureLine: { width: 150, borderTopWidth: 0.5, borderTopColor: '#000', borderTopStyle: 'solid', paddingTop: 6, alignItems: 'center' },
+    signatureArea: { marginTop: 10, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' },
     footerBox: { position: 'absolute', bottom: 15, left: 40, right: 40, borderTopWidth: 1, borderTopColor: '#E0E0E0', borderTopStyle: 'solid', flexDirection: 'row', paddingTop: 8, alignItems: 'stretch' },
     footerAccent: { width: 3, backgroundColor: PRIMARY, marginRight: 8 },
     footerLeft: { width: '45%', justifyContent: 'center', paddingRight: 6 },
@@ -112,11 +111,11 @@ export default function Template2({ invoice }) {
     footerText: { fontSize: 7.5, color: '#444', marginBottom: 2 },
     footerContactLabel: { fontSize: 6.5, fontFamily: B, color: PRIMARY, letterSpacing: 0.5, marginBottom: 2, textTransform: 'uppercase' },
     footerBrandName: { fontSize: 9.5, fontFamily: B, color: PRIMARY, letterSpacing: 0.3 },
-    footerBrandLine: { fontSize: 7, color: '#444', marginTop: 2 },
+    footerBrandLine: { fontSize: 7, color: '#444', marginTop: 1 },
     footerLink: { fontSize: 7, fontFamily: B, color: PRIMARY, textDecoration: 'underline' },
-    footerTagline: { fontSize: 6.5, color: '#666', marginTop: 2 },
-    footerTrustLine: { fontSize: 5.5, color: '#888', marginTop: 2, textAlign: 'left' },
-    poweredByContainer: { alignItems: 'flex-end', marginTop: 4 },
+    footerTagline: { fontSize: 6.5, color: '#666', marginTop: 1 },
+    footerTrustLine: { fontSize: 5.5, color: '#888', marginTop: 1, textAlign: 'left' },
+    poweredByContainer: { alignItems: 'flex-end', marginTop: 2 },
     poweredByLabel: { fontSize: 5.5, color: '#888', letterSpacing: 0.5 },
     poweredByValue: { fontSize: 8.5, fontFamily: B, color: '#000', letterSpacing: 0.5, marginTop: 1 },
     watermarkContainer: {
@@ -130,7 +129,7 @@ export default function Template2({ invoice }) {
       justifyContent: 'center',
       zIndex: -100,
     },
-        watermarkImg: { width: 250, height: 250, objectFit: 'contain', opacity: 0.12 },
+    watermarkImg: { width: 250, height: 250, objectFit: 'contain', opacity: 0.12 },
     watermarkText: {
       fontSize: 60,
       fontFamily: B,
@@ -138,15 +137,11 @@ export default function Template2({ invoice }) {
       transform: 'rotate(-45deg)',
       letterSpacing: 5,
     },
-    poweredByContainer: { alignItems: 'center', marginTop: 6 },
-    poweredByLabel: { fontSize: 6, color: hexToRgba('#FFF', 0.65), letterSpacing: 0.5 },
-    poweredByValue: { fontSize: 9.5, fontFamily: B, color: '#FFF', letterSpacing: 0.5, marginTop: 1 },
   });
 
   const bizName = biz?.businessName || biz?.name || '';
   const isQuotation = invoice.invoiceType === 'quotation';
   const docTitle = isQuotation ? 'QUOTATION' : 'INVOICE';
-
 
   return (
     <Document>
@@ -167,15 +162,14 @@ export default function Template2({ invoice }) {
           <View style={s.bizBox}>
             {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
             <View style={s.brandText}>
-            <Text style={s.bizName}>{bizName}</Text>
-            {biz?.address?.street && <Text style={s.bizSubText}>{String(biz.address.street).replace(/\s+,/g, ',').replace(/,(?=\S)/g, ', ').trim()}</Text>}
-            {biz?.address?.city && (
-              <Text style={s.bizSubText}>
-                {[[biz?.address?.city, biz?.address?.state].map((v) => String(v || '').trim().replace(/[-,\s]+$/, '')).filter(Boolean).join(', '), String(biz?.address?.pincode || '').trim()].filter(Boolean).join(' ')}
-              </Text>
-            )}
-            {biz?.gstin && <Text style={[s.bizSubText, { fontFamily: B }]}>GSTIN: {biz.gstin}</Text>}
-          
+              <Text style={s.bizName} numberOfLines={1}>{bizName}</Text>
+              {biz?.address?.street && <Text style={s.bizSubText}>{String(biz.address.street).replace(/\s+,/g, ',').replace(/,(?=\S)/g, ', ').trim()}</Text>}
+              {biz?.address?.city && (
+                <Text style={s.bizSubText}>
+                  {[[biz?.address?.city, biz?.address?.state].map((v) => String(v || '').trim().replace(/[-,\s]+$/, '')).filter(Boolean).join(', '), String(biz?.address?.pincode || '').trim()].filter(Boolean).join(' ')}
+                </Text>
+              )}
+              {biz?.gstin && <Text style={[s.bizSubText, { fontFamily: B }]}>GSTIN: {biz.gstin}</Text>}
             </View>
           </View>
           <View style={s.titleBox}>
@@ -189,8 +183,8 @@ export default function Template2({ invoice }) {
         {/* Meta Grid: Client & Payment */}
         <View style={s.metaGrid}>
           <View style={s.metaColumn}>
-            <Text style={s.metaTitle}>{isQuotation ? 'Prepared For:' : 'Bill To:'}</Text>
-            <Text style={s.clientName}>{client?.name}</Text>
+            <Text style={s.metaTitle}>Bill To:</Text>
+            <Text style={s.clientName} numberOfLines={1}>{client?.name}</Text>
             {client?.address?.street && <Text style={s.metaText}>{client.address.street}</Text>}
             {client?.address?.city && (
               <Text style={s.metaText}>
@@ -207,22 +201,20 @@ export default function Template2({ invoice }) {
             <Text style={s.metaText}>{isQuotation ? 'Valid Until' : 'Due Date'}: <Text style={{ fontFamily: B }}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-GB') : (isQuotation ? '-' : 'Upon Receipt')}</Text></Text>
           </View>
 
-          {(
-            <View style={s.metaColumn}>
-              <Text style={s.metaTitle}>Payment Details:</Text>
-              {biz?.bankDetails?.accountNumber ? (
-                <>
-                  {biz.bankDetails.bankName && <Text style={s.metaText}>Bank: {biz.bankDetails.bankName}</Text>}
-                  <Text style={s.metaText}>A/C Name: {biz.bankDetails.accountName}</Text>
-                  <Text style={s.metaText}>A/C No: {biz.bankDetails.accountNumber}</Text>
-                  {biz.bankDetails.ifscCode && <Text style={s.metaText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
-                    {biz.bankDetails.branch && <Text style={s.metaText}>Branch: {biz.bankDetails.branch}</Text>}
-                </>
-              ) : (
-                <Text style={s.metaText}>{invoice.paymentInfo || '—'}</Text>
-              )}
-            </View>
-          )}
+          <View style={s.metaColumn}>
+            <Text style={s.metaTitle}>Payment Details:</Text>
+            {biz?.bankDetails?.accountNumber ? (
+              <>
+                {biz.bankDetails.bankName && <Text style={s.metaText}>Bank: {biz.bankDetails.bankName}</Text>}
+                <Text style={s.metaText}>A/C Name: {biz.bankDetails.accountName}</Text>
+                <Text style={s.metaText}>A/C No: {biz.bankDetails.accountNumber}</Text>
+                {biz.bankDetails.ifscCode && <Text style={s.metaText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
+                {biz.bankDetails.branch && <Text style={s.metaText}>Branch: {biz.bankDetails.branch}</Text>}
+              </>
+            ) : (
+              <Text style={s.metaText}>{invoice.paymentInfo || '—'}</Text>
+            )}
+          </View>
         </View>
 
         {/* Table */}
@@ -272,7 +264,7 @@ export default function Template2({ invoice }) {
             )}
             {invoice.termsAndConditions && (
               <>
-                <Text style={[s.metaTitle, { marginTop: 10, marginBottom: 4 }]}>Terms</Text>
+                <Text style={[s.metaTitle, { marginTop: 8, marginBottom: 4 }]}>Terms</Text>
                 <Text style={[s.metaText, { fontSize: 8 }]}>{invoice.termsAndConditions}</Text>
               </>
             )}
@@ -285,37 +277,27 @@ export default function Template2({ invoice }) {
           </View>
         </View>
 
-        {/* Signature + stamp side by side (stays short, never strands on its own page) */}
+        {/* Signature + stamp: right side */}
         <View style={s.signatureArea} wrap={false}>
           {biz?.businessSeal && (
-            <Image src={biz.businessSeal} style={{ width: 64, height: 64, objectFit: 'contain', marginRight: 18 }} />
+            <Image src={biz.businessSeal} style={{ width: 55, height: 55, objectFit: 'contain', marginRight: 16 }} />
           )}
-          <View style={{ width: 150, alignItems: 'center' }}>
-            {biz?.businessSignature && (
-              <Image src={biz.businessSignature} style={{ width: 130, height: 42, objectFit: 'contain', marginBottom: 3 }} />
-            )}
-            <View style={s.signatureLine}>
-              <SignatoryDetails biz={biz} align="center" />
-              <Text style={{ fontSize: 9, fontFamily: M }}>Authorised Signature</Text>
-            </View>
-          </View>
+          <SignatoryDetails biz={biz} color={PRIMARY} />
         </View>
 
-        {/* Footer: split two-panel — brand left | contact right */}
+        {/* Footer */}
         <View style={s.footerBox} fixed>
           <View style={s.footerAccent} />
-          {/* Left panel — Brand */}
           <View style={s.footerLeft}>
             <Text style={s.footerBrandName}>GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text></Text>
-            <Text style={s.footerBrandLine}>Goodsynk Invoice  •  Simple Invoicing & Quotations</Text>
+            <Text style={s.footerBrandLine}>Goodsynk Invoice • Simple Invoicing & Quotations</Text>
             <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
             <Text style={s.footerTrustLine}>Generated securely • Digitally signed document</Text>
           </View>
-          {/* Right panel — Contact & Powered By */}
           <View style={s.footerRight}>
             <Text style={s.footerContactLabel}>Contact Us</Text>
-            {biz?.phone && <Text style={[s.footerText, { fontSize: footPhoneSize, textAlign: 'right' }]}>{footPhone}</Text>}
-            {biz?.email && <Text style={[s.footerText, { fontSize: footEmailSize, textAlign: 'right' }]}>{footEmail}</Text>}
+            {biz?.phone && <Text style={[s.footerText, { fontSize: footPhoneSize, textAlign: 'right' }]} numberOfLines={1}>{footPhone}</Text>}
+            {biz?.email && <Text style={[s.footerText, { fontSize: footEmailSize, textAlign: 'right' }]} numberOfLines={1}>{footEmail}</Text>}
             <View style={s.poweredByContainer}>
               <Text style={s.poweredByLabel}>Powered By</Text>
               <Text style={s.poweredByValue}>GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text></Text>

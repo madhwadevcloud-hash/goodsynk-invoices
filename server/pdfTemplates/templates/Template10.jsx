@@ -127,7 +127,7 @@ export default function Template10({ invoice }) {
     // Top Bar (No background block)
     topFlex: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
     bizBox: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0, paddingRight: 20 },
-    topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 10, flexShrink: 0 },
+    topLogo: { maxWidth: 140, maxHeight: 52, objectFit: 'contain', marginRight: 10, flexShrink: 0 },
     bizInfoCol: { flexDirection: 'column', flex: 1, minWidth: 0 },
     bizName: { fontFamily: B, fontSize: 18, color: PRIMARY, textTransform: 'uppercase', letterSpacing: 1 },
     bizAddress: { color: '#4B5563', marginTop: 4, lineHeight: 1.35 },
@@ -245,7 +245,7 @@ export default function Template10({ invoice }) {
           <View style={s.bizBox}>
             {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
             <View style={s.bizInfoCol}>
-              <Text style={s.bizName}>{bizName}</Text>
+              <Text numberOfLines={1} wrap={false} style={s.bizName}>{bizName}</Text>
               {addrLines.length > 0 && (
                 <Text style={[s.bizAddress, { fontSize: addrFontSize }]}>
                   {addrLines.join('\n')}
@@ -262,14 +262,14 @@ export default function Template10({ invoice }) {
         {/* Business contact row */}
         <View style={s.bizDetailsRow}>
           {biz?.phone && <Text style={s.bizText}>P: {biz.phone}</Text>}
-          {biz?.email && <Text style={s.bizText}>E: {biz.email}</Text>}
+          {biz?.email && <Text wrap={false} style={s.bizText}>E: {biz.email}</Text>}
           {biz?.gstin && <Text style={[s.bizText, { fontFamily: B, color: PRIMARY }]}>GSTIN: {biz.gstin}</Text>}
         </View>
 
         <View style={s.cardsRow}>
           <View style={s.card}>
-            <Text style={s.cardHeader}>{isQuotation ? 'Prepared For' : 'Billed To'}</Text>
-            <Text style={s.clientName}>{client?.name}</Text>
+            <Text style={s.cardHeader}>Billed To</Text>
+            <Text numberOfLines={1} style={s.clientName}>{client?.name}</Text>
             {client?.address?.street && <Text style={s.clientText}>{client.address.street}</Text>}
             {client?.address?.city && <Text style={s.clientText}>{client.address.city}, {client.address.state} {client.address.pincode}</Text>}
             {client?.phone && <Text style={s.clientText}>P: {client.phone}</Text>}
@@ -442,5 +442,3 @@ export default function Template10({ invoice }) {
     </Document>
   );
 }
-
-/*Soft Corporate Cards*/

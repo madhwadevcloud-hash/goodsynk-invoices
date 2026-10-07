@@ -95,11 +95,20 @@ app.use((err, _req, res, _next) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(
     'Server running in ' +
       (process.env.NODE_ENV || 'production') +
       ' mode on port ' +
       PORT
   );
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is already in use. Kill the process and restart.`.red.bold);
+    process.exit(1);
+  } else {
+    throw err;
+  }
 });

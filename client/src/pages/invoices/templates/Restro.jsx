@@ -357,7 +357,7 @@ export default function Template1({ invoice }) {
         ) : null}
 
         {/* Company Name */}
-        <Text style={s.companyName}>{bizName || 'HOTEL'}</Text>
+        <Text numberOfLines={1} style={s.companyName}>{bizName || 'HOTEL'}</Text>
 
         {/* Address */}
         {(biz?.address?.street || biz?.address?.city) && (
@@ -476,10 +476,7 @@ export default function Template1({ invoice }) {
         <View style={s.solidDivider} />
 
         {/* Signature */}
-        {biz?.businessSignature && (
-          <Image src={biz.businessSignature} style={s.signatureImg} />
-        )}
-        <SignatoryDetails biz={biz} />
+        <SignatoryDetails biz={biz} color="#000" />
 
         {/* Footer lines */}
         {biz?.fssai && <Text style={s.footerLine}>FSSAI Lic No. {biz.fssai}</Text>}

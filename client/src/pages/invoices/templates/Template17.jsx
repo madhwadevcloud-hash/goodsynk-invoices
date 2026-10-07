@@ -172,7 +172,7 @@ export default function Template17({ invoice }) {
           <View style={s.brandRow}>
             {biz?.businessLogo && <Image src={biz.businessLogo} style={s.logo} />}
             <View style={s.brandTextContainer}>
-              <Text style={s.bizName}>{bizName}</Text>
+              <Text numberOfLines={1} style={s.bizName}>{bizName}</Text>
               {biz?.address?.street && <Text style={s.bizText}>{biz.address.street}</Text>}
               {biz?.address?.city && <Text style={s.bizText}>{biz.address.city}, {biz.address.state} {biz.address.pincode}</Text>}
               {(biz?.phone || biz?.email) && <Text style={s.bizText}>{biz?.phone}{biz?.phone && biz?.email ? '  •  ' : ''}{biz?.email}</Text>}
@@ -335,6 +335,3 @@ export default function Template17({ invoice }) {
     </Document>
   );
 }
-
-
-/*Modern Retail*/
