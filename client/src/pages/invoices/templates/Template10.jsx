@@ -3,6 +3,7 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image, Link } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
 import { isRasterImage } from './watermarkUtils';
+import { safeHyphenation } from './layoutUtils';
 
 const B = 'Inter-Bold';
 const M = 'Inter-SemiBold';
@@ -65,6 +66,8 @@ const amountInWords = (amount, currency) => {
 
 export default function Template10({ invoice }) {
   const { client, user: biz } = invoice;
+  // Break very long unbroken tokens (bank names, branch text, e-mails) inside their box.
+  Font.registerHyphenationCallback(safeHyphenation);
   const colors = invoice.templateColors || { primary: '#10B981' };
   const PRIMARY = colors.primary;
   const LIGHT_CARD = '#F3F4F6';
@@ -129,9 +132,9 @@ export default function Template10({ invoice }) {
     bizName: { fontFamily: B, fontSize: 18, color: PRIMARY, textTransform: 'uppercase', letterSpacing: 1 },
     bizAddress: { color: '#4B5563', marginTop: 4, lineHeight: 1.35 },
 
-    docTitleBox: { alignItems: 'flex-end', flexShrink: 0 },
+    docTitleBox: { alignItems: 'flex-end', flexShrink: 0, maxWidth: '40%' },
     docTitle: { fontFamily: B, fontSize: 24, color: '#111', textTransform: 'uppercase', letterSpacing: 2 },
-    docNo: { fontSize: 10, color: '#6B7280', marginTop: 4 },
+    docNo: { fontSize: 10, color: '#6B7280', marginTop: 4, textAlign: 'right' },
     docNoBold: { fontFamily: B, color: PRIMARY },
 
     // Business details row (phone / email / GSTIN)
@@ -140,19 +143,19 @@ export default function Template10({ invoice }) {
 
     // Card Layout for Info
     cardsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 30, alignItems: 'stretch' },
-    card: { backgroundColor: LIGHT_CARD, borderRadius: 8, padding: 15, width: '48%' },
+    card: { backgroundColor: LIGHT_CARD, borderRadius: 8, padding: 15, width: '48%', minWidth: 0 },
     cardHeader: { fontSize: 8, fontFamily: B, color: PRIMARY, textTransform: 'uppercase', marginBottom: 8, letterSpacing: 1 },
     clientName: { fontFamily: B, fontSize: 12, color: '#111', marginBottom: 4 },
     clientText: { fontSize: 8.5, color: '#4B5563', lineHeight: 1.5 },
     metaRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
-    metaLabel: { fontSize: 8.5, color: '#6B7280' },
-    metaVal: { fontSize: 8.5, fontFamily: B, color: '#111' },
+    metaLabel: { fontSize: 8.5, color: '#6B7280', flexShrink: 0, paddingRight: 6 },
+    metaVal: { fontSize: 8.5, fontFamily: B, color: '#111', flexShrink: 1, textAlign: 'right' },
 
     // Payment info styles
     paymentSection: { marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#D1D5DB' },
-    paymentRow: { flexDirection: 'row', marginBottom: 3 },
-    paymentLabel: { fontSize: 8.5, color: '#6B7280', width: 70 },
-    paymentValue: { fontSize: 8.5, color: '#111', fontFamily: M, flex: 1 },
+    paymentRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 3 },
+    paymentLabel: { fontSize: 8.5, color: '#6B7280', width: 70, flexShrink: 0 },
+    paymentValue: { fontSize: 8.5, color: '#111', fontFamily: M, flex: 1, minWidth: 0 },
 
     // Clean Table
     table: { width: '100%', marginBottom: 14 },

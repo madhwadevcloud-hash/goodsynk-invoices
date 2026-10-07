@@ -527,10 +527,11 @@ const createInvoice = async (req, res) => {
           invoiceType,
           isInterstate,
           user: req.user._id,
-          template:
+          template: String(
             req.body.template ||
             req.user.invoiceTemplate ||
-            'template1',
+            'template1'
+          ).toLowerCase(),
         });
 
         break;
@@ -584,7 +585,10 @@ const updateInvoice = async (req, res) => {
     const interstate = isInterstate !== undefined ? isInterstate : existing.isInterstate;
     const totals = calcTotals(updatedItems, interstate);
     // Preserve the stored template unless the user explicitly chose a new one or cleared it
-    const resolvedTemplate = (template !== undefined) ? template.toLowerCase() : existing.template;
+    // An empty value means "Account Default" – resolve it to the account's real default template.
+    const resolvedTemplate = (template !== undefined)
+      ? (String(template || '').toLowerCase() || String(req.user.invoiceTemplate || 'template1').toLowerCase())
+      : existing.template;
 
     const invoice = await Invoice.findOneAndUpdate(
       { _id: req.params.id, user: req.user._id, isDeleted: { $ne: true } },

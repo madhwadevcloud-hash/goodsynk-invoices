@@ -2,10 +2,11 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
 import { getAddressStreet, getAddressCityLine, getFullAddress } from './addressUtils';
+import { safeHyphenation } from './layoutUtils';
 
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-Bold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYMZhrib2Bg-4.ttf' });
-Font.registerHyphenationCallback(word => [word]);
+Font.registerHyphenationCallback(safeHyphenation);
 
 const B = 'Inter-Bold';
 
@@ -59,6 +60,8 @@ function numberToWords(num) {
 }
 
 export default function Template18({ invoice }) {
+  // Re-assert at render time: the callback is global and other templates register their own.
+  Font.registerHyphenationCallback(safeHyphenation);
   const inv = invoice || {};
   const client = inv.client || {};
   const biz = inv.user || inv.biz || {};
@@ -87,17 +90,18 @@ export default function Template18({ invoice }) {
     watermarkImg: { width: 250, height: 250, objectFit: 'contain', opacity: 0.12 },
 
     topHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
-    brandBlock: { flexDirection: 'row', alignItems: 'center' },
-    logoImg: { width: 44, height: 44, objectFit: 'contain', marginRight: 10 },
+    // flex:1 + minWidth:0 lets a long business name wrap inside its own column instead of running under the title
+    brandBlock: { flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0, paddingRight: 14 },
+    logoImg: { width: 44, height: 44, objectFit: 'contain', marginRight: 10, flexShrink: 0 },
     bizTitle: { fontFamily: B, fontSize: scaled.bizNameFontSize || 14, color: '#111827' },
     bizSub: { fontSize: 7, color: '#4B5563', lineHeight: 1.3 },
 
-    docMetaBlock: { alignItems: 'flex-end' },
+    docMetaBlock: { alignItems: 'flex-end', flexShrink: 0, maxWidth: '38%' },
     docTypeTitle: { fontFamily: B, fontSize: 13, color: '#111827', textTransform: 'uppercase' },
     docCopyTag: { fontSize: 6.5, fontFamily: B, color: '#4B5563', marginBottom: 4 },
-    metaRow: { flexDirection: 'row', marginTop: 1 },
-    metaKey: { fontSize: 7, color: '#4B5563', marginRight: 4 },
-    metaVal: { fontSize: 7, fontFamily: B, color: '#111827' },
+    metaRow: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 1, maxWidth: '100%' },
+    metaKey: { fontSize: 7, color: '#4B5563', marginRight: 4, flexShrink: 0 },
+    metaVal: { fontSize: 7, fontFamily: B, color: '#111827', flexShrink: 1, textAlign: 'right' },
 
     addressGrid: { marginTop: 8, marginBottom: 10 },
     addressRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
@@ -128,9 +132,9 @@ export default function Template18({ invoice }) {
     summaryGrid: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
     bankCol: { width: '38%' },
     bankTitle: { fontSize: 7.5, fontFamily: B, color: '#111827', marginBottom: 4 },
-    bankRow: { flexDirection: 'row', marginBottom: 1.5 },
-    bankKey: { fontSize: 7, color: '#4B5563', width: 55 },
-    bankVal: { fontSize: 7, fontFamily: B, color: '#111827' },
+    bankRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 1.5 },
+    bankKey: { fontSize: 7, color: '#4B5563', width: 55, flexShrink: 0 },
+    bankVal: { fontSize: 7, fontFamily: B, color: '#111827', flex: 1, minWidth: 0 },
 
     qrCol: { width: '22%', alignItems: 'center' },
     qrTitle: { fontSize: 7, fontFamily: B, color: '#111827', marginBottom: 3 },
@@ -185,7 +189,7 @@ export default function Template18({ invoice }) {
             {isRasterImage(biz?.businessLogo) ? (
               <Image src={biz.businessLogo} style={s.logoImg} />
             ) : null}
-            <View>
+            <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={s.bizTitle}>{bizName}</Text>
               {biz?.gstin ? <Text style={s.bizSub}>GSTIN: {biz.gstin}</Text> : null}
               {biz?.phone ? <Text style={s.bizSub}>Mobile: {biz.phone}</Text> : null}
@@ -352,3 +356,5 @@ export default function Template18({ invoice }) {
     </Document>
   );
 }
+
+/*E-Commerce Tax Invoice*/

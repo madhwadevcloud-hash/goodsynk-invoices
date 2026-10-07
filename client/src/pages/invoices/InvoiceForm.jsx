@@ -383,6 +383,9 @@ export default function InvoiceForm() {
     items: [],
   });
 
+  // Becomes true once the user explicitly picks a template on this form, so the
+  // account-default sync effects below never overwrite that choice.
+  const templateTouchedRef = useRef(false);
   const draftKeyRef = useRef(DRAFT_KEY);
   const draftClientQueryKeyRef = useRef(DRAFT_CLIENT_QUERY_KEY);
   const draftDiscountKeyRef = useRef(DRAFT_DISCOUNT_KEY);
@@ -436,11 +439,13 @@ export default function InvoiceForm() {
         (isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) ||
         'template1'
       ).toLowerCase();
-      restoredForm.template = defaultTemplate;
-      restoredForm.templateColors = resolveTemplateColors(
-        defaultTemplate,
-        isQuotation ? currentUser?.quotationTemplateColors : currentUser?.invoiceTemplateColors
-      );
+      if (!(templateTouchedRef.current && restoredForm.template)) {
+        restoredForm.template = defaultTemplate;
+        restoredForm.templateColors = resolveTemplateColors(
+          defaultTemplate,
+          isQuotation ? currentUser?.quotationTemplateColors : currentUser?.invoiceTemplateColors
+        );
+      }
 
       setForm(restoredForm);
       setClientQuery(localStorage.getItem(DRAFT_CLIENT_QUERY_KEY) || '');
@@ -683,9 +688,14 @@ export default function InvoiceForm() {
           'template1'
         ).toLowerCase();
 
+        // Keep the user's explicit template choice; otherwise the account-level
+        // template is the default for every new document.
+        if (templateTouchedRef.current && f.template) {
+          return { ...f, currency: f.currency || currentUser.currency || 'INR' };
+        }
+
         return {
           ...f,
-          // The account-level template is the default for every new document.
           template: resolvedTemplate,
           templateColors: resolveTemplateColors(
             resolvedTemplate,
@@ -2544,7 +2554,7 @@ export default function InvoiceForm() {
                   // when the form has no explicit template value.
                   const isSelected = t.id
                     ? selectedKey === t.id.toLowerCase()
-                    : !form.template;
+                    : selectedKey === defaultKey;
                   const isFreePlan = !currentUser?.plan || String(currentUser.plan).toLowerCase() === 'free';
                   const isLocked = Boolean(t.id) && !FREE_TEMPLATES.includes(t.id) && isFreePlan;
 
@@ -2780,7 +2790,14 @@ export default function InvoiceForm() {
                         navigate('/upgrade');
                         return;
                       }
-                      const selectedTemplateKey = (previewTemplate.id || 'template1').toLowerCase();
+                      // "Account Default" has an empty id – resolve it to the
+                      // account's actual default template (not template1).
+                      const accountDefaultKey = (
+                        (isQuotation ? currentUser?.quotationTemplate : currentUser?.invoiceTemplate) ||
+                        'template1'
+                      ).toLowerCase();
+                      const selectedTemplateKey = (previewTemplate.id || accountDefaultKey).toLowerCase();
+                      templateTouchedRef.current = true;
                       setField('template', selectedTemplateKey);
                       setField(
                         'templateColors',

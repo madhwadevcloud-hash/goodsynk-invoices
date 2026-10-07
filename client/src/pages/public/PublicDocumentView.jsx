@@ -449,10 +449,10 @@ export default function PublicDocumentView() {
                             <div style={S.heroGrid} />
 
                             <div className="pdv-hero-content" style={S.heroContent}>
-                                <div style={S.heroAvatar}>
+                                <div style={doc.businessLogo ? { ...S.heroAvatar, ...S.heroAvatarLogo } : S.heroAvatar}>
                                     {doc.businessLogo
                                         ? <img src={doc.businessLogo} alt={doc.businessName}
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            style={S.heroLogoImg} />
                                         : <span style={S.heroAvatarText}>{initials}</span>}
                                 </div>
                                 <div style={{ flex: 1, minWidth: 0, width: '100%' }}>
@@ -834,7 +834,7 @@ const S = {
         boxShadow: '0 10px 26px -6px rgba(99,102,241,0.35), 0 2px 6px -1px rgba(15,23,42,0.08), inset 0 0 0 1px rgba(226,232,240,0.9)',
         overflow: 'hidden', flexShrink: 0,
     },
-    brandLogoImg: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' },
+    brandLogoImg: { width: '100%', height: '100%', objectFit: 'contain', display: 'block', padding: 3, boxSizing: 'border-box' },
     brandTitle: { fontSize: 14.5, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.05 },
     brandTag: { fontSize: 9, fontWeight: 800, color: '#6366f1', letterSpacing: '0.18em', marginTop: 3 },
     topRight: { display: 'flex', alignItems: 'center', gap: 8 },
@@ -915,6 +915,10 @@ const S = {
         overflow: 'hidden', flexShrink: 0,
         boxShadow: '0 12px 32px -8px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.5)',
     },
+    // Company logo: show the WHOLE logo (no cropping/zoom). The box grows
+    // horizontally for wide logos and the image is letterboxed with padding.
+    heroAvatarLogo: { width: 'auto', minWidth: 58, maxWidth: 150, padding: 6, boxSizing: 'border-box' },
+    heroLogoImg: { display: 'block', height: '100%', width: 'auto', maxWidth: '100%', objectFit: 'contain' },
     heroAvatarText: { fontSize: 20, fontWeight: 800, color: '#1e1b4b', letterSpacing: '-0.03em' },
     heroFrom: {
         display: 'inline-flex', alignItems: 'center', gap: 5,

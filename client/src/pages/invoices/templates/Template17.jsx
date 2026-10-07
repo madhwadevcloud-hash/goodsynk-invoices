@@ -3,11 +3,12 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
 import { isRasterImage } from './watermarkUtils';
+import { safeHyphenation } from './layoutUtils';
 
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-SemiBold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-Bold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYMZhrib2Bg-4.ttf' });
-Font.registerHyphenationCallback(word => [word]);
+Font.registerHyphenationCallback(safeHyphenation);
 
 const B = 'Inter-Bold';
 const M = 'Inter-SemiBold';
@@ -55,6 +56,9 @@ function numberToWords(num) {
 
 export default function Template17({ invoice }) {
   const { client, user: biz } = invoice;
+  // Break long unbroken tokens (invoice numbers, e-mails, bank text) inside their box; re-asserted
+  // at render time because the callback is global and other templates register their own.
+  Font.registerHyphenationCallback(safeHyphenation);
   const colors = invoice.templateColors || { primary: '#111820' };
   const PRIMARY = colors.primary;
   const scaled = buildScaledStyles(biz);
@@ -69,19 +73,19 @@ export default function Template17({ invoice }) {
     topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
     brandRow: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, paddingRight: 15 },
     logo: { width: 40, height: 40, objectFit: 'contain', marginRight: 10, marginTop: 2 },
-    brandTextContainer: { flex: 1, flexDirection: 'column', alignItems: 'flex-start' },
+    brandTextContainer: { flex: 1, minWidth: 0, flexDirection: 'column', alignItems: 'flex-start' },
     bizName: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
     bizText: { fontSize: scaled.bizSubTextFontSize, color: '#666', lineHeight: scaled.bizSubTextLineHeight, marginTop: 0, textAlign: 'left' },
     
-    titleBlock: { alignItems: 'flex-end', width: '35%' },
+    titleBlock: { alignItems: 'flex-end', width: '35%', flexShrink: 0 },
     docTag: { fontSize: 7, fontFamily: B, color: PRIMARY, letterSpacing: 2, marginBottom: 3 },
     docTitle: { fontFamily: B, fontSize: 22, color: '#000' },
-    docNumber: { fontSize: 8.5, color: '#555', marginTop: 4 },
+    docNumber: { fontSize: 8.5, color: '#555', marginTop: 4, textAlign: 'right' },
 
     divider: { height: 2, backgroundColor: PRIMARY, marginTop: 16, marginBottom: 16 },
 
     metaGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 18 },
-    metaCol: { width: '31%' },
+    metaCol: { width: '31%', minWidth: 0 },
     metaLabel: { fontSize: 6.8, fontFamily: B, color: '#8A8F98', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 4 },
     metaName: { fontSize: 9, fontFamily: B, color: '#000', marginBottom: 2 },
     metaText: { fontSize: 7.8, color: '#333', lineHeight: 1.45, marginBottom: 1 },
@@ -126,7 +130,7 @@ export default function Template17({ invoice }) {
     bankContainer: { marginTop: 6, flexDirection: 'column' },
     bankRow: { flexDirection: 'row', marginBottom: 3 },
     bankLabel: { fontSize: 7.4, color: '#555', width: 75 },
-    bankValue: { fontSize: 7.4, fontFamily: M, color: '#000', flex: 1 },
+    bankValue: { fontSize: 7.4, fontFamily: M, color: '#000', flex: 1, minWidth: 0 },
 
     sigCol: { width: '30%', alignItems: 'flex-end' },
     sigLabel: { fontSize: 7.5, color: '#555', marginBottom: 22 },

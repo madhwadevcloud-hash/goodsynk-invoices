@@ -3,6 +3,7 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image, Link } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
 import { isRasterImage } from './watermarkUtils';
+import { safeHyphenation } from './layoutUtils';
 
 // Register fonts
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
@@ -77,6 +78,9 @@ function numberToWords(num) {
 
 export default function Template7({ invoice }) {
   const { client, user: biz } = invoice;
+  // Break long unbroken tokens (invoice numbers, e-mails, bank text) inside their box; re-asserted
+  // at render time because the callback is global and other templates register their own.
+  Font.registerHyphenationCallback(safeHyphenation);
   const colors = invoice.templateColors || { primary: '#B565D8' };
   const PRIMARY = colors.primary;
 
@@ -85,7 +89,6 @@ export default function Template7({ invoice }) {
   // or push the block tall enough to crowd the sections below it.
   const headerScale = buildScaledStyles(biz);
   const bizInfoWidth = headerScale.bizInfoMaxWidth;
-  const bizLogoWidth = `${100 - parseFloat(bizInfoWidth)}%`;
 
   const s = StyleSheet.create({
     watermarkContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: -100 },
@@ -96,17 +99,19 @@ export default function Template7({ invoice }) {
 
     // Header
     topSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 40, marginBottom: 0 },
-    docTitle: { fontFamily: B, fontSize: 10, letterSpacing: 1.5, textTransform: 'uppercase', color: PRIMARY, marginBottom: 6 },
+    docTitle: { fontFamily: B, fontSize: 24, letterSpacing: 1.5, textTransform: 'uppercase', color: PRIMARY, marginBottom: 6 },
     bizName: { fontFamily: B, fontSize: headerScale.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
+    brandRow: { flexDirection: 'row', alignItems: 'flex-start', minWidth: 0 },
+    brandText: { width: 230, flexShrink: 1 },
+    topLogoSafe: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizText: { fontSize: headerScale.bizSubTextFontSize, color: '#444', marginBottom: 1, lineHeight: headerScale.bizSubTextLineHeight },
     boldText: { fontFamily: B, color: '#000' },
     originalText: { fontSize: 6.5, color: '#666', textTransform: 'uppercase', textAlign: 'right', marginBottom: 10, fontFamily: B },
-    topLogo: { width: 36, height: 36, objectFit: 'contain', alignSelf: 'flex-end', flexShrink: 0 },
     // Meta & Info Columns
     gridRow: { flexDirection: 'row', paddingHorizontal: 40, marginBottom: 10 },
-    col1: { width: '38%' },
-    col2: { width: '40%' },
-    col3: { width: '22%', alignItems: 'flex-end' },
+    col1: { width: '38%', minWidth: 0, paddingRight: 6 },
+    col2: { width: '40%', minWidth: 0, paddingRight: 6 },
+    col3: { width: '22%', minWidth: 0, alignItems: 'flex-end' },
 
     metaLabel: { fontSize: 7.5, color: '#444' },
     metaValue: { fontSize: 7.5, color: '#000', fontFamily: B },
@@ -122,23 +127,23 @@ export default function Template7({ invoice }) {
     th: { fontSize: 7, fontFamily: B, color: '#000', paddingHorizontal: 2 },
     td: { fontSize: 7.5, color: '#000', paddingHorizontal: 2 },
 
-    colNo: { width: '5%', textAlign: 'left' },
-    colDesc: { width: '38%' },
-    colRate: { width: '12%', textAlign: 'right' },
-    colQty: { width: '10%', textAlign: 'center' },
-    colTaxable: { width: '12%', textAlign: 'right' },
-    colTaxAmt: { width: '13%', textAlign: 'right' },
-    colTotal: { width: '10%', textAlign: 'right' },
+    colNo: { width: '4%', textAlign: 'left' },
+    colDesc: { width: '32%' },
+    colRate: { width: '13%', textAlign: 'right' },
+    colQty: { width: '8%', textAlign: 'center' },
+    colTaxable: { width: '14%', textAlign: 'right' },
+    colTaxAmt: { width: '15%', textAlign: 'right' },
+    colTotal: { width: '14%', textAlign: 'right' },
 
     // Totals Box
     totalsWrapper: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 40, marginBottom: 6 },
     totalsBox: { width: '50%' },
     totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 1.5 },
     totalLabel: { fontSize: 7.5, fontFamily: B, color: '#000', textAlign: 'right', flex: 1, paddingRight: 10 },
-    totalVal: { fontSize: 7.5, fontFamily: B, color: '#000', width: 70, textAlign: 'right' },
+    totalVal: { fontSize: 7.5, fontFamily: B, color: '#000', width: 100, textAlign: 'right' },
     grandTotalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4, marginTop: 4 },
     grandTotalLabel: { fontSize: 11, fontFamily: B, color: '#000', textAlign: 'right', flex: 1, paddingRight: 10 },
-    grandTotalVal: { fontSize: 11, fontFamily: B, color: '#000', width: 70, textAlign: 'right' },
+    grandTotalVal: { fontSize: 11, fontFamily: B, color: '#000', width: 110, textAlign: 'right' },
 
     // Items and Words
     wordsRow: { flexDirection: 'row', justifyContent: 'space-between', borderTop: `1pt solid ${PRIMARY}`, borderBottom: `1pt solid ${PRIMARY}`, marginHorizontal: 40, paddingVertical: 3, marginBottom: 15 },
@@ -149,19 +154,23 @@ export default function Template7({ invoice }) {
     bankCol: { width: '50%' },
     sigCol: { width: '40%', alignItems: 'flex-end' },
     bankLabel: { fontSize: 7.5, fontFamily: B, color: '#000', marginBottom: 4 },
-    bankRow: { flexDirection: 'row', marginBottom: 1.5 },
-    bankKey: { fontSize: 7, color: '#444', width: 60 },
-    bankVal: { fontSize: 7, fontFamily: B, color: '#000' },
+    bankRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 1.5 },
+    bankKey: { fontSize: 7, color: '#444', width: 60, flexShrink: 0 },
+    bankVal: { fontSize: 7, fontFamily: B, color: '#000', flex: 1, minWidth: 0 },
 
     sigText: { fontSize: 7, color: '#444', marginBottom: 25 },
     sigLine: { fontSize: 7, color: '#444', paddingTop: 4, width: 100, textAlign: 'center' },
 
-    // Footer - Minimalist Single Line
-    footerBox: { position: 'absolute', bottom: 15, left: 40, right: 40, paddingTop: 10, borderTop: '0.5pt solid #E0E0E0', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-    footerTrustLine: { fontSize: 6.5, color: '#333333', textAlign: 'center' },
-    footerDot: { fontSize: 7, color: '#CCC', marginHorizontal: 6 },
-    footerBold: { fontFamily: B, color: PRIMARY },
-    footerLink: { fontFamily: B, color: PRIMARY, textDecoration: 'none' },
+    // Footer - slim, plain background, split left (brand/legal) vs right (powered by)
+    footerBox: { position: 'absolute', bottom: 18, left: 0, right: 0, paddingHorizontal: 40, paddingTop: 8, borderTop: '0.5pt solid #E0E0E0', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
+    footerLeft: { flexDirection: 'column' },
+    footerBrandLine: { fontSize: 7, fontFamily: B, color: PRIMARY, letterSpacing: 0.2, marginBottom: 3 },
+    footerLink: { fontFamily: B, color: PRIMARY, textDecoration: 'underline' },
+    footerTrustLine: { fontSize: 6.5, color: '#333333' },
+    poweredByContainer: { alignItems: 'flex-end' },
+    poweredByLabel: { fontSize: 6, color: '#888', letterSpacing: 0.3 },
+    poweredByValue: { fontSize: 9.5, fontFamily: B, color: '#000', letterSpacing: 0.3, marginTop: 1 },
+    footerTagline: { fontSize: 6, color: PRIMARY, marginTop: 2 },
   });
 
   const currency = invoice._currency || invoice.currency || 'INR';
@@ -198,8 +207,11 @@ export default function Template7({ invoice }) {
         <View style={s.topSection}>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={s.docTitle}>{docTitle}</Text>
-            <Text style={s.bizName}>{bizName}</Text>
-            {biz?.gstin && <Text style={s.bizText}>GSTIN <Text style={s.boldText}>{biz.gstin}</Text></Text>}
+            <View style={s.brandRow}>
+              {biz?.businessLogo && <Image style={s.topLogoSafe} src={biz.businessLogo} />}
+              <View style={s.brandText}>
+                <Text style={s.bizName}>{bizName}</Text>
+                {biz?.gstin && <Text style={s.bizText}>GSTIN <Text style={s.boldText}>{biz.gstin}</Text></Text>}
             {biz?.address?.street && <Text style={s.bizText}>{biz.address.street}</Text>}
             {biz?.address?.city && (
               <Text style={s.bizText}>
@@ -213,9 +225,8 @@ export default function Template7({ invoice }) {
               </Text>
             )}
             {biz?.website && <Text style={s.bizText}><Text style={s.boldText}>Website</Text> {biz.website}</Text>}
-          </View>
-          <View style={{ width: bizLogoWidth, alignItems: 'flex-end' }}>
-            {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
+              </View>
+            </View>
           </View>
         </View>
 
@@ -338,21 +349,24 @@ export default function Template7({ invoice }) {
           </View>
         </View>
 
-        {/* Minimalist Single Line Footer */}
         <View style={s.footerBox} fixed>
-          <Text style={s.footerSingleLine}>
-            {biz?.phone && <Text>P: {biz.phone}</Text>}
-            {biz?.phone && biz?.email && <Text style={s.footerDot}> • </Text>}
-            {biz?.email && <Text>E: {biz.email}</Text>}
-            {(biz?.phone || biz?.email) && <Text style={s.footerDot}> • </Text>}
-            
-            Powered By <Text style={s.footerBold}>GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text></Text>
-            <Text style={s.footerDot}> • </Text>
-            <Link src="https://invoice.goodsynk.com" style={s.footerLink}>invoice.goodsynk.com</Link>
-            
-            <Text style={s.footerDot}> • </Text>
-            <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
-          </Text>
+          <View style={s.footerLeft}>
+            <Text style={s.footerBrandLine}>
+              Goodsynk Invoice  |  Simple Invoicing, Billing & Quotations  |  Visit{' '}
+              <Link src="https://invoice.goodsynk.com" style={s.footerLink}>invoice.goodsynk.com</Link>
+            </Text>
+            <Text
+              style={s.footerTrustLine}
+              render={({ pageNumber, totalPages }) =>
+                `Page ${pageNumber} / ${totalPages}  •  This is a digitally signed document.`
+              }
+            />
+          </View>
+          <View style={s.poweredByContainer}>
+            <Text style={s.poweredByLabel}>Powered By</Text>
+            <Text style={s.poweredByValue}>GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text></Text>
+            <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
+          </View>
         </View>
 
       </Page>

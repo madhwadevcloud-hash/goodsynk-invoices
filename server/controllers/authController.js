@@ -252,7 +252,7 @@ const deleteMe = async (req, res) => {
     await User.findByIdAndDelete(req.user._id);
     res.json({ success: true, message: 'Account deleted successfully' });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 
@@ -327,7 +327,7 @@ const upgradePlan = async (req, res) => {
 
     res.json({ success: true, message: `Upgraded to ${plan} plan`, user });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 

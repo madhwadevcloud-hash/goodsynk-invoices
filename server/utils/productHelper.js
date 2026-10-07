@@ -17,13 +17,24 @@ const upsertProductsFromItems = async (userId, items) => {
     const cgstRate = item.cgstRate || 0;
     const sgstRate = item.sgstRate || 0;
     const igstRate = item.igstRate || 0;
-    const hsn = item.hsn || '';
+    const hsn = String(item.hsn || '');
     const description = item.description || '';
     
-    // Determine isService based on whether it starts with SAC or is a 6-digit SAC code
-    const isService = item.isService !== undefined 
-      ? item.isService 
-      : (hsn.toUpperCase().startsWith('SAC') || (hsn.length === 6 && !isNaN(hsn)));
+    // Determine whether the line item is a service.
+    // Priority:
+    //   1. The Product/Service toggle on the line item (itemType) – this is
+    //      what the invoice/quotation form actually sends.
+    //   2. An explicit isService flag, if one is provided.
+    //   3. Fallback: SAC code detection (starts with "SAC" or a 6-digit code).
+    const itemType = String(item.itemType || '').trim().toLowerCase();
+    const isService =
+      itemType === 'service'
+        ? true
+        : itemType === 'product'
+          ? false
+          : item.isService !== undefined
+            ? Boolean(item.isService)
+            : (hsn.toUpperCase().startsWith('SAC') || (hsn.length === 6 && !isNaN(hsn)));
 
     // Escape regex characters to prevent query crashes
     const escapedName = productName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');

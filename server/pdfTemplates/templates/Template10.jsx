@@ -3,6 +3,7 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image, Link } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
 import { isRasterImage } from './watermarkUtils';
+import { safeHyphenation } from './layoutUtils';
 
 const B = 'Inter-Bold';
 const M = 'Inter-SemiBold';
@@ -19,43 +20,142 @@ const hexToRgba = (hex, alpha) => {
   return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
 };
 
+/* ---------- Number to Words (Indian system) ---------- */
+const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+  'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+  'Seventeen', 'Eighteen', 'Nineteen'];
+const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+const twoDigit = (n) => {
+  if (n < 20) return ones[n];
+  return tens[Math.floor(n / 10)] + (n % 10 ? ' ' + ones[n % 10] : '');
+};
+
+const threeDigit = (n) => {
+  const h = Math.floor(n / 100);
+  const rest = n % 100;
+  let str = '';
+  if (h) str += ones[h] + ' Hundred';
+  if (rest) str += (h ? ' ' : '') + twoDigit(rest);
+  return str;
+};
+
+const numberToWords = (num) => {
+  if (num === 0) return 'Zero';
+  const n = Math.floor(Math.abs(num));
+  if (n === 0) return 'Zero';
+  const crore = Math.floor(n / 10000000);
+  const lakh = Math.floor((n % 10000000) / 100000);
+  const thousand = Math.floor((n % 100000) / 1000);
+  const hundred = n % 1000;
+  let out = '';
+  if (crore) out += threeDigit(crore) + ' Crore ';
+  if (lakh) out += threeDigit(lakh) + ' Lakh ';
+  if (thousand) out += threeDigit(thousand) + ' Thousand ';
+  if (hundred) out += threeDigit(hundred);
+  return out.trim();
+};
+
+const amountInWords = (amount, currency) => {
+  const whole = Math.floor(Math.abs(amount || 0));
+  const paise = Math.round((Math.abs(amount || 0) - whole) * 100);
+  let words = numberToWords(whole) + ' ' + currency;
+  if (paise > 0) words += ' and ' + numberToWords(paise) + ' Paise';
+  return words + ' Only';
+};
+
 export default function Template10({ invoice }) {
   const { client, user: biz } = invoice;
+  // Break very long unbroken tokens (bank names, branch text, e-mails) inside their box.
+  Font.registerHyphenationCallback(safeHyphenation);
   const colors = invoice.templateColors || { primary: '#10B981' };
   const PRIMARY = colors.primary;
   const LIGHT_CARD = '#F3F4F6';
+  const roundOffDiff = invoice.roundOff ? (invoice.total || 0) - ((invoice.subtotal || 0) - (invoice.discountAmount || 0) + (invoice.taxTotal || 0)) : 0;
+  const notesText = Array.isArray(invoice.notes) ? invoice.notes.join('\n') : invoice.notes;
+  const termsText = Array.isArray(invoice.termsAndConditions) ? invoice.termsAndConditions.join('\n') : invoice.termsAndConditions;
   const scaled = buildScaledStyles(biz);
+
+  /* -------- Build address lines (max 3) -------- */
+  const addrParts = [];
+  if (biz?.address?.street) addrParts.push(biz.address.street);
+  if (biz?.address?.city || biz?.address?.state || biz?.address?.pincode) {
+    addrParts.push(
+      [
+        [biz?.address?.city, biz?.address?.state].filter(Boolean).join(', '),
+        biz?.address?.pincode
+      ].filter(Boolean).join(' - ')
+    );
+  }
+  // Split any overly long line by commas so it wraps naturally to max 3 lines
+  let addrLines = [];
+  addrParts.forEach(part => {
+    if (!part) return;
+    if (part.length > 55) {
+      const chunks = part.split(',').map(c => c.trim()).filter(Boolean);
+      let buf = '';
+      chunks.forEach(chunk => {
+        if ((buf + ', ' + chunk).trim().length > 55) {
+          if (buf) addrLines.push(buf.trim());
+          buf = chunk;
+        } else {
+          buf = buf ? buf + ', ' + chunk : chunk;
+        }
+      });
+      if (buf) addrLines.push(buf.trim());
+    } else {
+      addrLines.push(part.trim());
+    }
+  });
+  addrLines = addrLines.slice(0, 3); // max 3 lines
+
+  /* -------- Auto font-size for address -------- */
+  const maxLineLen = addrLines.reduce((m, l) => Math.max(m, l.length), 0);
+  const totalLen = addrLines.join(' ').length;
+  let addrFontSize = 8.5;
+  if (maxLineLen > 55 || totalLen > 130) addrFontSize = 6.5;
+  else if (maxLineLen > 45 || totalLen > 100) addrFontSize = 7;
+  else if (maxLineLen > 35 || totalLen > 70) addrFontSize = 7.5;
+  else if (maxLineLen > 25 || totalLen > 50) addrFontSize = 8;
 
   const s = StyleSheet.create({
     watermarkContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: -100 },
     watermarkImg: { width: 250, height: 250, objectFit: 'contain', opacity: 0.12 },
     watermarkText: { fontSize: 60, fontFamily: B, color: hexToRgba(PRIMARY, 0.08), transform: 'rotate(-45deg)', letterSpacing: 5 },
     page: { paddingTop: 40, paddingBottom: 60, paddingHorizontal: 40, fontFamily: 'Inter', color: '#1F2937' },
-    
+
     // Top Bar (No background block)
-    topFlex: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 },
-    bizBox: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0 },
+    topFlex: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
+    bizBox: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0, paddingRight: 20 },
     topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 10, flexShrink: 0 },
+    bizInfoCol: { flexDirection: 'column', flex: 1, minWidth: 0 },
     bizName: { fontFamily: B, fontSize: 18, color: PRIMARY, textTransform: 'uppercase', letterSpacing: 1 },
-    
-    docTitleBox: { alignItems: 'flex-end' },
+    bizAddress: { color: '#4B5563', marginTop: 4, lineHeight: 1.35 },
+
+    docTitleBox: { alignItems: 'flex-end', flexShrink: 0, maxWidth: '40%' },
     docTitle: { fontFamily: B, fontSize: 24, color: '#111', textTransform: 'uppercase', letterSpacing: 2 },
-    docNo: { fontSize: 10, color: '#6B7280', marginTop: 4 },
+    docNo: { fontSize: 10, color: '#6B7280', marginTop: 4, textAlign: 'right' },
     docNoBold: { fontFamily: B, color: PRIMARY },
 
-    // Business details row
+    // Business details row (phone / email / GSTIN)
     bizDetailsRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20, gap: 10 },
     bizText: { fontSize: 8.5, color: '#4B5563' },
 
     // Card Layout for Info
-    cardsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 30 },
-    card: { backgroundColor: LIGHT_CARD, borderRadius: 8, padding: 15, width: '48%' },
+    cardsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 30, alignItems: 'stretch' },
+    card: { backgroundColor: LIGHT_CARD, borderRadius: 8, padding: 15, width: '48%', minWidth: 0 },
     cardHeader: { fontSize: 8, fontFamily: B, color: PRIMARY, textTransform: 'uppercase', marginBottom: 8, letterSpacing: 1 },
     clientName: { fontFamily: B, fontSize: 12, color: '#111', marginBottom: 4 },
     clientText: { fontSize: 8.5, color: '#4B5563', lineHeight: 1.5 },
     metaRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 },
-    metaLabel: { fontSize: 8.5, color: '#6B7280' },
-    metaVal: { fontSize: 8.5, fontFamily: B, color: '#111' },
+    metaLabel: { fontSize: 8.5, color: '#6B7280', flexShrink: 0, paddingRight: 6 },
+    metaVal: { fontSize: 8.5, fontFamily: B, color: '#111', flexShrink: 1, textAlign: 'right' },
+
+    // Payment info styles
+    paymentSection: { marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#D1D5DB' },
+    paymentRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 3 },
+    paymentLabel: { fontSize: 8.5, color: '#6B7280', width: 70, flexShrink: 0 },
+    paymentValue: { fontSize: 8.5, color: '#111', fontFamily: M, flex: 1, minWidth: 0 },
 
     // Clean Table
     table: { width: '100%', marginBottom: 14 },
@@ -77,7 +177,7 @@ export default function Template10({ invoice }) {
     bottomFlex: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
     notesBox: { width: '50%' },
     totalsCard: { width: '45%', backgroundColor: LIGHT_CARD, borderRadius: 8, padding: 15 },
-    
+
     totRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 },
     totLabel: { fontSize: 9, color: '#6B7280' },
     totVal: { fontSize: 9, fontFamily: M, color: '#111', textAlign: 'right' },
@@ -86,20 +186,25 @@ export default function Template10({ invoice }) {
     grandTotLabel: { fontSize: 11, fontFamily: B, color: PRIMARY, textTransform: 'uppercase' },
     grandTotVal: { fontSize: 11, fontFamily: B, color: PRIMARY, textAlign: 'right' },
 
+    // Total in words
+    wordsRow: { marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#D1D5DB' },
+    wordsLabel: { fontSize: 7.5, fontFamily: B, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 3 },
+    wordsVal: { fontSize: 8.5, fontFamily: M, color: '#111', lineHeight: 1.4 },
+
     // Notes and Signature
     sectionTitle: { fontSize: 9, fontFamily: B, color: '#111', textTransform: 'uppercase', marginBottom: 6, letterSpacing: 1 },
     notesText: { fontSize: 8.5, color: '#4B5563', lineHeight: 1.5, marginBottom: 15 },
-    
+
     sigBox: { width: '40%', alignItems: 'flex-start', marginTop: 20 },
     sigImg: { width: 120, height: 40, objectFit: 'contain', marginBottom: 6 },
     sigLine: { width: 140, height: 1, backgroundColor: '#D1D5DB', marginBottom: 4 },
     sigText: { fontSize: 8, color: '#6B7280' },
 
-    // Footer: Floating Pill
-    footerBox: { position: 'absolute', bottom: 20, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center' },
-    footerPill: { backgroundColor: PRIMARY, borderRadius: 20, paddingVertical: 10, paddingHorizontal: 30, flexDirection: 'row', alignItems: 'center', gap: 16 },
-    footerText: { fontSize: 7.5, color: '#FFFFFF', letterSpacing: 0.5 },
-    footerLink: { fontSize: 7.5, fontFamily: B, color: '#FFFFFF', textDecoration: 'none' }
+    // Footer
+    footer: { position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#E5E7EB', paddingTop: 12 },
+    footerLeft: { fontSize: 7, color: '#9CA3AF' },
+    footerRight: { fontSize: 7, color: '#9CA3AF' },
+    footerLink: { fontSize: 7, color: PRIMARY, textDecoration: 'underline' }
   });
 
   const currency = invoice._currency || invoice.currency || 'INR';
@@ -116,9 +221,10 @@ export default function Template10({ invoice }) {
   const showVAT = invoice.vatTotal > 0;
   const hasHsn = invoice.items?.some(i => i.hsn);
   const hasDiscount = invoice.items?.some(i => i.discount > 0);
-  const roundOffDiff = invoice.roundOff ? (invoice.total || 0) - ((invoice.subtotal || 0) - (invoice.discountAmount || 0) + (invoice.taxTotal || 0)) : 0;
-  const notesText = Array.isArray(invoice.notes) ? invoice.notes.join('\n') : invoice.notes;
-  const termsText = Array.isArray(invoice.termsAndConditions) ? invoice.termsAndConditions.join('\n') : invoice.termsAndConditions;
+
+  // Check if there's any payment info to show
+  const hasBankDetails = biz?.bankDetails?.accountNumber;
+  const hasPaymentInfo = invoice.paymentInfo;
 
   return (
     <Document>
@@ -134,24 +240,30 @@ export default function Template10({ invoice }) {
             <Image src={invoice.watermarkImage || biz.watermarkImage} style={s.watermarkImg} />
           </View>
         ) : null}
-        
+
         <View style={s.topFlex}>
           <View style={s.bizBox}>
             {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
-            <Text style={s.bizName}>{bizName}</Text>
+            <View style={s.bizInfoCol}>
+              <Text style={s.bizName}>{bizName}</Text>
+              {addrLines.length > 0 && (
+                <Text style={[s.bizAddress, { fontSize: addrFontSize }]}>
+                  {addrLines.join('\n')}
+                </Text>
+              )}
+            </View>
           </View>
           <View style={s.docTitleBox}>
             <Text style={s.docTitle}>{docTitle}</Text>
-            <Text style={s.docNo}>{isQuotation ? 'NO.' : 'NO.'} <Text style={s.docNoBold}>{docNo}</Text></Text>
+            <Text style={s.docNo}>NO. <Text style={s.docNoBold}>{docNo}</Text></Text>
           </View>
         </View>
 
+        {/* Business contact row */}
         <View style={s.bizDetailsRow}>
-          {biz?.address?.street && <Text style={s.bizText}>{biz.address.street}, </Text>}
-          {biz?.address?.city && <Text style={s.bizText}>{[[biz?.address?.city, biz?.address?.state].map((v) => String(v || '').trim().replace(/[-,\s]+$/, '')).filter(Boolean).join(', '), String(biz?.address?.pincode || '').trim()].filter(Boolean).join(' ')}</Text>}
-          {biz?.phone && <Text style={s.bizText}> | P: {biz.phone}</Text>}
-          {biz?.email && <Text style={s.bizText}> | E: {biz.email}</Text>}
-          {biz?.gstin && <Text style={[s.bizText, { fontFamily: B, color: PRIMARY }]}> | GSTIN: {biz.gstin}</Text>}
+          {biz?.phone && <Text style={s.bizText}>P: {biz.phone}</Text>}
+          {biz?.email && <Text style={s.bizText}>E: {biz.email}</Text>}
+          {biz?.gstin && <Text style={[s.bizText, { fontFamily: B, color: PRIMARY }]}>GSTIN: {biz.gstin}</Text>}
         </View>
 
         <View style={s.cardsRow}>
@@ -163,7 +275,7 @@ export default function Template10({ invoice }) {
             {client?.phone && <Text style={s.clientText}>P: {client.phone}</Text>}
             {client?.email && <Text style={s.clientText}>E: {client.email}</Text>}
           </View>
-          
+
           <View style={s.card}>
              <Text style={s.cardHeader}>Details</Text>
              <View style={s.metaRow}>
@@ -176,23 +288,53 @@ export default function Template10({ invoice }) {
                  <Text style={s.metaVal}>{new Date(invoice.dueDate).toLocaleDateString('en-US')}</Text>
                </View>
              )}
-             
-             {biz?.bankDetails?.accountNumber && (
-              <View style={{ marginTop: 10 }}>
-                <Text style={[s.cardHeader, { marginBottom: 4 }]}>Payment Info</Text>
-                {biz.bankDetails.bankName && <Text style={s.clientText}>Bank: {biz.bankDetails.bankName}</Text>}
-                {biz.bankDetails.accountName && <Text style={s.clientText}>A/C Name: {biz.bankDetails.accountName}</Text>}
-                <Text style={s.clientText}>A/C: {biz.bankDetails.accountNumber}</Text>
-                {biz.bankDetails.ifscCode && <Text style={s.clientText}>IFSC: {biz.bankDetails.ifscCode}</Text>}
-                {biz.bankDetails.swiftCode && <Text style={s.clientText}>SWIFT: {biz.bankDetails.swiftCode}</Text>}
-                {biz.bankDetails.branch && <Text style={s.clientText}>Branch: {biz.bankDetails.branch}</Text>}
-              </View>
-            )}
-            {!biz?.bankDetails?.accountNumber && invoice.paymentInfo && (
-               <View style={{ marginTop: 10 }}>
-                  <Text style={[s.cardHeader, { marginBottom: 4 }]}>Payment Info</Text>
+
+             {/* Payment Info Section - Fixed */}
+             {(hasBankDetails || hasPaymentInfo) && (
+              <View style={s.paymentSection}>
+                <Text style={[s.cardHeader, { marginBottom: 6 }]}>Payment Info</Text>
+                
+                {hasBankDetails ? (
+                  <View>
+                    {biz.bankDetails.bankName && (
+                      <View style={s.paymentRow}>
+                        <Text style={s.paymentLabel}>Bank:</Text>
+                        <Text style={s.paymentValue}>{biz.bankDetails.bankName}</Text>
+                      </View>
+                    )}
+                    {biz.bankDetails.accountName && (
+                      <View style={s.paymentRow}>
+                        <Text style={s.paymentLabel}>A/C Name:</Text>
+                        <Text style={s.paymentValue}>{biz.bankDetails.accountName}</Text>
+                      </View>
+                    )}
+                    <View style={s.paymentRow}>
+                      <Text style={s.paymentLabel}>A/C No:</Text>
+                      <Text style={s.paymentValue}>{biz.bankDetails.accountNumber}</Text>
+                    </View>
+                    {biz.bankDetails.ifscCode && (
+                      <View style={s.paymentRow}>
+                        <Text style={s.paymentLabel}>IFSC:</Text>
+                        <Text style={s.paymentValue}>{biz.bankDetails.ifscCode}</Text>
+                      </View>
+                    )}
+                    {biz.bankDetails.swiftCode && (
+                      <View style={s.paymentRow}>
+                        <Text style={s.paymentLabel}>SWIFT:</Text>
+                        <Text style={s.paymentValue}>{biz.bankDetails.swiftCode}</Text>
+                      </View>
+                    )}
+                    {biz.bankDetails.branch && (
+                      <View style={s.paymentRow}>
+                        <Text style={s.paymentLabel}>Branch:</Text>
+                        <Text style={s.paymentValue}>{biz.bankDetails.branch}</Text>
+                      </View>
+                    )}
+                  </View>
+                ) : hasPaymentInfo ? (
                   <Text style={s.clientText}>{invoice.paymentInfo}</Text>
-               </View>
+                ) : null}
+              </View>
             )}
           </View>
         </View>
@@ -246,7 +388,7 @@ export default function Template10({ invoice }) {
                 <Text style={s.notesText}>{termsText}</Text>
               </View>
             )}
-            
+
             <View style={s.sigBox} wrap={false}>
               {biz?.businessSignature && <Image src={biz.businessSignature} style={s.sigImg} />
 }
@@ -264,23 +406,32 @@ export default function Template10({ invoice }) {
             {showSGST && <View style={s.totRow}><Text style={s.totLabel}>SGST</Text><Text style={s.totVal}>{fmt(invoice.sgstTotal)}</Text></View>}
             {showIGST && <View style={s.totRow}><Text style={s.totLabel}>IGST</Text><Text style={s.totVal}>{fmt(invoice.igstTotal)}</Text></View>}
             {showVAT && <View style={s.totRow}><Text style={s.totLabel}>VAT</Text><Text style={s.totVal}>{fmt(invoice.vatTotal)}</Text></View>}
-            {invoice.roundOff && Math.abs(roundOffDiff) > 0.001 && <View style={s.totRow}><Text style={s.totLabel}>Round Off</Text><Text style={s.totVal}>{roundOffDiff >= 0 ? '+' : '-'}{fmt(Math.abs(roundOffDiff))}</Text></View>}
+            {invoice.roundOff && Math.abs(roundOffDiff) > 0.001 && (
+              <View style={s.totRow}>
+                <Text style={s.totLabel}>Round Off</Text>
+                <Text style={s.totVal}>{roundOffDiff >= 0 ? '+' : '-'}{fmt(Math.abs(roundOffDiff))}</Text>
+              </View>
+            )}
+
             <View style={s.totDivider} />
             <View style={s.grandTotRow}>
               <Text style={s.grandTotLabel}>Total {currency}</Text>
               <Text style={s.grandTotVal}>{fmt(invoice.total)}</Text>
             </View>
+
+            <View style={s.wordsRow}>
+              <Text style={s.wordsLabel}>Amount in Words</Text>
+              <Text style={s.wordsVal}>{amountInWords(invoice.total, currency)}</Text>
+            </View>
           </View>
         </View>
 
-        <View style={s.footerBox} fixed>
-          <View style={s.footerPill}>
-            {biz?.phone && <Text style={s.footerText}>P: {biz.phone}</Text>}
-            {biz?.email && <Text style={s.footerText}>E: {biz.email}</Text>}
-            <Text style={s.footerText}>
-              Powered by <Link style={s.footerLink} src="https://invoice.goodsynk.com">GoodSynk</Link><Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text>
-            </Text>
-          </View>
+        <View style={s.footer} fixed>
+          <Text style={s.footerLeft}>{bizName}</Text>
+          <Text style={s.footerRight}>
+            Powered by <Link style={s.footerLink} src="https://invoice.goodsynk.com">GoodSynk</Link>
+            <Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text>
+          </Text>
         </View>
         <Text
           style={{ position: 'absolute', bottom: 4, right: 40, fontSize: 7.5, color: '#333333' }}
@@ -291,3 +442,5 @@ export default function Template10({ invoice }) {
     </Document>
   );
 }
+
+/*Soft Corporate Cards*/

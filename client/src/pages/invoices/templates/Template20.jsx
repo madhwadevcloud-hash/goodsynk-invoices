@@ -3,10 +3,11 @@ import SignatoryDetails from './SignatoryDetails';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
 import { getAddressStreet, getAddressCityLine, getFullAddress } from './addressUtils';
+import { safeHyphenation } from './layoutUtils';
 
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-Bold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYMZhrib2Bg-4.ttf' });
-Font.registerHyphenationCallback(word => [word]);
+Font.registerHyphenationCallback(safeHyphenation);
 
 const B = 'Inter-Bold';
 
@@ -148,6 +149,8 @@ const DEFAULT_TATA_ITEMS = [
 ];
 
 export default function Template20({ invoice }) {
+  // Re-assert at render time: the callback is global and other templates register their own.
+  Font.registerHyphenationCallback(safeHyphenation);
   const inv = invoice || {};
   const client = inv.client || {};
   const biz = inv.user || inv.biz || {};
@@ -307,16 +310,16 @@ export default function Template20({ invoice }) {
     outerBox: { borderWidth: 0.75, borderColor: '#374151' },
 
     headerGrid: { flexDirection: 'row', borderBottomWidth: 0.75, borderBottomColor: '#374151' },
-    headerLeft: { width: '48%', padding: 6, borderRightWidth: 0.75, borderRightColor: '#374151' },
+    headerLeft: { width: '48%', padding: 6, minWidth: 0, borderRightWidth: 0.75, borderRightColor: '#374151' },
     brandRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-    logoImg: { width: 36, height: 36, objectFit: 'contain', marginRight: 8 },
+    logoImg: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizTitle: { fontSize: 10, fontFamily: B, color: '#1E293B' },
     bizSub: { fontSize: 7, color: '#374151', lineHeight: 1.25 },
 
     headerRight: { width: '52%' },
     docMetaGrid: { flexDirection: 'row', borderBottomWidth: 0.75, borderBottomColor: '#374151' },
-    docMetaCol1: { width: '50%', padding: 4, borderRightWidth: 0.75, borderRightColor: '#374151' },
-    docMetaCol2: { width: '50%', padding: 4 },
+    docMetaCol1: { width: '50%', padding: 4, minWidth: 0, borderRightWidth: 0.75, borderRightColor: '#374151' },
+    docMetaCol2: { width: '50%', padding: 4, minWidth: 0 },
     metaLabel: { fontSize: 6.5, color: '#4B5563' },
     metaVal: { fontSize: 7, fontFamily: B, color: '#111827' },
 
@@ -378,9 +381,9 @@ export default function Template20({ invoice }) {
     upiCol: { width: '20%', padding: 4, alignItems: 'center', justifyContent: 'center', borderRightWidth: 0.75, borderRightColor: '#374151' },
     sigCol: { width: '35%', padding: 6, alignItems: 'center', justifyContent: 'space-between' },
 
-    bankRow: { flexDirection: 'row', marginBottom: 2 },
-    bankKey: { fontSize: 6.5, color: '#4B5563', width: 50 },
-    bankVal: { fontSize: 6.5, fontFamily: B, color: '#111827' },
+    bankRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 2 },
+    bankKey: { fontSize: 6.5, color: '#4B5563', width: 50, flexShrink: 0 },
+    bankVal: { fontSize: 6.5, fontFamily: B, color: '#111827', flex: 1, minWidth: 0 },
 
     qrBox: { width: 55, height: 55, borderWidth: 0.5, borderColor: '#9CA3AF', backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
     qrText: { fontSize: 5, color: '#6B7280', textAlign: 'center' },
@@ -425,7 +428,8 @@ export default function Template20({ invoice }) {
                 {isRasterImage(biz?.businessLogo) ? (
                   <Image src={biz.businessLogo} style={s.logoImg} />
                 ) : null}
-                <View>
+                {/* flex:1 + minWidth:0 keeps a long business name inside the left cell (it used to spill into the Place of Supply box) */}
+                <View style={{ flex: 1, minWidth: 0 }}>
                   <Text style={s.bizTitle}>{bizName}</Text>
                 </View>
               </View>
