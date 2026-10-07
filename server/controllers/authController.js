@@ -1,31 +1,47 @@
-﻿const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { PLAN_LIMITS } = require('../utils/planLimits');
 
+// Helper: generate JWT
 const generateToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE || '30d' });
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, businessName } = req.body;
+
     if (!name || !email || !password) {
-      return res.status(400).json({ success: false, message: 'Please provide name, email and password' });
+      return res.status(400).json({ success: false, message: 'Name, email and password are required' });
     }
-    const existing = await User.findOne({ email: email.toLowerCase().trim() });
+
+    const existing = await User.findOne({ email });
     if (existing) {
-      return res.status(400).json({ success: false, message: 'Email already in use' });
+      return res.status(400).json({ success: false, message: 'Email already registered' });
     }
-    const user = await User.create({ name, email, password });
+
+    const user = await User.create({ name, email, password, businessName });
+    const token = generateToken(user._id);
+
     res.status(201).json({
       success: true,
-      token: generateToken(user._id),
-      user: { _id: user._id, name: user.name, email: user.email, plan: user.plan },
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        businessName: user.businessName,
+        signatoryName: user.signatoryName,
+        designation: user.designation,
+        currency: user.currency,
+        plan: user.plan,
+        documentSettings: user.documentSettings,
+      },
     });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -35,95 +51,174 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Please provide email and password' });
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
     }
-    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
+
+    const user = await User.findOne({ email }).select('+password');
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+      return res.status(401).json({ success: false, message: 'Entered email ID is not registered' });
     }
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    if (!(await user.matchPassword(password))) {
+      return res.status(401).json({ success: false, message: 'Incorrect password' });
     }
+
+    const token = generateToken(user._id);
+
     res.json({
       success: true,
-      token: generateToken(user._id),
+      token,
       user: {
         _id: user._id,
         name: user.name,
         email: user.email,
-        plan: user.plan,
         businessName: user.businessName,
+        signatoryName: user.signatoryName,
+        designation: user.designation,
         businessLogo: user.businessLogo,
+        businessSignature: user.businessSignature,
+        businessSeal: user.businessSeal,
+        address: user.address,
+        phone: user.phone,
+        alternateEmail: user.alternateEmail,
+        alternatePhone: user.alternatePhone,
+        alternateAddress: user.alternateAddress,
+        invoiceContactPreference: user.invoiceContactPreference,
+        gstin: user.gstin,
+        currency: user.currency,
+        bankDetails: user.bankDetails,
+        bankAccounts: user.bankAccounts,
+        plan: user.plan,
+        documentSettings: user.documentSettings,
       },
     });
-  } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
-  }
-};
-
-// @desc    Google OAuth login / register
-// @route   POST /api/auth/google
-// @access  Public
-const googleLogin = async (req, res) => {
-  try {
-    const { name, email } = req.body;
-    if (!email) {
-      return res.status(400).json({ success: false, message: 'Email is required for Google login' });
-    }
-    let user = await User.findOne({ email: email.toLowerCase().trim() });
-    if (!user) {
-      const randomPassword = require('crypto').randomBytes(24).toString('hex');
-      user = await User.create({
-        name: name || email.split('@')[0],
-        email: email.toLowerCase().trim(),
-        password: randomPassword,
-      });
-    }
-    res.json({
-      success: true,
-      token: generateToken(user._id),
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        plan: user.plan,
-        businessName: user.businessName,
-        businessLogo: user.businessLogo,
-      },
-    });
-  } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
-  }
-};
-
-// @desc    Get current logged-in user profile
-// @route   GET /api/auth/me
-// @access  Private
-const getMe = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    res.json({ success: true, user });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// @desc    Update current user profile
+// @desc    Get current logged-in user
+// @route   GET /api/auth/me
+// @access  Private
+const getMe = async (req, res) => {
+  res.json({ success: true, user: req.user });
+};
+
+// @desc    Update user profile
 // @route   PUT /api/auth/me
 // @access  Private
+// Same ceiling the PDF templates themselves enforce on inline data-URL images
+// (see isRasterImage in server/pdfTemplates/templates/Template18/19/20.jsx) —
+// reject an oversized watermark here rather than silently storing something
+// the renderer will later just drop.
+const MAX_DOCUMENT_WATERMARK_LENGTH = 2_000_000;
+
+const normalizeBankAccounts = (bankAccounts = []) => {
+  let primaryIndex = -1;
+  for (let i = 0; i < bankAccounts.length; i++) {
+    if (bankAccounts[i]?.isPrimary) {
+      primaryIndex = i;
+    }
+  }
+  return bankAccounts.map((bank, index) => ({
+    label: bank?.label || (index === 0 ? 'Primary' : `Bank ${index + 1}`),
+    bankName: bank?.bankName || '',
+    accountName: bank?.accountName || '',
+    accountNumber: bank?.accountNumber || '',
+    ifscCode: bank?.ifscCode || '',
+    swiftCode: bank?.swiftCode || '',
+    branch: bank?.branch || '',
+    isPrimary: primaryIndex >= 0 ? index === primaryIndex : index === 0,
+  }));
+};
+
 const updateMe = async (req, res) => {
   try {
-    const { password, plan, planUpdatedAt, ...updateData } = req.body;
     const user = await User.findById(req.user._id);
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    Object.assign(user, updateData);
-    await user.save();
-    res.json({ success: true, user });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const simpleFields = [
+      'name',
+      'businessName',
+      'signatoryName',
+      'designation',
+      'businessLogo',
+      'businessSignature',
+      'businessSeal',
+      'address',
+      'phone',
+      'alternateEmail',
+      'alternatePhone',
+      'alternateAddress',
+      'invoiceContactPreference',
+      'gstin',
+      'currency',
+      'invoiceTemplate',
+      'invoiceTemplateColors',
+      'quotationTemplate',
+      'quotationTemplateColors',
+    ];
+
+    simpleFields.forEach((field) => {
+      if (req.body[field] !== undefined) user[field] = req.body[field];
+    });
+
+    if (Array.isArray(req.body.bankAccounts)) {
+      const normalizedBanks = normalizeBankAccounts(req.body.bankAccounts);
+      user.bankAccounts = normalizedBanks;
+
+      const primaryBank = normalizedBanks.find((bank) => bank.isPrimary) || normalizedBanks[0];
+      user.bankDetails = primaryBank || {
+        bankName: '',
+        accountName: '',
+        accountNumber: '',
+        ifscCode: '',
+        swiftCode: '',
+        branch: '',
+      };
+    } else if (req.body.bankDetails !== undefined) {
+      user.bankDetails = req.body.bankDetails;
+
+      // Backward compatibility: when only the legacy bankDetails object is sent,
+      // seed bankAccounts if the user does not already have multiple accounts.
+      if (!Array.isArray(user.bankAccounts) || user.bankAccounts.length === 0) {
+        const legacy = req.body.bankDetails || {};
+        if (legacy.bankName || legacy.accountName || legacy.accountNumber || legacy.ifscCode) {
+          user.bankAccounts = [{
+            label: 'Primary',
+            bankName: legacy.bankName || '',
+            accountName: legacy.accountName || '',
+            accountNumber: legacy.accountNumber || '',
+            ifscCode: legacy.ifscCode || '',
+            swiftCode: legacy.swiftCode || '',
+            branch: legacy.branch || '',
+            isPrimary: true,
+          }];
+        }
+      }
+    }
+
+    // Handled separately from simpleFields because it's a partial update we
+    // merge onto the existing sub-document (the client only ever sends the
+    // keys that changed) and because the watermark image needs a size check.
+    if (req.body.documentSettings !== undefined && req.body.documentSettings !== null) {
+      const existing = user.documentSettings ? user.documentSettings.toObject() : {};
+      const merged = { ...existing, ...req.body.documentSettings };
+
+      if (typeof merged.watermarkImage === 'string' && merged.watermarkImage.length > MAX_DOCUMENT_WATERMARK_LENGTH) {
+        return res.status(400).json({ success: false, message: 'Watermark image is too large to save. Please use a smaller image.' });
+      }
+
+      user.documentSettings = merged;
+    }
+
+    const updatedUser = await user.save();
+    res.json({ success: true, user: updatedUser });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
@@ -133,25 +228,23 @@ const updateMe = async (req, res) => {
 const changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ success: false, message: 'Please provide current and new password' });
-    }
-    if (newPassword.length < 6) {
-      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters' });
-    }
     const user = await User.findById(req.user._id).select('+password');
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    const isMatch = await user.matchPassword(currentPassword);
-    if (!isMatch) return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+
+    if (!(await user.matchPassword(currentPassword))) {
+      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+    }
+
     user.password = newPassword;
     await user.save();
-    res.json({ success: true, message: 'Password updated successfully' });
+
+    const token = generateToken(user._id);
+    res.json({ success: true, message: 'Password updated successfully', token });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// @desc    Delete current user account
+// @desc    Delete own account
 // @route   DELETE /api/auth/me
 // @access  Private
 const deleteMe = async (req, res) => {
@@ -159,30 +252,83 @@ const deleteMe = async (req, res) => {
     await User.findByIdAndDelete(req.user._id);
     res.json({ success: true, message: 'Account deleted successfully' });
   } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Google login / register
+// @route   POST /api/auth/google
+// @access  Public
+const googleLogin = async (req, res) => {
+  try {
+    const { name, email, googleId } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Create new user if they don't exist
+      user = await User.create({
+        name: name || 'Google User',
+        email,
+        password: googleId || Math.random().toString(36).slice(-8), // Dummy password since they use Google
+      });
+    }
+
+    const token = generateToken(user._id);
+    res.json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        businessName: user.businessName,
+        signatoryName: user.signatoryName,
+        designation: user.designation,
+        businessLogo: user.businessLogo,
+        businessSignature: user.businessSignature,
+        businessSeal: user.businessSeal,
+        address: user.address,
+        phone: user.phone,
+        gstin: user.gstin,
+        currency: user.currency,
+        bankDetails: user.bankDetails,
+        bankAccounts: user.bankAccounts,
+        plan: user.plan,
+        documentSettings: user.documentSettings,
+      },
+    });
+  } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// @desc    Upgrade / change user plan
+// @desc    Upgrade / change subscription plan
 // @route   PUT /api/auth/upgrade-plan
 // @access  Private
 const upgradePlan = async (req, res) => {
   try {
     const { plan } = req.body;
-    const validPlans = ['free', 'growth', 'growth_yearly', 'enterprise', 'enterprise_yearly'];
-    if (!plan || !validPlans.includes(plan)) {
-      return res.status(400).json({ success: false, message: 'Invalid plan' });
+
+    if (!plan || !Object.keys(PLAN_LIMITS).includes(plan)) {
+      return res.status(400).json({ success: false, message: 'Invalid plan selected' });
     }
+
+    if (req.user.plan === plan) {
+      return res.status(400).json({ success: false, message: `You are already on the ${plan} plan` });
+    }
+
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { plan, planUpdatedAt: new Date() },
-      { new: true, runValidators: true }
+      { new: true }
     );
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    res.json({ success: true, user });
+
+    res.json({ success: true, message: `Upgraded to ${plan} plan`, user });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }
 };
 
-module.exports = { register, login, googleLogin, getMe, updateMe, changePassword, deleteMe, upgradePlan };
+module.exports = { register, login, getMe, updateMe, changePassword, deleteMe, googleLogin, upgradePlan };
