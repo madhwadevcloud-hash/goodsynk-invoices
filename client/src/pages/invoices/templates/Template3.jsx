@@ -36,7 +36,7 @@ export default function Template3({ invoice }) {
     headerBlock: { backgroundColor: DARK_BLUE, paddingTop: 30, paddingBottom: 25, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
     headerLeft: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0 },
     brandText: { width: 230, flexShrink: 1 },
-    topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
+    topLogo: { maxWidth: 140, maxHeight: 52, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizNameText: { color: '#FFF', fontFamily: B, fontSize: scaled.bizNameFontSize, textTransform: 'uppercase' },
     bizInfoText: { color: '#FFF', fontSize: scaled.bizSubTextFontSize, marginTop: 2, lineHeight: scaled.bizSubTextLineHeight, opacity: 0.85 },
     invoiceTitle: { color: '#FFF', fontFamily: B, fontSize: 26, letterSpacing: 2, marginTop: 10 },
@@ -150,7 +150,7 @@ export default function Template3({ invoice }) {
           <View style={s.headerLeft}>
             {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
             <View style={s.brandText}>
-            <Text style={s.bizNameText}>{bizName}</Text>
+            <Text numberOfLines={1} wrap={false} style={s.bizNameText}>{bizName}</Text>
             <Text style={s.bizInfoText}>
               {biz?.address?.street && `${biz.address.street}\n`}
               {biz?.address?.city && `${biz.address.city}, ${biz.address.state} ${biz.address.pincode || ''}\n`}
@@ -185,7 +185,7 @@ export default function Template3({ invoice }) {
         <View style={s.metaGrid}>
           <View style={s.metaColumn}>
             <Text style={s.metaLabel}>Billed To</Text>
-            <Text style={s.billToName}>{client?.name}</Text>
+            <Text numberOfLines={1} style={s.billToName}>{client?.name}</Text>
             <Text style={s.billToText}>
               {client?.address?.street && `${client.address.street}\n`}
               {client?.address?.city && (
@@ -281,20 +281,13 @@ export default function Template3({ invoice }) {
             </View>
 
             {/* Signature — bottom-right */}
-            <View style={{ marginTop: 24, alignItems: 'flex-end' }}>
-              {biz?.businessSignature && (
-                <Image src={biz.businessSignature} style={{ width: 160, height: 55, objectFit: 'contain', marginBottom: 4 }} />
-              )}
-              <View style={{ width: 120, borderTopWidth: 0.5, borderTopColor: '#888', borderTopStyle: 'solid', paddingTop: 4 }}>
-                <SignatoryDetails biz={biz} />
-              <Text style={{ fontSize: 8, color: '#555', textAlign: 'center' }}>Authorised Signature</Text>
-              </View>
-              {biz?.businessSeal && (
-                <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />
-              )}
-            </View>
-
-          </View>
+            <View style={{ marginTop: 10, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }} wrap={false}>
+          {biz?.businessSeal && (
+            <Image src={biz.businessSeal} style={{ width: 55, height: 55, objectFit: 'contain', marginRight: 16 }} />
+          )}
+          <SignatoryDetails biz={biz} color={DARK_BLUE} />
+        </View>
+        </View>
         </View>
 
         {/* Footer: single horizontal strip with inline bullets */}
@@ -305,7 +298,7 @@ export default function Template3({ invoice }) {
             <View style={s.footerBrandPill}>
               <Text style={s.footerBrandPillText}>GoodSynk<Text style={{ fontSize: 6, fontFamily: 'Helvetica' }}>™</Text></Text>
             </View>
-            {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
+            {biz?.email && <Text wrap={false} style={s.footerText}>Email: {biz.email}</Text>}
           </View>
           {/* Bottom row: tagline • brand • trust • link */}
           <View style={s.footerBottomRow}>

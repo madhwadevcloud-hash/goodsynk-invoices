@@ -19,6 +19,12 @@ export default function InvoicePDF({ invoice }) {
     case 'template4': return <Template4 invoice={invoice} />;
     case 'template3': return <Template3 invoice={invoice} />;
     case 'template2': return <Template2 invoice={invoice} />;
+    case 'template7':
+    case 'template8':
+    case 'template9':
+    case 'template10':
+    case 'template11':
+      return <TemplateResolver invoice={invoice} />;
     case 'template1':
     default:
       return <Template1 invoice={invoice} />;

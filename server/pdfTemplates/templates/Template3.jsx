@@ -34,9 +34,9 @@ export default function Template3({ invoice }) {
     page: { paddingBottom: 110, fontFamily: 'Inter', color: '#000' },
 
     headerBlock: { backgroundColor: DARK_BLUE, paddingTop: 30, paddingBottom: 25, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-    headerLeft: { width: scaled.bizInfoMaxWidth, flexDirection: 'row', alignItems: 'center' },
+    headerLeft: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0 },
     brandText: { width: 230, flexShrink: 1 },
-    logoImage: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
+    topLogo: { maxWidth: 140, maxHeight: 52, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizNameText: { color: '#FFF', fontFamily: B, fontSize: scaled.bizNameFontSize, textTransform: 'uppercase' },
     bizInfoText: { color: '#FFF', fontSize: scaled.bizSubTextFontSize, marginTop: 2, lineHeight: scaled.bizSubTextLineHeight, opacity: 0.85 },
     invoiceTitle: { color: '#FFF', fontFamily: B, fontSize: 26, letterSpacing: 2, marginTop: 10 },
@@ -85,16 +85,20 @@ export default function Template3({ invoice }) {
     paymentTitle: { fontSize: 10, fontFamily: B, color: DARK_BLUE, marginBottom: 6 },
     paymentText: { fontSize: 9, color: '#000', marginBottom: 3 },
 
-    footerBox: { position: 'absolute', bottom: 15, left: 40, right: 40, alignItems: 'center' },
-    thankYouBlock: { backgroundColor: hexToRgba(DARK_BLUE, 0.05), paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, marginBottom: 15, width: '100%', alignItems: 'center' },
-    thankYouTitle: { fontSize: 14, fontFamily: B, color: DARK_BLUE, letterSpacing: 1, textTransform: 'uppercase' },
-    thankYouText: { fontSize: 8, color: '#555', marginTop: 4 },
-    footerDivider: { width: '80%', height: 1, backgroundColor: '#E0E0E0', marginBottom: 10 },
-    footerInfoStack: { alignItems: 'center' },
-    footerContactLine: { fontSize: 8.5, color: '#333', fontFamily: M, marginBottom: 4 },
-    footerLinks: { flexDirection: 'row', justifyContent: 'center', marginBottom: 4 },
-    footerLink: { fontSize: 7, fontFamily: B, color: DARK_BLUE, textDecoration: 'none', marginHorizontal: 5 },
-    footerPoweredLine: { fontSize: 6.5, color: '#888', marginTop: 6 },
+    footerBox: { position: 'absolute', bottom: 15, left: 40, right: 40, borderTopWidth: 1, borderTopColor: '#E0E0E0', borderTopStyle: 'solid', flexDirection: 'column', paddingTop: 8, alignItems: 'center', justifyContent: 'center' },
+    footerTopRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 4 },
+    footerDot: { fontSize: 7, color: '#999', marginHorizontal: 8 },
+    footerBrandPill: { backgroundColor: hexToRgba(DARK_BLUE, 0.08), borderRadius: 10, paddingHorizontal: 8, paddingVertical: 1.5, marginHorizontal: 6 },
+    footerBrandPillText: { fontSize: 8, fontFamily: B, color: DARK_BLUE, letterSpacing: 0.5 },
+    footerText: { fontSize: 7.5, color: '#444' },
+    footerBottomRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', marginBottom: 4 },
+    footerBrandLine: { fontSize: 6.5, color: '#666', textAlign: 'center' },
+    footerLink: { fontSize: 6.5, fontFamily: B, color: DARK_BLUE, textDecoration: 'underline' },
+    footerTagline: { fontSize: 6, color: '#666', marginHorizontal: 6 },
+    footerTrustLine: { fontSize: 5.5, color: '#888', marginHorizontal: 6 },
+    poweredByContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+    poweredByLabel: { fontSize: 5.5, color: '#888', letterSpacing: 0.5, marginRight: 3 },
+    poweredByValue: { fontSize: 7.5, fontFamily: B, color: '#000', letterSpacing: 0.4 },
     watermarkContainer: {
       position: 'absolute',
       top: 0,
@@ -144,18 +148,19 @@ export default function Template3({ invoice }) {
         {/* Header Block */}
         <View style={s.headerBlock}>
           <View style={s.headerLeft}>
-            {biz?.businessLogo && <Image style={s.logoImage} src={biz.businessLogo} />}
+            {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
             <View style={s.brandText}>
-            <Text style={s.bizNameText}>{bizName}</Text>
+            <Text numberOfLines={1} wrap={false} style={s.bizNameText}>{bizName}</Text>
             <Text style={s.bizInfoText}>
               {biz?.address?.street && `${biz.address.street}\n`}
               {biz?.address?.city && `${biz.address.city}, ${biz.address.state} ${biz.address.pincode || ''}\n`}
               {biz?.gstin && `GSTIN: ${biz.gstin}`}
             </Text>
+          
+            </View>
           </View>
           <View style={s.headerRight}>
             <Text style={s.invoiceTitle}>{isQuotation ? 'QUOTATION' : 'INVOICE'}</Text>
-            </View>
           </View>
         </View>
 
@@ -180,7 +185,7 @@ export default function Template3({ invoice }) {
         <View style={s.metaGrid}>
           <View style={s.metaColumn}>
             <Text style={s.metaLabel}>Billed To</Text>
-            <Text style={s.billToName}>{client?.name}</Text>
+            <Text numberOfLines={1} style={s.billToName}>{client?.name}</Text>
             <Text style={s.billToText}>
               {client?.address?.street && `${client.address.street}\n`}
               {client?.address?.city && (
@@ -276,46 +281,38 @@ export default function Template3({ invoice }) {
             </View>
 
             {/* Signature — bottom-right */}
-            <View style={{ marginTop: 24, alignItems: 'flex-end' }}>
-              {biz?.businessSignature && (
-                <Image src={biz.businessSignature} style={{ width: 160, height: 55, objectFit: 'contain', marginBottom: 4 }} />
-              )}
-              <View style={{ width: 120, borderTopWidth: 0.5, borderTopColor: '#888', borderTopStyle: 'solid', paddingTop: 4 }}>
-                <SignatoryDetails biz={biz} />
-              <Text style={{ fontSize: 8, color: '#555', textAlign: 'center' }}>Authorised Signature</Text>
-              </View>
-              {biz?.businessSeal && (
-                <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />
-              )}
-            </View>
-
-          </View>
+            <View style={{ marginTop: 10, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }} wrap={false}>
+          {biz?.businessSeal && (
+            <Image src={biz.businessSeal} style={{ width: 55, height: 55, objectFit: 'contain', marginRight: 16 }} />
+          )}
+          <SignatoryDetails biz={biz} color={DARK_BLUE} />
+        </View>
+        </View>
         </View>
 
-        {/* Footer: Centered Stack with Thank You Block */}
+        {/* Footer: single horizontal strip with inline bullets */}
         <View style={s.footerBox} fixed>
-          <View style={s.thankYouBlock}>
-            <Text style={s.thankYouTitle}>Thank You!</Text>
-            <Text style={s.thankYouText}>We appreciate your business.</Text>
-          </View>
-          
-          <View style={s.footerDivider} />
-          
-          <View style={s.footerInfoStack}>
-            <Text style={s.footerContactLine}>
-              {biz?.phone && `Phone: ${biz.phone}  |  `}
-              {biz?.email && `Email: ${biz.email}`}
-            </Text>
-            
-            <View style={s.footerLinks}>
-              <Link style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
-              <Text style={{ fontSize: 7, color: '#CCC' }}>•</Text>
-              <Text style={{ fontSize: 7, color: '#666', marginHorizontal: 5 }}>Simple Invoicing & Quotations</Text>
+          {/* Top row: contact | brand pill | contact */}
+          <View style={s.footerTopRow}>
+            {biz?.phone && <Text style={s.footerText}>Phone: {biz.phone}</Text>}
+            <View style={s.footerBrandPill}>
+              <Text style={s.footerBrandPillText}>GoodSynk<Text style={{ fontSize: 6, fontFamily: 'Helvetica' }}>™</Text></Text>
             </View>
-            
-            <Text style={s.footerPoweredLine}>
-              Powered By GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text> — Digitally signed document
-            </Text>
+            {biz?.email && <Text wrap={false} style={s.footerText}>Email: {biz.email}</Text>}
+          </View>
+          {/* Bottom row: tagline • brand • trust • link */}
+          <View style={s.footerBottomRow}>
+            <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
+            <Text style={s.footerDot}>•</Text>
+            <Text style={s.footerBrandLine}>Goodsynk Invoice — Simple Invoicing & Quotations</Text>
+            <Text style={s.footerDot}>•</Text>
+            <Text style={s.footerTrustLine}>Digitally signed document</Text>
+            <Text style={s.footerDot}>•</Text>
+            <Link style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Link>
+          </View>
+          <View style={s.poweredByContainer}>
+            <Text style={s.poweredByLabel}>Powered By</Text>
+            <Text style={s.poweredByValue}>GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text></Text>
           </View>
         </View>
         <Text

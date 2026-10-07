@@ -38,7 +38,7 @@ export default function Template4({ invoice }) {
     headerArea: { flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1.5, borderBottomColor: NAVY, borderBottomStyle: 'solid', paddingBottom: 15, marginBottom: 10 },
     bizInfoBox: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0 },
     brandText: { width: 230, flexShrink: 1 },
-    topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
+    topLogo: { maxWidth: 180, maxHeight: 68, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizNameText: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: NAVY, textTransform: 'uppercase', marginBottom: 2 },
     bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight },
     titleBox: { alignItems: 'flex-end', paddingTop: 8 },
@@ -142,13 +142,14 @@ export default function Template4({ invoice }) {
           <View style={s.bizInfoBox}>
             {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
             <View style={s.brandText}>
-            <Text style={s.bizNameText}>{bizName}</Text>
+            <Text numberOfLines={1} wrap={false} style={s.bizNameText}>{bizName}</Text>
             {biz?.address?.street && <Text style={s.bizSubText}>{biz.address.street}</Text>}
             {biz?.address?.city && (
               <Text style={s.bizSubText}>
                 {biz.address.city}, {biz.address.state} {biz.address.pincode || ''}
               </Text>
             )}
+            {biz?.email && <Text wrap={false} style={s.bizSubText}>{biz.email}</Text>}
             {biz?.gstin && <Text style={[s.bizSubText, { color: GOLD, fontFamily: B }]}>GSTIN: {biz.gstin}</Text>}
           
             </View>
@@ -263,56 +264,11 @@ export default function Template4({ invoice }) {
         </View>
 
         {/* Signature */}
-        <View style={{ marginTop: -10, alignItems: 'flex-end' }}>
-          {biz?.businessSignature && (
-            <Image src={biz.businessSignature} style={{ width: 160, height: 55, objectFit: 'contain', marginBottom: 4 }} />
-          )}
-          <View style={{ width: 120, borderTopWidth: 0.5, borderTopColor: '#1B365D', borderTopStyle: 'solid', paddingTop: 4 }}>
-            <SignatoryDetails biz={biz} />
-              <Text style={{ fontSize: 8, color: '#1B365D', textAlign: 'center' }}>Authorised Signature</Text>
-          </View>
+        <View style={{ marginTop: 10, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }} wrap={false}>
           {biz?.businessSeal && (
-            <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />
+            <Image src={biz.businessSeal} style={{ width: 55, height: 55, objectFit: 'contain', marginRight: 16 }} />
           )}
-        </View>
-
-        {/* Footer: two-row stacked with gold accent top rule */}
-        <View style={s.footerBox} fixed>
-          {/* Row 1: Contact */}
-          {(biz?.phone || biz?.email) && (
-            <View style={s.footerContactRow}>
-              {biz?.phone && (
-                <View style={s.footerContactItem}>
-                  <Text style={s.footerContactLabel}>Phone:</Text>
-                  <Text style={s.footerText}>{biz.phone}</Text>
-                </View>
-              )}
-              {biz?.email && (
-                <View style={s.footerContactItem}>
-                  <Text style={s.footerContactLabel}>Email:</Text>
-                  <Text style={s.footerText}>{biz.email}</Text>
-                </View>
-              )}
-            </View>
-          )}
-          {/* Row 2: Brand left + Trust right */}
-          <View style={s.footerBrandRow}>
-            <View style={s.footerBrandLeft}>
-              <Text style={s.footerBrandLine}>Goodsynk Invoice</Text>
-              <Text style={s.footerTagline}>Simple Invoicing, Billing & Quotations</Text>
-              <Text style={s.footerTagline}>Invoice Banega, Payment Badega.</Text>
-            </View>
-            <View style={s.poweredByContainer}>
-              <Text style={s.poweredByLabel}>Powered By</Text>
-              <Text style={s.poweredByValue}>GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text></Text>
-            </View>
-            <View style={s.footerBrandRight}>
-              <Text style={s.footerTrustLine}>Generated securely by GoodSynk<Text style={{ fontSize: 6, fontFamily: 'Helvetica' }}>™</Text>.</Text>
-              <Text style={s.footerTrustLine}>This is a digitally signed document.</Text>
-              <Text style={s.footerLink} src="https://invoice.goodsynk.com">invoice.goodsynk.com</Text>
-              <Text style={{ fontSize: 6.5, color: '#FFFFFF', marginTop: 2, textAlign: 'right' }} render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
-            </View>
-          </View>
+          <SignatoryDetails biz={biz} color={'#1a3a6b'} />
         </View>
       </Page>
     </Document>

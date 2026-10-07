@@ -89,7 +89,7 @@ export default function Template6({ invoice }) {
 
     headerLeft: { width: hdrLeftW, paddingTop: 0, flexDirection: 'row', alignItems: 'flex-start', minWidth: 0 },
     brandText: { flex: 1, minWidth: 0 },
-    topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
+    topLogo: { maxWidth: 140, maxHeight: 52, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizNameHeader: { fontSize: scaled.bizNameFontSize + 2, fontFamily: B, color: '#FFF', textTransform: 'uppercase', marginBottom: 2 },
     bizSubTextHeader: { fontSize: scaled.bizSubTextFontSize, color: '#ffffffff', lineHeight: scaled.bizSubTextLineHeight },
 
@@ -222,7 +222,7 @@ export default function Template6({ invoice }) {
             <View style={s.headerLeft}>
               {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
               <View style={s.brandText}>
-              <Text style={s.bizNameHeader}>{bizName}</Text>
+              <Text numberOfLines={1} wrap={false} style={s.bizNameHeader}>{bizName}</Text>
               <Text style={s.bizSubTextHeader}>
                 {biz?.address?.street && `${biz.address.street}\n`}
                 {biz?.address?.city && `${biz.address.city}, ${biz.address.state} ${biz.address.pincode || ''}\n`}
@@ -241,7 +241,7 @@ export default function Template6({ invoice }) {
         <View style={s.metaSection}>
           <View style={s.billToBlock}>
             <Text style={s.billToTitle}>{isQuotation ? 'QUOTATION TO.' : 'INVOICE TO.'}</Text>
-            <Text style={s.billToName}>{client?.name}</Text>
+            <Text numberOfLines={1} style={s.billToName}>{client?.name}</Text>
             {client?.email && <Text style={s.billToRole}>{client.email}</Text>}
             {client?.phone && <Text style={s.billToText}>Phone: {client.phone}</Text>}
             {client?.address?.street && <Text style={s.billToText}>{client.address.street}</Text>}
@@ -344,18 +344,11 @@ export default function Template6({ invoice }) {
         </View>
 
         {/* Signature + stamp side by side — bottom right */}
-        <View style={{ paddingHorizontal: 40, marginTop: 8, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }} wrap={false}>
+        <View style={{ marginTop: 10, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }} wrap={false}>
           {biz?.businessSeal && (
-            <Image src={biz.businessSeal} style={{ width: 64, height: 64, objectFit: 'contain', marginRight: 18 }} />
+            <Image src={biz.businessSeal} style={{ width: 55, height: 55, objectFit: 'contain', marginRight: 16 }} />
           )}
-          <View style={{ width: 150, alignItems: 'center' }}>
-            {biz?.businessSignature && (
-              <Image src={biz.businessSignature} style={{ width: 130, height: 42, objectFit: 'contain', marginBottom: 3 }} />
-            )}
-            <View style={[s.sigLine, { alignSelf: 'stretch' }]} />
-            <SignatoryDetails biz={biz} align="center" />
-            <Text style={s.sigText}>Authorised Signature</Text>
-          </View>
+          <SignatoryDetails biz={biz} color={'#1a3a6b'} showLabel={false} />
         </View>
         <Text style={s.thankYou}>Thank you for your business</Text>
 
@@ -364,7 +357,7 @@ export default function Template6({ invoice }) {
           {(biz?.phone || biz?.email) && (
             <View style={s.footerContact}>
               {biz?.phone && <Text style={[s.footerContactText, { fontSize: contactSize(phoneTxt), textAlign: 'center' }]}>{phoneTxt}</Text>}
-              {biz?.email && <Text style={[s.footerContactText, { fontSize: contactSize(emailTxt), textAlign: 'center' }]}>{emailTxt}</Text>}
+              {biz?.email && <Text wrap={false} style={[s.footerContactText, { fontSize: contactSize(emailTxt), textAlign: 'center' }]}>{emailTxt}</Text>}
             </View>
           )}
           <View style={s.footerDivider} />

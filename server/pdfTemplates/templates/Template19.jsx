@@ -261,7 +261,9 @@ export default function Template19({ invoice }) {
     headerCol1: { width: '36%', padding: 8, borderRightWidth: 1, borderRightColor: '#111827', justifyContent: 'center', alignItems: 'center' },
     headerCol2: { width: '32%', padding: 8, borderRightWidth: 1, borderRightColor: '#111827' },
     headerCol3: { width: '32%', padding: 8 },
-    logoImg: { width: '100%', height: 55, objectFit: 'contain', marginBottom: 2 },
+    // Keep the logo compact in emailed quotation PDFs; filling the whole header
+    // column made large source logos dominate the document header.
+    logoImg: { width: 96, maxWidth: '100%', height: 42, objectFit: 'contain', marginBottom: 2, flexShrink: 0 },
     brandName: { fontSize: 7, fontFamily: B, color: PRIMARY, textAlign: 'center' },
     officeTitle: { fontSize: 8, color: '#1E3A8A', marginBottom: 2 },
     officeText: { fontSize: 7.5, color: '#111827', lineHeight: 1.25 },

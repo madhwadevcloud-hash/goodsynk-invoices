@@ -32,7 +32,7 @@ export default function Template11({ invoice }) {
     headerWrap: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 },
     bizBox: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'flex-start' },
     brandText: { width: 230, flexShrink: 1 },
-    topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
+    topLogo: { maxWidth: 140, maxHeight: 52, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizName: { fontFamily: B, fontSize: 14, color: '#111', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 8 },
     bizText: { fontSize: 8.5, color: '#555', lineHeight: 1.6 },
     
@@ -85,14 +85,11 @@ export default function Template11({ invoice }) {
     sigLine: { width: 160, height: 1, backgroundColor: '#DDD', marginBottom: 6 },
     sigText: { fontSize: 8, color: '#777', textTransform: 'uppercase', letterSpacing: 1 },
 
-    // Footer: Asymmetric Split Border
-    footerBox: { position: 'absolute', bottom: 20, left: 45, right: 45 },
-    footerBorderRow: { flexDirection: 'row', width: '100%', marginBottom: 15 },
-    footerBorderLeft: { height: 2, width: '30%', backgroundColor: PRIMARY },
-    footerBorderRight: { height: 1, width: '70%', backgroundColor: '#DDD' },
-    footerContentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    // Footer
+    footer: { position: 'absolute', bottom: 20, left: 45, right: 45, alignItems: 'center' },
+    footerDivider: { width: '100%', height: 1, backgroundColor: '#EEE', marginBottom: 10 },
     footerText: { fontSize: 7, color: '#999', letterSpacing: 1, textTransform: 'uppercase' },
-    footerLink: { color: PRIMARY, fontFamily: B, textDecoration: 'none' }
+    footerLink: { color: '#555', textDecoration: 'none' }
   });
 
   const currency = invoice._currency || invoice.currency || 'INR';
@@ -128,11 +125,11 @@ export default function Template11({ invoice }) {
           <View style={s.bizBox}>
             {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
             <View style={s.brandText}>
-            <Text style={s.bizName}>{bizName}</Text>
+            <Text numberOfLines={1} wrap={false} style={s.bizName}>{bizName}</Text>
             {biz?.address?.street && <Text style={s.bizText}>{String(biz.address.street).replace(/\s+,/g, ',').replace(/,(?=\S)/g, ', ').trim()}</Text>}
             {biz?.address?.city && <Text style={s.bizText}>{[[biz?.address?.city, biz?.address?.state].map((v) => String(v || '').trim().replace(/[-,\s]+$/, '')).filter(Boolean).join(', '), String(biz?.address?.pincode || '').trim()].filter(Boolean).join(' ')}</Text>}
             {biz?.phone && <Text style={s.bizText}>{biz.phone}</Text>}
-            {biz?.email && <Text style={s.bizText}>{biz.email}</Text>}
+            {biz?.email && <Text wrap={false} style={s.bizText}>{biz.email}</Text>}
             {biz?.gstin && <Text style={[s.bizText, { marginTop: 10, fontFamily: B }]}>GSTIN: {biz.gstin}</Text>}
             </View>
           </View>
@@ -158,7 +155,7 @@ export default function Template11({ invoice }) {
 
         <View style={s.billToWrap}>
           <Text style={s.billToLabel}>BILLED TO</Text>
-          <Text style={s.clientName}>{client?.name}</Text>
+          <Text numberOfLines={1} style={s.clientName}>{client?.name}</Text>
           {client?.address?.street && <Text style={s.clientText}>{client.address.street}</Text>}
           {client?.address?.city && <Text style={s.clientText}>{client.address.city}, {client.address.state} {client.address.pincode}</Text>}
           {client?.phone && <Text style={s.clientText}>{client.phone}</Text>}
@@ -249,25 +246,17 @@ export default function Template11({ invoice }) {
           )}
           
           <View style={s.sigWrap} wrap={false}>
-            {biz?.businessSignature && <Image src={biz.businessSignature} style={s.sigImg} />
-}
             <View style={s.sigLine} />
-            <SignatoryDetails biz={biz} />
-              <Text style={s.sigText}>Authorised Signatory</Text>
+            <SignatoryDetails biz={biz} showLabel={false} />
             {biz?.businessSeal && <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />}
           </View>
         </View>
 
-        <View style={s.footerBox} fixed>
-          <View style={s.footerBorderRow}>
-            <View style={s.footerBorderLeft} />
-            <View style={s.footerBorderRight} />
-          </View>
-          <View style={s.footerContentRow}>
-            <Text style={s.footerText}>
-              Generated securely • Powered by <Link style={s.footerLink} src="https://invoice.goodsynk.com">GoodSynk</Link><Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text>
-            </Text>
-          </View>
+        <View style={s.footer} fixed>
+          <View style={s.footerDivider} />
+          <Text style={s.footerText}>
+            Generated securely • Powered by <Link style={s.footerLink} src="https://invoice.goodsynk.com">GoodSynk</Link><Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text>
+          </Text>
         </View>
         <Text
           style={{ position: 'absolute', bottom: 6, right: 40, fontSize: 7.5, color: '#333333' }}
