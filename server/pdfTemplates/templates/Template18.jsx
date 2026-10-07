@@ -203,7 +203,7 @@ export default function Template18({ invoice }) {
             <Text style={s.docCopyTag}>ORIGINAL FOR RECIPIENT</Text>
             <View style={s.metaRow}><Text style={s.metaKey}>{isQuotation ? 'Quotation #:' : 'Invoice #:'}</Text><Text style={s.metaVal}>{docNumber}</Text></View>
             <View style={s.metaRow}><Text style={s.metaKey}>Date:</Text><Text style={s.metaVal}>{inv.invoiceDate || inv.date || '13 Jul 2023'}</Text></View>
-            {inv.dueDate ? <View style={s.metaRow}><Text style={s.metaKey}>Due Date:</Text><Text style={s.metaVal}>{inv.dueDate}</Text></View> : null}
+            {inv.dueDate ? <View style={s.metaRow}><Text style={s.metaKey}>{isQuotation ? 'Valid Until:' : 'Due Date:'}</Text><Text style={s.metaVal}>{inv.dueDate}</Text></View> : null}
           </View>
         </View>
 
@@ -216,7 +216,7 @@ export default function Template18({ invoice }) {
               <Text style={s.addrText}>{getAddressCityLine(biz?.address)}</Text>
             </View>
             <View style={s.addressCol}>
-              <Text style={s.addrLabel}>Bill To:</Text>
+              <Text style={s.addrLabel}>{isQuotation ? 'Prepared For:' : 'Bill To:'}</Text>
               <Text style={s.addrName}>{client?.name || client?.clientName || 'Client Name'}</Text>
               <Text style={s.addrText}>{getAddressStreet(client?.address)}</Text>
               <Text style={s.addrText}>{getAddressCityLine(client?.address)}</Text>

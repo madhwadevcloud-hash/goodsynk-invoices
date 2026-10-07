@@ -206,7 +206,7 @@ export default function Template1({ invoice }) {
           {/* Info Blocks */}
           <View style={s.infoBlock}>
             <View style={s.infoCol}>
-              <Text style={s.infoTitle}>Billed To</Text>
+              <Text style={s.infoTitle}>{isQuotation ? 'Prepared For' : 'Billed To'}</Text>
               <Text style={[s.infoText, { fontFamily: B }]}>{client?.name}</Text>
               {client?.address?.street && <Text style={s.infoText}>{client.address.street}</Text>}
               {client?.address?.city && <Text style={s.infoText}>{client.address.city}, {client.address.state} {client.address.pincode}</Text>}
@@ -215,12 +215,12 @@ export default function Template1({ invoice }) {
             <View style={s.infoCol}>
               <Text style={s.infoTitle}>Details</Text>
               <Text style={s.infoText}>{isQuotation ? 'Quotation No' : 'Invoice No'}: <Text style={{ fontFamily: B }}>{invoice.invoiceNumber || invoice.quotationNumber}</Text></Text>
-              <Text style={s.infoText}>Date of Issue: <Text style={{ fontFamily: B }}>{new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text></Text>
-              <Text style={s.infoText}>Due Date: <Text style={{ fontFamily: B }}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US') : 'Upon Receipt'}</Text></Text>
+              <Text style={s.infoText}>Date of Issue: <Text style={{ fontFamily: B }}>{new Date(invoice.issueDate).toLocaleDateString('en-GB')}</Text></Text>
+              <Text style={s.infoText}>{isQuotation ? 'Valid Until' : 'Due Date'}: <Text style={{ fontFamily: B }}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-GB') : (isQuotation ? '-' : 'Upon Receipt')}</Text></Text>
             </View>
             {(
               <View style={s.infoCol}>
-                <Text style={s.infoTitle}>Payment Details</Text>
+                <Text style={s.infoTitle}>{isQuotation ? 'Bank Details' : 'Payment Details'}</Text>
                 {biz?.bankDetails?.accountNumber ? (
                   <>
                     {biz.bankDetails.bankName && <Text style={s.infoText}>Bank: {biz.bankDetails.bankName}</Text>}
@@ -307,7 +307,15 @@ export default function Template1({ invoice }) {
         </View>
 
         {/* Signature + stamp: side by side so the block stays short and never strands alone on a new page */}
-        <View style={{ marginTop: 14, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }} wrap={false}>
+        <View style={{ marginTop: 14, paddingHorizontal: 40, flexDirection: 'row', justifyContent: isQuotation ? 'space-between' : 'flex-end', alignItems: 'flex-end' }} wrap={false}>
+          {isQuotation && (
+            <View style={{ width: 170 }}>
+              <Text style={{ fontSize: 7.5, fontFamily: B, color: '#666', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 22 }}>Accepted by (Client)</Text>
+              <View style={{ borderTopWidth: 0.5, borderTopColor: '#1a3a6b', borderTopStyle: 'solid', paddingTop: 2 }}>
+                <Text style={{ fontSize: 8, color: '#1a3a6b' }}>Signature, name & date</Text>
+              </View>
+            </View>
+          )}
           {biz?.businessSeal && (
             <Image src={biz.businessSeal} style={{ width: 64, height: 64, objectFit: 'contain', marginRight: 18 }} />
           )}

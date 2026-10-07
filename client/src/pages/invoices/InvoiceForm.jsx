@@ -2561,6 +2561,9 @@ export default function InvoiceForm() {
                   return (
                     <div
                       key={t.id}
+                      onClick={() => {
+                        if (isLocked) navigate('/upgrade');
+                      }}
                       style={{
                         border: isSelected ? '2px solid var(--primary)' : '1px solid var(--border)',
                         borderRadius: 10,
@@ -2580,16 +2583,15 @@ export default function InvoiceForm() {
                       <div style={{ position: 'relative' }}>
                         <button
                           type="button"
-                          disabled={isLocked}
-                          onClick={() => setPreviewTemplate(t)}
-                          aria-label={`Preview ${t.name}`}
+                          onClick={() => { if (!isLocked) setPreviewTemplate(t); }}
+                          aria-label={isLocked ? `Upgrade to use ${t.name}` : `Preview ${t.name}`}
                           style={{
                             width: '100%',
                             display: 'block',
                             border: 0,
                             padding: 0,
                             background: '#fff',
-                            cursor: isLocked ? 'not-allowed' : 'pointer',
+                            cursor: 'pointer',
                             overflow: 'hidden',
                           }}
                         >
@@ -2648,6 +2650,7 @@ export default function InvoiceForm() {
                             <div style={{
                               position: 'absolute',
                               inset: 0,
+                              pointerEvents: 'none',
                               background: 'rgba(20,20,30,0.45)',
                               display: 'flex',
                               alignItems: 'center',
@@ -2698,8 +2701,7 @@ export default function InvoiceForm() {
                         <button
                           type="button"
                           className="btn btn-ghost btn-sm"
-                          disabled={isLocked}
-                          onClick={() => setPreviewTemplate(t)}
+                          onClick={() => { if (!isLocked) setPreviewTemplate(t); }}
                           style={{ minHeight: 36, fontSize: '0.68rem', padding: '5px 6px' }}
                         >
                           <Eye size={13} /> Preview
@@ -2708,8 +2710,8 @@ export default function InvoiceForm() {
                         <button
                           type="button"
                           className="btn btn-secondary btn-sm"
-                          disabled={isLocked}
                           onClick={() => {
+                            if (isLocked) return;
                             setPreviewTemplate({
                               ...t,
                               colorsOnly: true,

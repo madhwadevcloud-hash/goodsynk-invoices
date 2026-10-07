@@ -268,7 +268,7 @@ export default function Template10({ invoice }) {
 
         <View style={s.cardsRow}>
           <View style={s.card}>
-            <Text style={s.cardHeader}>Billed To</Text>
+            <Text style={s.cardHeader}>{isQuotation ? 'Prepared For' : 'Billed To'}</Text>
             <Text style={s.clientName}>{client?.name}</Text>
             {client?.address?.street && <Text style={s.clientText}>{client.address.street}</Text>}
             {client?.address?.city && <Text style={s.clientText}>{client.address.city}, {client.address.state} {client.address.pincode}</Text>}
@@ -280,12 +280,12 @@ export default function Template10({ invoice }) {
              <Text style={s.cardHeader}>Details</Text>
              <View style={s.metaRow}>
                <Text style={s.metaLabel}>Date of Issue:</Text>
-               <Text style={s.metaVal}>{new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text>
+               <Text style={s.metaVal}>{new Date(invoice.issueDate).toLocaleDateString('en-GB')}</Text>
              </View>
              {invoice.dueDate && (
                <View style={s.metaRow}>
-                 <Text style={s.metaLabel}>Due Date:</Text>
-                 <Text style={s.metaVal}>{new Date(invoice.dueDate).toLocaleDateString('en-US')}</Text>
+                 <Text style={s.metaLabel}>{isQuotation ? 'Valid Until:' : 'Due Date:'}</Text>
+                 <Text style={s.metaVal}>{new Date(invoice.dueDate).toLocaleDateString('en-GB')}</Text>
                </View>
              )}
 
