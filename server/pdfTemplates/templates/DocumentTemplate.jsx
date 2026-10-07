@@ -1,7 +1,9 @@
 import SignatoryDetails from './SignatoryDetails';
 import React from 'react';
-import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, Image, StyleSheet, Font } from '@react-pdf/renderer';
 import { isRasterImage } from './watermarkUtils';
+import { getAddressStreet, getAddressCityLine } from './addressUtils';
+import { safeHyphenation } from './layoutUtils';
 
 const themes = {
   invoice12: { ink: '#123B5D', accent: '#D9A441', soft: '#F2F5F7', mode: 'ledger', title: 'INVOICE' },
@@ -31,23 +33,30 @@ const hexToRgba = (hex, alpha) => {
 
 
 export default function DocumentTemplate({ invoice, variant }) {
+  // Break long unbroken tokens (invoice numbers, e-mails) so they wrap inside their column.
+  Font.registerHyphenationCallback(safeHyphenation);
   const theme = themes[variant] || themes.invoice12;
   const biz = invoice.user || {};
   const client = invoice.client || {};
   const currency = invoice.currency || 'INR';
   const number = invoice.invoiceNumber || invoice.quotationNumber || '-';
   const items = invoice.items || [];
+  // client.address is an object ({ street, city, state, pincode }); interpolating it directly printed "[object Object]".
+  const clientAddress = [getAddressStreet(client.address), getAddressCityLine(client.address)].filter(Boolean).join('\n');
   const isQuotation = theme.title === 'QUOTATION';
   const styles = StyleSheet.create({
     page: { padding: 34, fontSize: 9, color: '#27313B', fontFamily: 'Helvetica', backgroundColor: '#FFFFFF' },
     top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: 18, borderBottomWidth: theme.mode === 'band' ? 0 : 1, borderBottomColor: theme.accent },
-    brand: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    // flex:1 + minWidth:0: a long business name wraps in its own column instead of running under the INVOICE title
+    brand: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0, paddingRight: 16 },
+    titleBlock: { flexShrink: 0, maxWidth: 210, alignItems: 'flex-end' },
     logo: { width: 36, height: 36, objectFit: 'contain', flexShrink: 0 },
     logoFallback: { width: 36, height: 36, backgroundColor: theme.ink, color: '#FFFFFF', textAlign: 'center', paddingTop: 12, fontSize: 10, fontFamily: 'Helvetica-Bold' },
     bizName: { color: theme.ink, fontSize: 14, fontFamily: 'Helvetica-Bold' },
     muted: { color: '#66717D', marginTop: 3, lineHeight: 1.35 },
     title: { color: theme.ink, fontSize: 25, fontFamily: 'Helvetica-Bold', letterSpacing: 1 },
-    meta: { textAlign: 'right', color: '#66717D', lineHeight: 1.45 },
+    meta: { textAlign: 'right', color: '#66717D', lineHeight: 1.45, maxWidth: 210 },
+    metaStrong: { color: theme.ink, fontFamily: 'Helvetica-Bold' },
     intro: { backgroundColor: theme.soft, padding: 14, marginTop: 16, borderLeftWidth: 5, borderLeftColor: theme.accent, flexDirection: 'row', justifyContent: 'space-between' },
     sectionLabel: { color: theme.ink, fontSize: 8, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 5 },
     address: { color: '#3F4B57', lineHeight: 1.35, maxWidth: 220 },
@@ -88,14 +97,29 @@ export default function DocumentTemplate({ invoice, variant }) {
           </View>
         ) : null}
         {theme.mode === 'band' ? (
-          <View style={styles.band}><View style={styles.brand}>{biz.businessLogo ? <Image src={biz.businessLogo} style={styles.logo} /> : <Text style={styles.logoFallback}>G</Text>}<View><Text style={{ ...styles.bizName, color: '#FFFFFF' }}>{biz.businessName || biz.name || 'Your Business'}</Text><Text style={{ color: '#DCE5ED', marginTop: 3 }}>Tax invoice and payment record</Text></View></View><View><Text style={{ ...styles.title, color: '#FFFFFF' }}>{theme.title}</Text><Text style={{ color: '#DCE5ED', textAlign: 'right', marginTop: 4 }}>#{number}</Text></View></View>
+          <View style={styles.band}>
+            <View style={styles.brand}>{biz.businessLogo ? <Image src={biz.businessLogo} style={styles.logo} /> : <Text style={styles.logoFallback}>G</Text>}<View style={{ flex: 1, minWidth: 0 }}><Text style={{ ...styles.bizName, color: '#FFFFFF' }}>{biz.businessName || biz.name || 'Your Business'}</Text><Text style={{ color: '#DCE5ED', marginTop: 3 }}>Tax invoice and payment record</Text></View></View>
+            <View style={styles.titleBlock}><Text style={{ ...styles.title, color: '#FFFFFF' }}>{theme.title}</Text><Text style={{ color: '#DCE5ED', textAlign: 'right', marginTop: 4, maxWidth: 210 }}>#{number}</Text></View>
+          </View>
         ) : (
-          <View style={styles.top}><View style={styles.brand}>{biz.businessLogo ? <Image src={biz.businessLogo} style={styles.logo} /> : <Text style={styles.logoFallback}>G</Text>}<View><Text style={styles.bizName}>{biz.businessName || biz.name || 'Your Business'}</Text><Text style={styles.muted}>{biz.email || ''}</Text></View></View><View><Text style={styles.title}>{theme.title}</Text><Text style={styles.meta}>#{number}{'\n'}Issued {date(invoice.issueDate)}{'\n'}{isQuotation ? `Valid until ${date(invoice.validUntil)}` : `Due ${date(invoice.dueDate)}`}</Text></View></View>
+          <View style={styles.top}>
+            <View style={styles.brand}>{biz.businessLogo ? <Image src={biz.businessLogo} style={styles.logo} /> : <Text style={styles.logoFallback}>G</Text>}<View style={{ flex: 1, minWidth: 0 }}><Text style={styles.bizName}>{biz.businessName || biz.name || 'Your Business'}</Text><Text style={styles.muted}>{biz.email || ''}</Text></View></View>
+            <View style={styles.titleBlock}><Text style={styles.title}>{theme.title}</Text><Text style={styles.meta}>#{number}{'\n'}Issued {date(invoice.issueDate)}{'\n'}{isQuotation ? `Valid until ${date(invoice.validUntil)}` : `Due ${date(invoice.dueDate)}`}</Text></View>
+          </View>
         )}
         {isQuotation && <View style={styles.callout}><Text style={styles.sectionLabel}>Project proposal</Text><Text style={{ color: theme.ink, fontFamily: 'Helvetica-Bold' }}>Thank you for the opportunity to work together.</Text><Text style={styles.muted}>This quotation outlines the requested products and services, pricing, and terms.</Text></View>}
-        <View style={styles.intro}><View><Text style={styles.sectionLabel}>{isQuotation ? 'Prepared for' : 'Bill to'}</Text><Text style={{ ...styles.address, fontFamily: 'Helvetica-Bold', color: theme.ink }}>{client.name || 'Client'}</Text><Text style={styles.address}>{client.email || ''}{client.phone ? `\n${client.phone}` : ''}{client.address ? `\n${client.address}` : ''}</Text></View><View><Text style={styles.sectionLabel}>Business details</Text><Text style={styles.address}>{biz.phone || ''}{biz.gstin ? `\nGSTIN: ${biz.gstin}` : ''}{biz.address?.city ? `\n${biz.address.city}, ${biz.address.state || ''}` : ''}</Text></View></View>
-        <View style={styles.table}><View style={styles.head}><Text style={styles.desc}>Description</Text><Text style={styles.qty}>Qty</Text><Text style={styles.price}>Rate</Text><Text style={styles.tax}>Tax</Text><Text style={styles.total}>Amount</Text></View>{items.map((item, index) => <View key={index} style={[styles.row, index % 2 ? styles.alt : {}]}><View style={styles.desc}><Text style={styles.itemName}>{item.name || 'Item'}</Text><Text style={styles.itemSub}>{item.description || ''}{item.hsn ? ` | HSN ${item.hsn}` : ''}</Text></View><Text style={styles.qty}>{item.quantity || 0} {item.unit || ''}</Text><Text style={styles.price}>{money(item.price, currency)}</Text><Text style={styles.tax}>{Number(item.cgstRate || 0) + Number(item.sgstRate || 0) + Number(item.igstRate || 0) + Number(item.vatRate || 0)}%</Text><Text style={styles.total}>{money(item.total ?? (item.price || 0) * (item.quantity || 0), currency)}</Text></View>)}</View>
-        <View style={styles.lower}><View style={styles.notes}><Text style={styles.sectionLabel}>{isQuotation ? 'Scope and terms' : 'Notes and payment details'}</Text><Text>{invoice.notes || 'Thank you for your business.'}</Text><Text style={{ marginTop: 8 }}>{invoice.termsAndConditions || ''}</Text>{biz.bankDetails?.bankName && <Text style={{ marginTop: 8 }}>Bank: {biz.bankDetails.bankName}{biz.bankDetails.accountNumber ? ` | A/C ${biz.bankDetails.accountNumber}` : ''}{biz.bankDetails.ifscCode ? ` | IFSC ${biz.bankDetails.ifscCode}` : ''}{biz.bankDetails.branch ? ` | Branch ${biz.bankDetails.branch}` : ''}</Text>}</View><View style={styles.totals}><View style={styles.totalLine}><Text>Subtotal</Text><Text>{money(invoice.subtotal, currency)}</Text></View><View style={styles.totalLine}><Text>Discount</Text><Text>- {money(invoice.discountAmount, currency)}</Text></View><View style={styles.totalLine}><Text>Tax</Text><Text>{money(invoice.taxTotal, currency)}</Text></View><View style={styles.grand}><Text>{isQuotation ? 'Estimated total' : 'Amount due'}</Text><Text>{money(invoice.total, currency)}</Text></View></View></View>
+        <View style={styles.intro}>
+          <View><Text style={styles.sectionLabel}>{isQuotation ? 'Prepared for' : 'Bill to'}</Text><Text style={{ ...styles.address, fontFamily: 'Helvetica-Bold', color: theme.ink }}>{client.name || 'Client'}</Text><Text style={styles.address}>{client.email || ''}{client.phone ? `\n${client.phone}` : ''}{clientAddress ? `\n${clientAddress}` : ''}</Text></View>
+          <View><Text style={styles.sectionLabel}>Business details</Text><Text style={styles.address}>{biz.phone || ''}{biz.gstin ? `\nGSTIN: ${biz.gstin}` : ''}{biz.address?.city ? `\n${biz.address.city}, ${biz.address.state || ''}` : ''}</Text></View>
+        </View>
+        <View style={styles.table}>
+          <View style={styles.head}><Text style={styles.desc}>Description</Text><Text style={styles.qty}>Qty</Text><Text style={styles.price}>Rate</Text><Text style={styles.tax}>Tax</Text><Text style={styles.total}>Amount</Text></View>
+          {items.map((item, index) => <View key={index} style={[styles.row, index % 2 ? styles.alt : {}]}><View style={styles.desc}><Text style={styles.itemName}>{item.name || 'Item'}</Text><Text style={styles.itemSub}>{item.description || ''}{item.hsn ? ` | HSN ${item.hsn}` : ''}</Text></View><Text style={styles.qty}>{item.quantity || 0} {item.unit || ''}</Text><Text style={styles.price}>{money(item.price, currency)}</Text><Text style={styles.tax}>{Number(item.cgstRate || 0) + Number(item.sgstRate || 0) + Number(item.igstRate || 0) + Number(item.vatRate || 0)}%</Text><Text style={styles.total}>{money(item.total ?? (item.price || 0) * (item.quantity || 0), currency)}</Text></View>)}
+        </View>
+        <View style={styles.lower}>
+          <View style={styles.notes}><Text style={styles.sectionLabel}>{isQuotation ? 'Scope and terms' : 'Notes and payment details'}</Text><Text>{invoice.notes || 'Thank you for your business.'}</Text><Text style={{ marginTop: 8 }}>{invoice.termsAndConditions || ''}</Text>{biz.bankDetails?.bankName && <Text style={{ marginTop: 8 }}>Bank: {biz.bankDetails.bankName}{biz.bankDetails.accountNumber ? ` | A/C ${biz.bankDetails.accountNumber}` : ''}{biz.bankDetails.ifscCode ? ` | IFSC ${biz.bankDetails.ifscCode}` : ''}{biz.bankDetails.branch ? ` | Branch ${biz.bankDetails.branch}` : ''}</Text>}</View>
+          <View style={styles.totals}><View style={styles.totalLine}><Text>Subtotal</Text><Text>{money(invoice.subtotal, currency)}</Text></View><View style={styles.totalLine}><Text>Discount</Text><Text>- {money(invoice.discountAmount, currency)}</Text></View><View style={styles.totalLine}><Text>Tax</Text><Text>{money(invoice.taxTotal, currency)}</Text></View><View style={styles.grand}><Text>{isQuotation ? 'Estimated total' : 'Amount due'}</Text><Text>{money(invoice.total, currency)}</Text></View></View>
+        </View>
         <View style={styles.footer}><Text style={styles.muted}>Powered by GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text> | {biz.email || 'invoice.goodsynk.com'}</Text><View style={styles.signature}>{biz.businessSignature && <Image src={biz.businessSignature} style={styles.signatureImage} />
 }<SignatoryDetails biz={biz} />
               <Text>Authorised signature</Text>{biz.businessSeal && <Image src={biz.businessSeal} style={{ height: 40, width: 40, objectFit: 'contain', marginTop: 2 }} me={1} />}</View></View>

@@ -3,11 +3,12 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
 import { isRasterImage } from './watermarkUtils';
+import { safeHyphenation } from './layoutUtils';
 
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-SemiBold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-Bold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYMZhrib2Bg-4.ttf' });
-Font.registerHyphenationCallback(word => [word]);
+Font.registerHyphenationCallback(safeHyphenation);
 
 const B = 'Inter-Bold';
 const M = 'Inter-SemiBold';
@@ -53,12 +54,11 @@ function numberToWords(num) {
   return words.trim();
 }
 
-// Template17 — "Modern Retail": a clean, borderless e-commerce-style invoice
-// (inspired by modern retail tax invoices) — logo top-left, big doc title +
-// number top-right, underline-only rows, a bold rounded total chip, and a
-// slim two-tone footer with page numbers.
 export default function Template17({ invoice }) {
   const { client, user: biz } = invoice;
+  // Break long unbroken tokens (invoice numbers, e-mails, bank text) inside their box; re-asserted
+  // at render time because the callback is global and other templates register their own.
+  Font.registerHyphenationCallback(safeHyphenation);
   const colors = invoice.templateColors || { primary: '#111820' };
   const PRIMARY = colors.primary;
   const scaled = buildScaledStyles(biz);
@@ -69,20 +69,23 @@ export default function Template17({ invoice }) {
     watermarkImg: { width: 250, height: 250, objectFit: 'contain', opacity: 0.12 },
     watermarkText: { fontSize: 60, fontFamily: B, color: hexToRgba(PRIMARY, 0.07), transform: 'rotate(-45deg)', letterSpacing: 5 },
 
+    // --- Header Alignment Fix ---
     topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-    brandRow: { flexDirection: 'row', alignItems: 'center' },
-    logo: { width: 40, height: 40, objectFit: 'contain', marginRight: 10 },
-    bizName: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase' },
-    bizText: { fontSize: scaled.bizSubTextFontSize, color: '#666', lineHeight: scaled.bizSubTextLineHeight, marginTop: 1 },
-    titleBlock: { alignItems: 'flex-end' },
+    brandRow: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, paddingRight: 15 },
+    logo: { width: 40, height: 40, objectFit: 'contain', marginRight: 10, marginTop: 2 },
+    brandTextContainer: { flex: 1, minWidth: 0, flexDirection: 'column', alignItems: 'flex-start' },
+    bizName: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
+    bizText: { fontSize: scaled.bizSubTextFontSize, color: '#666', lineHeight: scaled.bizSubTextLineHeight, marginTop: 0, textAlign: 'left' },
+    
+    titleBlock: { alignItems: 'flex-end', width: '35%', flexShrink: 0 },
     docTag: { fontSize: 7, fontFamily: B, color: PRIMARY, letterSpacing: 2, marginBottom: 3 },
     docTitle: { fontFamily: B, fontSize: 22, color: '#000' },
-    docNumber: { fontSize: 8.5, color: '#555', marginTop: 4 },
+    docNumber: { fontSize: 8.5, color: '#555', marginTop: 4, textAlign: 'right' },
 
     divider: { height: 2, backgroundColor: PRIMARY, marginTop: 16, marginBottom: 16 },
 
     metaGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 18 },
-    metaCol: { width: '31%' },
+    metaCol: { width: '31%', minWidth: 0 },
     metaLabel: { fontSize: 6.8, fontFamily: B, color: '#8A8F98', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 4 },
     metaName: { fontSize: 9, fontFamily: B, color: '#000', marginBottom: 2 },
     metaText: { fontSize: 7.8, color: '#333', lineHeight: 1.45, marginBottom: 1 },
@@ -112,16 +115,22 @@ export default function Template17({ invoice }) {
     statusDot: { width: 5, height: 5, borderRadius: 3, marginRight: 4 },
     statusText: { fontSize: 7, fontFamily: B },
 
-    wordsBlock: { marginTop: 16, paddingTop: 10, borderTopWidth: 0.6, borderTopColor: '#EBEBEB' },
-    wordsLabel: { fontSize: 6.8, fontFamily: B, color: '#8A8F98', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3 },
-    wordsText: { fontSize: 7.8, color: '#333' },
+    // --- Amount in Words Alignment Fix ---
+    wordsBlock: { marginTop: 16, paddingTop: 10, borderTopWidth: 0.6, borderTopColor: '#EBEBEB', flexDirection: 'row', justifyContent: 'flex-end' },
+    wordsBox: { width: 220, alignItems: 'flex-end' },
+    wordsLabel: { fontSize: 6.8, fontFamily: B, color: '#8A8F98', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 3, textAlign: 'right' },
+    wordsText: { fontSize: 7.8, color: '#333', textAlign: 'right' },
 
     lowerRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 },
     noteCol: { width: '52%' },
     noteLabel: { fontSize: 6.8, fontFamily: B, color: '#8A8F98', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 4 },
     noteText: { fontSize: 7.6, color: '#333', lineHeight: 1.4, marginBottom: 8 },
-    bankLine: { fontSize: 7.4, color: '#333', lineHeight: 1.4 },
-    bankStrong: { fontFamily: B, color: '#000' },
+    
+    // --- Bank Details Structured Layout (Prevents page splitting) ---
+    bankContainer: { marginTop: 6, flexDirection: 'column' },
+    bankRow: { flexDirection: 'row', marginBottom: 3 },
+    bankLabel: { fontSize: 7.4, color: '#555', width: 75 },
+    bankValue: { fontSize: 7.4, fontFamily: M, color: '#000', flex: 1, minWidth: 0 },
 
     sigCol: { width: '30%', alignItems: 'flex-end' },
     sigLabel: { fontSize: 7.5, color: '#555', marginBottom: 22 },
@@ -158,10 +167,11 @@ export default function Template17({ invoice }) {
           </View>
         ) : null}
 
+        {/* Header Section */}
         <View style={s.topRow}>
           <View style={s.brandRow}>
             {biz?.businessLogo && <Image src={biz.businessLogo} style={s.logo} />}
-            <View>
+            <View style={s.brandTextContainer}>
               <Text style={s.bizName}>{bizName}</Text>
               {biz?.address?.street && <Text style={s.bizText}>{biz.address.street}</Text>}
               {biz?.address?.city && <Text style={s.bizText}>{biz.address.city}, {biz.address.state} {biz.address.pincode}</Text>}
@@ -180,6 +190,7 @@ export default function Template17({ invoice }) {
 
         <View style={s.divider} />
 
+        {/* Client Info Section */}
         <View style={s.metaGrid}>
           <View style={s.metaCol}>
             <Text style={s.metaLabel}>Bill To</Text>
@@ -200,6 +211,7 @@ export default function Template17({ invoice }) {
           </View>
         </View>
 
+        {/* Table Section */}
         <View style={s.table}>
           <View style={s.tHead}>
             <Text style={[s.th, s.colNo]}>#</Text>
@@ -229,6 +241,7 @@ export default function Template17({ invoice }) {
           })}
         </View>
 
+        {/* Totals Section */}
         <View style={s.totalsWrap}>
           <View style={s.totalsBox}>
             <View style={s.totalLine}><Text style={s.totalLabel}>Taxable Amount</Text><Text style={s.totalVal}>{fmt(invoice.subtotal - (invoice.discountAmount || 0))}</Text></View>
@@ -251,24 +264,52 @@ export default function Template17({ invoice }) {
           </View>
         </View>
 
+        {/* Amount in Words - Right Aligned below totals */}
         <View style={s.wordsBlock}>
-          <Text style={s.wordsLabel}>Amount in Words</Text>
-          <Text style={s.wordsText}>{currency} {totalInWords} Only</Text>
+          <View style={s.wordsBox}>
+            <Text style={s.wordsLabel}>Amount in Words</Text>
+            <Text style={s.wordsText}>{currency} {totalInWords} Only</Text>
+          </View>
         </View>
 
+        {/* Lower Section: Notes & Bank Details / Signature */}
         <View style={s.lowerRow}>
           <View style={s.noteCol}>
             {invoice.notes && (<><Text style={s.noteLabel}>Notes</Text><Text style={s.noteText}>{invoice.notes}</Text></>)}
             {invoice.termsAndConditions && (<><Text style={s.noteLabel}>Terms & Conditions</Text><Text style={s.noteText}>{invoice.termsAndConditions}</Text></>)}
+            
+            {/* Structured Bank Details */}
             {biz?.bankDetails?.accountNumber ? (
-              <>
+              <View style={s.bankContainer}>
                 <Text style={s.noteLabel}>Bank Details</Text>
-                <Text style={s.bankLine}>{biz.bankDetails.bankName ? <Text style={s.bankStrong}>{biz.bankDetails.bankName}</Text> : null}{biz.bankDetails.bankName ? '\n' : ''}A/C: {biz.bankDetails.accountNumber}{biz.bankDetails.ifscCode ? `  •  IFSC: ${biz.bankDetails.ifscCode}` : ''}{biz.bankDetails.branch ? `\nBranch: ${biz.bankDetails.branch}` : ''}</Text>
-              </>
+                {biz.bankDetails.bankName && (
+                  <View style={s.bankRow}>
+                    <Text style={s.bankLabel}>Bank Name:</Text>
+                    <Text style={s.bankValue}>{biz.bankDetails.bankName}</Text>
+                  </View>
+                )}
+                <View style={s.bankRow}>
+                  <Text style={s.bankLabel}>A/C Number:</Text>
+                  <Text style={s.bankValue}>{biz.bankDetails.accountNumber}</Text>
+                </View>
+                {biz.bankDetails.ifscCode && (
+                  <View style={s.bankRow}>
+                    <Text style={s.bankLabel}>IFSC Code:</Text>
+                    <Text style={s.bankValue}>{biz.bankDetails.ifscCode}</Text>
+                  </View>
+                )}
+                {biz.bankDetails.branch && (
+                  <View style={s.bankRow}>
+                    <Text style={s.bankLabel}>Branch:</Text>
+                    <Text style={s.bankValue}>{biz.bankDetails.branch}</Text>
+                  </View>
+                )}
+              </View>
             ) : invoice.paymentInfo ? (
-              <><Text style={s.noteLabel}>Payment Info</Text><Text style={s.bankLine}>{invoice.paymentInfo}</Text></>
+              <><Text style={s.noteLabel}>Payment Info</Text><Text style={s.noteText}>{invoice.paymentInfo}</Text></>
             ) : null}
           </View>
+
           <View style={s.sigCol}>
             <Text style={s.sigLabel}>For {bizName}</Text>
             {biz?.businessSignature && <Image src={biz.businessSignature} style={{ width: 100, height: 34, objectFit: 'contain', marginBottom: 2 }} />
@@ -279,6 +320,7 @@ export default function Template17({ invoice }) {
           </View>
         </View>
 
+        {/* Footer */}
         <View style={s.footerBar} fixed>
           <View>
             <Text style={s.footerBrand}>Powered by GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text></Text>
@@ -293,3 +335,6 @@ export default function Template17({ invoice }) {
     </Document>
   );
 }
+
+
+/*Modern Retail*/

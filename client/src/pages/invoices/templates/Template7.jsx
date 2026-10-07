@@ -3,6 +3,7 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image, Link } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
 import { isRasterImage } from './watermarkUtils';
+import { safeHyphenation } from './layoutUtils';
 
 // Register fonts
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
@@ -77,6 +78,9 @@ function numberToWords(num) {
 
 export default function Template7({ invoice }) {
   const { client, user: biz } = invoice;
+  // Break long unbroken tokens (invoice numbers, e-mails, bank text) inside their box; re-asserted
+  // at render time because the callback is global and other templates register their own.
+  Font.registerHyphenationCallback(safeHyphenation);
   const colors = invoice.templateColors || { primary: '#B565D8' };
   const PRIMARY = colors.primary;
 
@@ -105,9 +109,9 @@ export default function Template7({ invoice }) {
     originalText: { fontSize: 6.5, color: '#666', textTransform: 'uppercase', textAlign: 'right', marginBottom: 10, fontFamily: B },
     // Meta & Info Columns
     gridRow: { flexDirection: 'row', paddingHorizontal: 40, marginBottom: 10 },
-    col1: { width: '38%' },
-    col2: { width: '40%' },
-    col3: { width: '22%', alignItems: 'flex-end' },
+    col1: { width: '38%', minWidth: 0, paddingRight: 6 },
+    col2: { width: '40%', minWidth: 0, paddingRight: 6 },
+    col3: { width: '22%', minWidth: 0, alignItems: 'flex-end' },
 
     metaLabel: { fontSize: 7.5, color: '#444' },
     metaValue: { fontSize: 7.5, color: '#000', fontFamily: B },
@@ -123,23 +127,23 @@ export default function Template7({ invoice }) {
     th: { fontSize: 7, fontFamily: B, color: '#000', paddingHorizontal: 2 },
     td: { fontSize: 7.5, color: '#000', paddingHorizontal: 2 },
 
-    colNo: { width: '5%', textAlign: 'left' },
-    colDesc: { width: '38%' },
-    colRate: { width: '12%', textAlign: 'right' },
-    colQty: { width: '10%', textAlign: 'center' },
-    colTaxable: { width: '12%', textAlign: 'right' },
-    colTaxAmt: { width: '13%', textAlign: 'right' },
-    colTotal: { width: '10%', textAlign: 'right' },
+    colNo: { width: '4%', textAlign: 'left' },
+    colDesc: { width: '32%' },
+    colRate: { width: '13%', textAlign: 'right' },
+    colQty: { width: '8%', textAlign: 'center' },
+    colTaxable: { width: '14%', textAlign: 'right' },
+    colTaxAmt: { width: '15%', textAlign: 'right' },
+    colTotal: { width: '14%', textAlign: 'right' },
 
     // Totals Box
     totalsWrapper: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 40, marginBottom: 6 },
     totalsBox: { width: '50%' },
     totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 1.5 },
     totalLabel: { fontSize: 7.5, fontFamily: B, color: '#000', textAlign: 'right', flex: 1, paddingRight: 10 },
-    totalVal: { fontSize: 7.5, fontFamily: B, color: '#000', width: 70, textAlign: 'right' },
+    totalVal: { fontSize: 7.5, fontFamily: B, color: '#000', width: 100, textAlign: 'right' },
     grandTotalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4, marginTop: 4 },
     grandTotalLabel: { fontSize: 11, fontFamily: B, color: '#000', textAlign: 'right', flex: 1, paddingRight: 10 },
-    grandTotalVal: { fontSize: 11, fontFamily: B, color: '#000', width: 70, textAlign: 'right' },
+    grandTotalVal: { fontSize: 11, fontFamily: B, color: '#000', width: 110, textAlign: 'right' },
 
     // Items and Words
     wordsRow: { flexDirection: 'row', justifyContent: 'space-between', borderTop: `1pt solid ${PRIMARY}`, borderBottom: `1pt solid ${PRIMARY}`, marginHorizontal: 40, paddingVertical: 3, marginBottom: 15 },
@@ -150,9 +154,9 @@ export default function Template7({ invoice }) {
     bankCol: { width: '50%' },
     sigCol: { width: '40%', alignItems: 'flex-end' },
     bankLabel: { fontSize: 7.5, fontFamily: B, color: '#000', marginBottom: 4 },
-    bankRow: { flexDirection: 'row', marginBottom: 1.5 },
-    bankKey: { fontSize: 7, color: '#444', width: 60 },
-    bankVal: { fontSize: 7, fontFamily: B, color: '#000' },
+    bankRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 1.5 },
+    bankKey: { fontSize: 7, color: '#444', width: 60, flexShrink: 0 },
+    bankVal: { fontSize: 7, fontFamily: B, color: '#000', flex: 1, minWidth: 0 },
 
     sigText: { fontSize: 7, color: '#444', marginBottom: 25 },
     sigLine: { fontSize: 7, color: '#444', paddingTop: 4, width: 100, textAlign: 'center' },

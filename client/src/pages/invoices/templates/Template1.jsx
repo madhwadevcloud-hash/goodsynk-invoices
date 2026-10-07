@@ -3,11 +3,12 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image, Link } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
 import { isRasterImage } from './watermarkUtils';
+import { safeHyphenation, fitFont, layoutColumns, neededWidth, qtyText, footerReserve, A4_WIDTH } from './layoutUtils';
 // Register fonts (same as before)
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-SemiBold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
 Font.register({ family: 'Inter-Bold', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYMZhrib2Bg-4.ttf' });
-Font.registerHyphenationCallback(word => [word]);
+Font.registerHyphenationCallback(safeHyphenation);
 
 const B = 'Inter-Bold';
 const M = 'Inter-SemiBold';
@@ -31,15 +32,56 @@ export default function Template1({ invoice }) {
   const PRIMARY = colors.primary;
   const scaled = buildScaledStyles(biz);
 
+  const currency = invoice._currency || invoice.currency || 'INR';
+  const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency, currencyDisplay: 'code' }).format(n || 0).replace(currency, '').trim();
+
+  const showCGST = invoice.cgstTotal > 0;
+  const showSGST = invoice.sgstTotal > 0;
+  const showIGST = invoice.igstTotal > 0;
+  const showVAT = invoice.vatTotal > 0;
+  const hasHsn = invoice.items?.some(i => i.hsn);
+  const hasDiscount = invoice.items?.some(i => i.discount > 0);
+  const items = invoice.items || [];
+
+  // Dynamic table columns: numeric columns grow to fit their widest value,
+  // the description column takes the rest (no overflow, no mid-word breaks).
+  const TABLE_W = A4_WIDTH - 80;
+  const taxCols = [showCGST && 'CGST', showSGST && 'SGST', showIGST && 'IGST', showVAT && 'VAT'].filter(Boolean);
+  const colSpecs = [
+    { key: 'no', min: 22, strings: ['#', String(items.length)] },
+    { key: 'desc', flex: true },
+    ...(hasHsn ? [{ key: 'hsn', min: 50, strings: ['HSN', ...items.map(i => i.hsn || '—')] }] : []),
+    { key: 'qty', min: 46, strings: ['Qty', ...items.map(qtyText)] },
+    { key: 'price', min: 66, strings: ['Price', ...items.map(i => fmt(i.price))] },
+    ...(hasDiscount ? [{ key: 'disc', min: 38, strings: ['Disc%', ...items.map(i => `${i.discount || 0}%`)] }] : []),
+    ...taxCols.map(k => ({ key: k, min: 40, strings: [k, '100%'] })),
+    { key: 'total', min: 74, bold: true, strings: ['Total', ...items.map(i => fmt(i.total))] },
+  ];
+  const { widths: cw, size: cellSize } = layoutColumns(colSpecs, TABLE_W, 9);
+
+  // Totals block: value column sized to the widest figure.
+  const totalStrings = [invoice.subtotal, invoice.discountAmount, invoice.cgstTotal, invoice.sgstTotal, invoice.igstTotal, invoice.vatTotal].map(fmt);
+  const grandStr = fmt(invoice.total);
+  const totValW = Math.max(80, neededWidth([...totalStrings, '-' + totalStrings[1]], 9, { bold: true, pad: 4 }), neededWidth([grandStr], 11, { bold: true, pad: 4 }));
+  const totLabW = Math.max(80, neededWidth([`Total ${currency}`], 11, { bold: true, pad: 12 }));
+
+  // Footer columns: shrink long contact values so they stay inside their column.
+  const FOOT_W = A4_WIDTH - 80;
+  const footLeftW = FOOT_W * 0.38 - 8;
+  const phoneTxt = `Phone: ${biz?.phone || ''}`;
+  const emailTxt = `Email: ${biz?.email || ''}`;
+  const footPhoneSize = fitFont(phoneTxt, 7.5, footLeftW, 6);
+  const footEmailSize = fitFont(emailTxt, 7.5, footLeftW, 6);
+
   const s = StyleSheet.create({
-    page: { paddingTop: 30, paddingBottom: 75, fontFamily: 'Inter', color: '#000' },
+    page: { paddingTop: 30, paddingBottom: footerReserve(biz, 80), fontFamily: 'Inter', color: '#000' },
     container: { paddingHorizontal: 40 },
     topSection: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingHorizontal: 40, marginBottom: 16 },
     headerText: { fontFamily: B, fontSize: 32, letterSpacing: 2, textTransform: 'uppercase', color: PRIMARY, marginTop: 10 },
 
     bizInfoTop: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0, justifyContent: 'flex-end' },
     titleCol: { flexShrink: 0, marginRight: 24 },
-    brandText: { width: 230, flexShrink: 1 },
+    brandText: { maxWidth: 250, flexShrink: 1 },
     topLogo: { width: 36, height: 36, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
     bizNameTop: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 4, textAlign: 'right' },
     bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight, textAlign: 'right' },
@@ -53,37 +95,37 @@ export default function Template1({ invoice }) {
     table: { width: '100%', marginTop: 12 },
     tHeadRow: { flexDirection: 'row', borderBottom: `1pt solid ${PRIMARY}`, paddingBottom: 8, marginBottom: 8 },
     tRow: { flexDirection: 'row', borderBottom: `0.5pt solid ${PRIMARY}`, paddingVertical: 10 },
-    th: { fontSize: 9.5, fontFamily: B, color: '#000' },
-    td: { fontSize: 9, color: '#000' },
+    th: { fontSize: Math.min(9.5, cellSize + 0.5), fontFamily: B, color: '#000' },
+    td: { fontSize: cellSize, color: '#000' },
 
-    colNo: { flex: 0.4 },
-    colDesc: { flex: 2.2, paddingRight: 10 },
-    colHsn: { flex: 0.8, textAlign: 'center' },
-    colQty: { flex: 0.9, textAlign: 'center' },
-    colPrice: { flex: 1.2, textAlign: 'right', paddingRight: 10 },
-    colDisc: { flex: 0.8, textAlign: 'center', paddingRight: 4 },
-    colTax: { flex: 0.8, textAlign: 'center', paddingRight: 4 },
-    colTotal: { flex: 1.3, textAlign: 'right' },
+    colNo: { width: cw.no, flexShrink: 0 },
+    colDesc: { width: cw.desc, flexShrink: 0, paddingRight: 10 },
+    colHsn: { width: cw.hsn, flexShrink: 0, textAlign: 'center' },
+    colQty: { width: cw.qty, flexShrink: 0, textAlign: 'center' },
+    colPrice: { width: cw.price, flexShrink: 0, textAlign: 'right', paddingRight: 8 },
+    colDisc: { width: cw.disc, flexShrink: 0, textAlign: 'center' },
+    colTax: { flexShrink: 0, textAlign: 'center' },
+    colTotal: { width: cw.total, flexShrink: 0, textAlign: 'right' },
 
-    thTotal: { fontSize: 9.5, fontFamily: B, color: PRIMARY, textAlign: 'right' },
-    tdTotal: { fontSize: 9, color: PRIMARY, textAlign: 'right', fontFamily: M },
+    thTotal: { fontSize: Math.min(9.5, cellSize + 0.5), fontFamily: B, color: PRIMARY, textAlign: 'right' },
+    tdTotal: { fontSize: cellSize, color: PRIMARY, textAlign: 'right', fontFamily: M },
 
-    totalsBox: { marginTop: 16, alignItems: 'flex-end', paddingRight: 4 },
+    totalsBox: { marginTop: 16, alignItems: 'flex-end' },
     totalRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 5 },
-    totalLabel: { fontSize: 9, color: '#000', width: 80, textAlign: 'right', paddingRight: 8 },
-    totalVal: { fontSize: 9, fontFamily: M, width: 80, textAlign: 'right', color: PRIMARY },
-    grandTotalLabel: { fontSize: 11, fontFamily: B, width: 80, textAlign: 'right', paddingRight: 8, color: '#000', marginTop: 8 },
-    grandTotalVal: { fontSize: 11, fontFamily: B, width: 80, textAlign: 'right', color: PRIMARY, marginTop: 8 },
+    totalLabel: { fontSize: 9, color: '#000', width: totLabW, textAlign: 'right', paddingRight: 8 },
+    totalVal: { fontSize: 9, fontFamily: M, width: totValW, textAlign: 'right', color: PRIMARY },
+    grandTotalLabel: { fontSize: 11, fontFamily: B, width: totLabW, textAlign: 'right', paddingRight: 8, color: '#000', marginTop: 8 },
+    grandTotalVal: { fontSize: 11, fontFamily: B, width: totValW, textAlign: 'right', color: PRIMARY, marginTop: 8 },
 
     infoBlock: { flexDirection: 'row', marginTop: 24, justifyContent: 'space-between' },
-    infoCol: { width: '30%' },
+    infoCol: { width: '30%', minWidth: 0 },
     infoTitle: { fontFamily: B, fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, paddingBottom: 5, borderBottom: `1pt solid ${PRIMARY}` },
     infoText: { fontSize: 8.5, color: '#333', marginBottom: 3, lineHeight: 1.5 },
 
     footerBox: { position: 'absolute', bottom: 15, left: 40, right: 40, borderTopWidth: 1, borderTopColor: PRIMARY, borderTopStyle: 'solid', flexDirection: 'row', alignItems: 'stretch', paddingVertical: 10 },
-    footerLeft: { flex: 1.2, justifyContent: 'center' },
-    footerCenter: { flex: 2, justifyContent: 'center', alignItems: 'center', borderLeftWidth: 0.5, borderLeftColor: '#E0E0E0', borderLeftStyle: 'solid', borderRightWidth: 0.5, borderRightColor: '#E0E0E0', borderRightStyle: 'solid', paddingHorizontal: 10 },
-    footerRight: { flex: 1.2, justifyContent: 'center', alignItems: 'flex-end' },
+    footerLeft: { width: '38%', justifyContent: 'center', paddingRight: 8 },
+    footerCenter: { width: '32%', justifyContent: 'center', alignItems: 'center', borderLeftWidth: 0.5, borderLeftColor: '#E0E0E0', borderLeftStyle: 'solid', borderRightWidth: 0.5, borderRightColor: '#E0E0E0', borderRightStyle: 'solid', paddingHorizontal: 8 },
+    footerRight: { width: '30%', justifyContent: 'center', alignItems: 'flex-end', paddingLeft: 8 },
     watermarkContainer: {
       position: 'absolute',
       top: 0,
@@ -114,20 +156,9 @@ export default function Template1({ invoice }) {
     poweredByValue: { fontSize: 8.5, fontFamily: B, color: '#000', letterSpacing: 0.5, marginTop: 1 },
   });
 
-  const currency = invoice._currency || invoice.currency || 'INR';
-  const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency, currencyDisplay: 'code' }).format(n || 0).replace(currency, '').trim();
-
   const bizName = biz?.businessName || biz?.name || '';
   const isQuotation = invoice.invoiceType === 'quotation';
   const docTitle = isQuotation ? 'QUOTATION' : 'INVOICE';
-
-  const showCGST = invoice.cgstTotal > 0;
-  const showSGST = invoice.sgstTotal > 0;
-  const showIGST = invoice.igstTotal > 0;
-  const showVAT = invoice.vatTotal > 0;
-  const hasTax = showCGST || showSGST || showIGST || showVAT;
-  const hasHsn = invoice.items?.some(i => i.hsn);
-  const hasDiscount = invoice.items?.some(i => i.discount > 0);
 
   return (
     <Document>
@@ -208,35 +239,35 @@ export default function Template1({ invoice }) {
 
           {/* Table */}
           <View style={s.table}>
-            <View style={s.tHeadRow}>
+            <View style={s.tHeadRow} wrap={false}>
               <Text style={[s.th, s.colNo]}>#</Text>
               <Text style={[s.th, s.colDesc]}>Description</Text>
               {hasHsn && <Text style={[s.th, s.colHsn]}>HSN</Text>}
               <Text style={[s.th, s.colQty]}>Qty</Text>
               <Text style={[s.th, s.colPrice]}>Price</Text>
               {hasDiscount && <Text style={[s.th, s.colDisc]}>Disc%</Text>}
-              {showCGST && <Text style={[s.th, s.colTax]}>CGST</Text>}
-              {showSGST && <Text style={[s.th, s.colTax]}>SGST</Text>}
-              {showIGST && <Text style={[s.th, s.colTax]}>IGST</Text>}
-              {showVAT && <Text style={[s.th, s.colTax]}>VAT</Text>}
+              {showCGST && <Text style={[s.th, s.colTax, { width: cw.CGST }]}>CGST</Text>}
+              {showSGST && <Text style={[s.th, s.colTax, { width: cw.SGST }]}>SGST</Text>}
+              {showIGST && <Text style={[s.th, s.colTax, { width: cw.IGST }]}>IGST</Text>}
+              {showVAT && <Text style={[s.th, s.colTax, { width: cw.VAT }]}>VAT</Text>}
               <Text style={[s.thTotal, s.colTotal]}>Total</Text>
             </View>
 
             {invoice.items?.map((item, i) => (
-              <View key={i} style={s.tRow}>
+              <View key={i} style={s.tRow} wrap={false}>
                 <Text style={[s.td, s.colNo]}>{i + 1}</Text>
-                <View style={[s.td, s.colDesc, { paddingRight: 10 }]}>
-                  <Text style={{ fontFamily: B }}>{item.name}</Text>
+                <View style={[s.colDesc]}>
+                  <Text style={{ fontFamily: B, fontSize: cellSize }}>{item.name}</Text>
                   {item.description && <Text style={{ fontSize: 7.5, color: '#555', marginTop: 2 }}>{item.description}</Text>}
                 </View>
                 {hasHsn && <Text style={[s.td, s.colHsn]}>{item.hsn || '—'}</Text>}
-                <Text style={[s.td, s.colQty]}>{item.itemType === 'Service' ? '-' : `${item.quantity}${item.unit ? ` ${item.unit}` : ''}`}</Text>
+                <Text style={[s.td, s.colQty]}>{qtyText(item)}</Text>
                 <Text style={[s.td, s.colPrice]}>{fmt(item.price)}</Text>
                 {hasDiscount && <Text style={[s.td, s.colDisc]}>{item.discount || 0}%</Text>}
-                {showCGST && <Text style={[s.td, s.colTax]}>{item.cgstRate || 0}%</Text>}
-                {showSGST && <Text style={[s.td, s.colTax]}>{item.sgstRate || 0}%</Text>}
-                {showIGST && <Text style={[s.td, s.colTax]}>{item.igstRate || 0}%</Text>}
-                {showVAT && <Text style={[s.td, s.colTax]}>{item.vatRate || 0}%</Text>}
+                {showCGST && <Text style={[s.td, s.colTax, { width: cw.CGST }]}>{item.cgstRate || 0}%</Text>}
+                {showSGST && <Text style={[s.td, s.colTax, { width: cw.SGST }]}>{item.sgstRate || 0}%</Text>}
+                {showIGST && <Text style={[s.td, s.colTax, { width: cw.IGST }]}>{item.igstRate || 0}%</Text>}
+                {showVAT && <Text style={[s.td, s.colTax, { width: cw.VAT }]}>{item.vatRate || 0}%</Text>}
                 <Text style={[s.tdTotal, s.colTotal]}>{fmt(item.total)}</Text>
               </View>
             ))}
@@ -275,29 +306,29 @@ export default function Template1({ invoice }) {
 
         </View>
 
-        {/* Signature */}
-        <View style={{ marginTop: 10, alignItems: 'flex-end', paddingHorizontal: 40 }} wrap={false}>
-          {biz?.businessSignature && (
-            <Image src={biz.businessSignature} style={{ width: 140, height: 40, objectFit: 'contain', marginBottom: 2 }} />
-          )}
-          <View style={{ width: 120, borderTopWidth: 0.5, borderTopColor: '#1a3a6b', borderTopStyle: 'solid', paddingTop: 2 }}>
-            <SignatoryDetails biz={biz} />
-              <Text style={{ fontSize: 8, color: '#1a3a6b', textAlign: 'center' }}>Authorised Signature</Text>
-          </View>
+        {/* Signature + stamp: side by side so the block stays short and never strands alone on a new page */}
+        <View style={{ marginTop: 14, paddingHorizontal: 40, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }} wrap={false}>
           {biz?.businessSeal && (
-            <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />
+            <Image src={biz.businessSeal} style={{ width: 64, height: 64, objectFit: 'contain', marginRight: 18 }} />
           )}
+          <View style={{ width: 150, alignItems: 'center' }}>
+            {biz?.businessSignature && (
+              <Image src={biz.businessSignature} style={{ width: 130, height: 38, objectFit: 'contain', marginBottom: 2 }} />
+            )}
+            <View style={{ width: 150, borderTopWidth: 0.5, borderTopColor: '#1a3a6b', borderTopStyle: 'solid', paddingTop: 2, alignItems: 'center' }}>
+              <SignatoryDetails biz={biz} align="center" />
+              <Text style={{ fontSize: 8, color: '#1a3a6b', textAlign: 'center' }}>Authorised Signature</Text>
+            </View>
+          </View>
         </View>
-
-
 
         {/* Footer: 3-column layout — contact | brand | trust */}
         <View style={s.footerBox} fixed>
           {/* Left — Contact */}
           <View style={s.footerLeft}>
             <Text style={s.footerContactLabel}>CONTACT</Text>
-            {biz?.phone && <Text style={s.footerText}>Phone: {biz.phone}</Text>}
-            {biz?.email && <Text style={s.footerText}>Email: {biz.email}</Text>}
+            {biz?.phone && <Text style={[s.footerText, { fontSize: footPhoneSize }]}>{phoneTxt}</Text>}
+            {biz?.email && <Text style={[s.footerText, { fontSize: footEmailSize }]}>{emailTxt}</Text>}
           </View>
           {/* Center — Brand */}
           <View style={s.footerCenter}>

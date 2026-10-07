@@ -1,6 +1,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import { getAddressStreet, getFullAddress } from './addressUtils';
+import { safeHyphenation, fitFont } from './layoutUtils';
 
 Font.register({
   family: 'Inter',
@@ -12,7 +13,7 @@ Font.register({
   src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuFuYMZhrib2Bg-4.ttf'
 });
 
-Font.registerHyphenationCallback(word => [word]);
+Font.registerHyphenationCallback(safeHyphenation);
 
 const B = 'Inter-Bold';
 const MAX_INLINE_IMAGE_LENGTH = 2_000_000;
@@ -91,6 +92,37 @@ function formatDateOnly(value) {
   return `${day}-${month}-${year}`;
 }
 
+function wrapEmailAddress(email, maxLen = 28) {
+  // The PDF renderer treats an email address as one unbreakable word, so a long
+  // address runs past the template border. Break it ourselves with real line
+  // breaks: prefer breaking right after an email separator (@ . _ + -) and
+  // hard-split any single segment that is still longer than one line.
+  const text = String(email || '').trim();
+  if (!text) return '';
+
+  const parts = text.split(/(?<=[@._+-])/);
+  const lines = [];
+  let current = '';
+
+  parts.forEach((part) => {
+    if (current && (current + part).length > maxLen) {
+      lines.push(current);
+      current = part;
+    } else {
+      current += part;
+    }
+  });
+  if (current) lines.push(current);
+
+  return lines
+    .flatMap((line) => {
+      const chunks = [];
+      for (let k = 0; k < line.length; k += maxLen) chunks.push(line.slice(k, k + maxLen));
+      return chunks;
+    })
+    .join('\n');
+}
+
 // Common pricing calculation — mirrors InvoiceForm.jsx logic exactly.
 function computeLine(item, isInterstate, taxType = 'gst_india', isDiscColumnVisible = true) {
   const lineSubtotal = (item.price || 0) * (item.quantity || 0);
@@ -118,6 +150,9 @@ function computeLine(item, isInterstate, taxType = 'gst_india', isDiscColumnVisi
 }
 
 export default function Template19({ invoice }) {
+  // Break long unbroken tokens (invoice numbers, e-mails, bank text) inside their box; re-asserted
+  // at render time because the callback is global and other templates register their own.
+  Font.registerHyphenationCallback(safeHyphenation);
   const inv = invoice || {};
   const client = inv.client || {};
   const biz = inv.user || inv.biz || {};
@@ -203,6 +238,19 @@ export default function Template19({ invoice }) {
   // Category with Legal Services default
   const categoryText = inv.category || 'Legal Services';
 
+  // ---- Ref Line Logic (Terms & Conditions connected here) ----
+  // 1. Prefer explicit reference field, fallback to Terms & Conditions
+  // 2. Limit to 100 chars to ensure it fits on one line
+  // 3. Replace newlines with spaces to keep it on one line
+  const rawRefText = inv.reference || termsText || '';
+  const cleanRefText = rawRefText.replace(/\n/g, ' ').trim();
+  const displayRefText = cleanRefText.length > 100 
+    ? cleanRefText.substring(0, 100) + '...' 
+    : cleanRefText;
+  
+  // If the Terms text was used in the Ref line, don't show it again at the bottom
+  const showTermsBlock = termsText && inv.reference;
+
   const s = StyleSheet.create({
     page: { paddingTop: 25, paddingBottom: 50, paddingHorizontal: 30, fontFamily: 'Inter', color: '#111827', fontSize: 8 },
     watermarkContainer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', zIndex: -100 },
@@ -210,25 +258,33 @@ export default function Template19({ invoice }) {
     watermarkImg: { width: 250, height: 250, objectFit: 'contain', opacity: 0.12 },
     outerBox: { borderWidth: 1, borderColor: '#111827' },
     topHeaderRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#111827', minHeight: 80 },
-    headerCol1: { width: '45%', padding: 8, borderRightWidth: 1, borderRightColor: '#111827', justifyContent: 'center', alignItems: 'center' },
-    headerCol2: { width: '30%', padding: 8, borderRightWidth: 1, borderRightColor: '#111827' },
-    headerCol3: { width: '25%', padding: 8 },
+    headerCol1: { width: '36%', padding: 8, borderRightWidth: 1, borderRightColor: '#111827', justifyContent: 'center', alignItems: 'center' },
+    headerCol2: { width: '32%', padding: 8, borderRightWidth: 1, borderRightColor: '#111827' },
+    headerCol3: { width: '32%', padding: 8 },
     logoImg: { width: '100%', height: 55, objectFit: 'contain', marginBottom: 2 },
     brandName: { fontSize: 7, fontFamily: B, color: PRIMARY, textAlign: 'center' },
     officeTitle: { fontSize: 8, color: '#1E3A8A', marginBottom: 2 },
     officeText: { fontSize: 7.5, color: '#111827', lineHeight: 1.25 },
     contactText: { fontSize: 7.5, color: '#111827', marginBottom: 2 },
-    linkText: { fontSize: 7.5, color: '#2563EB', textDecoration: 'underline' },
+    linkText: { fontSize: 7.5, color: '#2563EB', textDecoration: 'underline', lineHeight: 1.25 },
     banner: { backgroundColor: BANNER, paddingVertical: 3, paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: '#111827' },
     catRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 6 },
     catText: { fontSize: 8, color: '#111827' },
     gstText: { fontSize: 8, fontFamily: B, color: '#111827' },
     docTitleText: { fontSize: 13, fontFamily: B, color: '#111827', textAlign: 'center', marginVertical: 8, textTransform: 'uppercase' },
     metaBox: { marginHorizontal: 12, borderWidth: 1, borderColor: '#111827', flexDirection: 'row', minHeight: 60, marginBottom: 8 },
-    metaCol1: { width: '45%', padding: 6, borderRightWidth: 1, borderRightColor: '#111827' },
-    metaCol2: { width: '25%', padding: 6, borderRightWidth: 1, borderRightColor: '#111827' },
-    metaCol3: { width: '30%', padding: 6 },
-    refText: { marginHorizontal: 12, fontSize: 8.5, color: '#111827', marginBottom: 10 },
+    metaCol1: { width: '45%', padding: 6, minWidth: 0, borderRightWidth: 1, borderRightColor: '#111827' },
+    metaCol2: { width: '25%', padding: 6, minWidth: 0, borderRightWidth: 1, borderRightColor: '#111827' },
+    metaCol3: { width: '30%', padding: 6, minWidth: 0 },
+    refText: { 
+      marginHorizontal: 12, 
+      fontSize: 8.5, 
+      color: '#111827', 
+      marginBottom: 10,
+      lineHeight: 1.2,
+      flexWrap: 'nowrap', // Prevent wrapping to keep it one line
+      overflow: 'hidden'   // Hide overflow if it exceeds width
+    },
     table: { marginHorizontal: 12, borderWidth: 1, borderColor: '#111827', marginBottom: 10 },
     tHead: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#111827', backgroundColor: '#F9FAFB', paddingVertical: 5 },
     thSno: { width: '8%', paddingLeft: 6, fontSize: 9, fontFamily: B, color: '#111827', borderRightWidth: 1, borderRightColor: '#111827' },
@@ -247,7 +303,7 @@ export default function Template19({ invoice }) {
     sumText: { width: '80%', fontSize: 9, fontFamily: B, color: '#111827', borderRightWidth: 1, borderRightColor: '#111827', paddingLeft: 4 },
     sumVal: { width: '20%', fontSize: 9, fontFamily: B, color: '#111827', textAlign: 'right' },
     wordsRow: { flexDirection: 'row', borderTopWidth: 0.5, borderTopColor: '#111827', paddingVertical: 6, paddingHorizontal: 8, backgroundColor: '#F9FAFB' },
-    wordsText: { width: '100%', fontSize: 8.5, fontFamily: B, color: '#111827' },
+    wordsText: { flex: 1, minWidth: 0, fontSize: 8.5, fontFamily: B, color: '#111827' },
     reverseChargeBlock: { marginHorizontal: 12, flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
     noteCol: { width: '100%' },
     noteTitle: { fontSize: 8, fontFamily: B, color: '#111827', marginBottom: 2 },
@@ -261,7 +317,7 @@ export default function Template19({ invoice }) {
     payTitle: { fontSize: 13, fontFamily: B, color: '#111827', marginBottom: 8 },
     payRow: { fontSize: 8, color: '#111827', marginBottom: 4 },
     certText: { fontSize: 7.5, color: '#111827', marginBottom: 15 },
-    sigBox: { borderWidth: 1, borderColor: '#111827', padding: 6 },
+    sigBox: { borderWidth: 1, borderColor: '#111827', padding: 8 },
     sigLabel: { fontSize: 7.5, fontFamily: B, color: '#111827', marginBottom: 2 },
     pageFooter: { position: 'absolute', bottom: 15, left: 30, right: 30, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     footerPageNum: { fontSize: 8, color: '#111827' }
@@ -299,7 +355,7 @@ export default function Template19({ invoice }) {
             <View style={s.headerCol3}>
               <Text style={s.contactText}>Ph: {biz?.phone || ''}</Text>
               <Text style={s.contactText}>Email:</Text>
-              <Text style={s.linkText}>{biz?.email || ''}</Text>
+              <Text style={s.linkText}>{wrapEmailAddress(biz?.email)}</Text>
             </View>
           </View>
 
@@ -345,9 +401,10 @@ export default function Template19({ invoice }) {
             </View>
           </View>
 
-          {inv.reference ? (
+          {/* Ref Line: Connected to Terms & Conditions, limited to one line */}
+          {displayRefText ? (
             <Text style={s.refText}>
-              <Text style={{ fontFamily: B }}>Ref:</Text> {inv.reference}
+              <Text style={{ fontFamily: B }}>Ref:</Text> {displayRefText}
             </Text>
           ) : null}
 
@@ -411,7 +468,8 @@ export default function Template19({ invoice }) {
 
             <View style={s.sumRow} wrap={false}>
               <Text style={s.sumText}>{isQuotation ? 'QUOTATION TOTAL:' : 'INVOICE TOTAL:'}</Text>
-              <Text style={s.sumVal}>Rs. {fmt(grandTotal)}/-</Text>
+              {/* the total sits in a fixed 20% column: shrink the font a little for very large totals so it stays on one line */}
+              <Text style={[s.sumVal, { fontSize: fitFont(`Rs. ${fmt(grandTotal)}/-`, 9, 84, 5.5, true) }]}>{`Rs.\u00A0${fmt(grandTotal)}/-`}</Text>
             </View>
 
             <View style={s.wordsRow} wrap={false}>
@@ -428,7 +486,8 @@ export default function Template19({ invoice }) {
             </View>
           ) : null}
 
-          {termsText ? (
+          {/* Only show Terms block if it wasn't used in the Ref line above */}
+          {showTermsBlock ? (
             <View style={s.termsBlock} wrap={false}>
               <Text style={s.termsTitle}>Terms & Conditions:</Text>
               <Text style={s.termsText}>{termsText}</Text>
@@ -467,12 +526,12 @@ export default function Template19({ invoice }) {
               <View style={s.sigBox}>
                 <Text style={s.sigLabel}>Authorised Signatory</Text>
                 {isRasterImage(biz?.businessSignature) ? (
-                  <Image src={biz.businessSignature} style={{ width: 60, height: 22, objectFit: 'contain', marginTop: 2 }} />
+                  <Image src={biz.businessSignature} style={{ width: 130, height: 50, objectFit: 'contain', marginTop: 4, marginBottom: 4 }} />
                 ) : null}
                 <Text style={{ fontSize: 7.5, color: '#111827' }}>Name: {biz?.signatoryName || ''}</Text>
                 <Text style={{ fontSize: 7, color: '#4B5563' }}>Designation: {biz?.designation || ''}</Text>
                 {isRasterImage(biz?.businessSeal) ? (
-                  <Image src={biz.businessSeal} style={{ width: 45, height: 45, marginTop: 4, objectFit: 'contain' }} />
+                  <Image src={biz.businessSeal} style={{ width: 55, height: 55, marginTop: 6, objectFit: 'contain' }} />
                 ) : null}
               </View>
             </View>
