@@ -150,7 +150,7 @@ export default function Template18({ invoice }) {
 
     table: { borderWidth: 0.75, borderColor: '#9CA3AF', marginBottom: 10 },
     tHead: { flexDirection: 'row', borderBottomWidth: 0.75, borderBottomColor: '#9CA3AF', backgroundColor: '#F9FAFB', paddingVertical: 4 },
-    th: { fontSize: 6.5, fontFamily: B, color: '#111827', textAlign: 'center' },
+    th: { fontSize: 7, fontFamily: B, color: '#111827', textAlign: 'center' },
     colNo: { width: '5%', borderRightWidth: 0.75, borderRightColor: '#9CA3AF' },
     colItem: { width: '33%', textAlign: 'left', paddingLeft: 4, paddingRight: 4, borderRightWidth: 0.75, borderRightColor: '#9CA3AF' },
     colHsn: { width: '12%', borderRightWidth: 0.75, borderRightColor: '#9CA3AF' },
@@ -161,9 +161,9 @@ export default function Template18({ invoice }) {
     colAmount: { width: '10%', textAlign: 'right', paddingRight: 4 },
 
     tRow: { flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#E5E7EB', paddingVertical: 4, minHeight: 18 },
-    td: { fontSize: 6.5, color: '#1F2937', textAlign: 'center' },
+    td: { fontSize: 7, color: '#1F2937', textAlign: 'center' },
     tdItemName: { fontFamily: B, color: '#111827' },
-    tdItemDesc: { fontSize: 6, color: '#6B7280' },
+    tdItemDesc: { fontSize: 6.5, color: '#6B7280' },
 
     summaryGrid: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
     bankCol: { width: '38%' },

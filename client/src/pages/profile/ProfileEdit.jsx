@@ -126,6 +126,14 @@ const normalizeBankAccounts = (user) => {
   return [];
 };
 
+const normalizeBusinessSignatures = (user) => {
+  const signatures = Array.isArray(user?.businessSignatures) ? user.businessSignatures.filter((item) => item?.image) : [];
+  if (signatures.length) return signatures;
+  return user?.businessSignature
+    ? [{ id: 'legacy-signature', label: 'Signature 1', image: user.businessSignature }]
+    : [];
+};
+
 function BankCard({ bank, index, editing, onEdit, onDelete, onPrimary }) {
   const [showDetails, setShowDetails] = useState(false);
   const masked = (value) => value ? '********' : '—';
@@ -177,20 +185,42 @@ export default function ProfileEdit() {
   const [deleteInput, setDeleteInput] = useState('');
   const [deleting, setDeleting] = useState(false);
   const fileRef = useRef();
-  const [signatureImg, setSignatureImg] = useState(user?.businessSignature || '');
+  const [businessSignatures, setBusinessSignatures] = useState(() => normalizeBusinessSignatures(user));
   const [sealImg, setSealImg] = useState(user?.businessSeal || '');
   const [bankAccounts, setBankAccounts] = useState(() => normalizeBankAccounts(user));
   const [bankModal, setBankModal] = useState({ open: false, index: null, draft: emptyBankAccount() });
 
-  /* ── Save signature immediately ── */
+  /* ── Save an additional signature immediately ── */
   const handleSignatureSave = async (dataUrl) => {
     try {
-      const { data } = await authAPI.updateMe({ businessSignature: dataUrl });
+      const id = globalThis.crypto?.randomUUID?.() || `signature-${Date.now()}`;
+      const next = [...businessSignatures, { id, label: `Signature ${businessSignatures.length + 1}`, image: dataUrl }];
+      const { data } = await authAPI.updateMe({ businessSignatures: next });
       updateUser(data.user);
-      setSignatureImg(dataUrl);
-      toast.success(dataUrl ? 'Signature saved!' : 'Signature removed.');
+      setBusinessSignatures(normalizeBusinessSignatures(data.user));
+      toast.success('Signature saved! Choose it for invoices below.');
     } catch {
       toast.error('Failed to save signature.');
+    }
+  };
+
+  const handleSignatureDelete = async (id) => {
+    try {
+      const next = businessSignatures.filter((signature) => signature.id !== id);
+      const currentChoice = user?.invoiceContactPreference?.signature || '';
+      const fallback = next.find((signature) => signature.id === currentChoice) || next[0];
+      const { data } = await authAPI.updateMe({
+        businessSignatures: next,
+        ...(currentChoice === id ? {
+          businessSignature: fallback?.image || '',
+          invoiceContactPreference: { ...user?.invoiceContactPreference, signature: fallback?.id || '' },
+        } : {}),
+      });
+      updateUser(data.user);
+      setBusinessSignatures(normalizeBusinessSignatures(data.user));
+      toast.success('Signature removed.');
+    } catch {
+      toast.error('Failed to remove signature.');
     }
   };
 
@@ -219,6 +249,7 @@ export default function ProfileEdit() {
       invoiceEmailChoice: user?.invoiceContactPreference?.email || 'primary',
       invoicePhoneChoice: user?.invoiceContactPreference?.phone || 'primary',
       invoiceAddressChoice: user?.invoiceContactPreference?.address || 'primary',
+      invoiceSignatureChoice: user?.invoiceContactPreference?.signature || normalizeBusinessSignatures(user)[0]?.id || '',
       alternateStreet: user?.alternateAddress?.street || '',
       alternateCity: user?.alternateAddress?.city || '',
       alternateState: user?.alternateAddress?.state || '',
@@ -240,6 +271,7 @@ export default function ProfileEdit() {
 
   useEffect(() => {
     setBankAccounts(normalizeBankAccounts(user));
+    setBusinessSignatures(normalizeBusinessSignatures(user));
   }, [user]);
 
   // Auto-save disabled: profile changes are persisted only when the user clicks Save Changes.
@@ -297,6 +329,7 @@ export default function ProfileEdit() {
           swiftCode: values.swiftCode, branch: values.branch, isPrimary: true,
         }] : []);
       const primaryBank = normalizedBanks.find((bank) => bank.isPrimary) || normalizedBanks[0] || emptyBankAccount();
+      const selectedSignature = businessSignatures.find((signature) => signature.id === values.invoiceSignatureChoice);
       const payload = {
         name: values.name,
         businessName: values.businessName,
@@ -311,8 +344,10 @@ export default function ProfileEdit() {
         },
         invoiceContactPreference: {
           email: values.invoiceEmailChoice, phone: values.invoicePhoneChoice,
-          address: values.invoiceAddressChoice,
+          address: values.invoiceAddressChoice, signature: selectedSignature?.id || '',
         },
+        businessSignatures,
+        businessSignature: selectedSignature?.image || '',
         gstin: values.gstin,
         businessLogo: avatarPreview || '',
         address: {
@@ -424,6 +459,7 @@ export default function ProfileEdit() {
       invoiceEmailChoice: user?.invoiceContactPreference?.email || 'primary',
       invoicePhoneChoice: user?.invoiceContactPreference?.phone || 'primary',
       invoiceAddressChoice: user?.invoiceContactPreference?.address || 'primary',
+      invoiceSignatureChoice: user?.invoiceContactPreference?.signature || normalizeBusinessSignatures(user)[0]?.id || '',
       alternateStreet: user?.alternateAddress?.street || '', alternateCity: user?.alternateAddress?.city || '',
       alternateState: user?.alternateAddress?.state || '', alternatePincode: user?.alternateAddress?.pincode || '',
       gstin: user?.gstin || '',
@@ -695,6 +731,35 @@ export default function ProfileEdit() {
                   <div className="form-group"><label className="form-label">Address shown on invoices</label><select className="form-control" {...register('invoiceAddressChoice')}><option value="primary">Primary address</option><option value="alternate">Additional address</option></select></div>
                 </div>
 
+                <div style={{ margin: '8px 0 20px', padding: 16, border: '1px solid var(--border)', borderRadius: 12, background: 'var(--bg-elevated)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <PenLine size={15} style={{ color: 'var(--primary-light)' }} />
+                    <strong style={{ fontSize: '0.88rem' }}>Additional signatures</strong>
+                  </div>
+                  <div className="form-group" style={{ maxWidth: 440, margin: '10px 0 14px' }}>
+                    <label className="form-label">Choose signature for invoices and quotations</label>
+                    <select className="form-control" {...register('invoiceSignatureChoice')}>
+                      <option value="">No signature</option>
+                      {businessSignatures.map((signature) => <option key={signature.id} value={signature.id}>{signature.label}</option>)}
+                    </select>
+                    <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: 5 }}>Save Changes to apply your selection to new invoices and quotations.</p>
+                  </div>
+                  {businessSignatures.length > 0 && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10, marginBottom: 14 }}>
+                      {businessSignatures.map((signature) => (
+                        <div key={signature.id} style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, background: 'var(--bg-card)' }}>
+                          <div style={{ minWidth: 0 }}>
+                            <strong style={{ fontSize: '0.8rem' }}>{signature.label}</strong>
+                            <div style={{ marginTop: 5, height: 40, display: 'flex', alignItems: 'center' }}><img src={signature.image} alt={signature.label} style={{ maxHeight: 36, maxWidth: 160, objectFit: 'contain' }} /></div>
+                          </div>
+                          <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => handleSignatureDelete(signature.id)} aria-label={`Remove ${signature.label}`} title="Remove signature"><Trash2 size={14} /></button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <SignaturePicker onSave={handleSignatureSave} title="Add additional signature" />
+                </div>
+
                 <SectionHeading icon={Landmark} label="Banking Information" />
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Manage multiple bank accounts. The primary account is mirrored to legacy bank details.</p>
@@ -757,12 +822,6 @@ export default function ProfileEdit() {
               </div>
             </>
           )}
-
-          {/* ── Signature Card (always visible) ── */}
-          <SignaturePicker
-            currentSignature={signatureImg}
-            onSave={handleSignatureSave}
-          />
 
           {/* ── Seal Card (always visible) ── */}
           <SignaturePicker

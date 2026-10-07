@@ -15,6 +15,15 @@ const bankAccountSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const businessSignatureSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true },
+    label: { type: String, trim: true, default: 'Signature' },
+    image: { type: String, default: '' },
+  },
+  { _id: false }
+);
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -51,6 +60,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    businessSignatures: {
+      type: [businessSignatureSchema],
+      default: [],
+    },
     businessSeal: {
       type: String,
       default: '',
@@ -77,6 +90,7 @@ const userSchema = new mongoose.Schema(
       email: { type: String, enum: ['primary', 'alternate'], default: 'primary' },
       phone: { type: String, enum: ['primary', 'alternate'], default: 'primary' },
       address: { type: String, enum: ['primary', 'alternate'], default: 'primary' },
+      signature: { type: String, default: '' },
     },
     gstin: {
       type: String,

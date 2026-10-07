@@ -23,24 +23,24 @@
     <rect x="285" y="42" width="285" height="105" fill="none" stroke="#374151" stroke-width="0.8"/>
     
     <!-- Meta Sub-grid -->
-    <line x1="285" y1="82" x2="570" y2="82" stroke="#374151" stroke-width="0.8"/>
-    <line x1="427" y1="42" x2="427" y2="82" stroke="#374151" stroke-width="0.8"/>
+    <line x1="285" y1="94" x2="570" y2="94" stroke="#374151" stroke-width="0.8"/>
+    <line x1="427" y1="42" x2="427" y2="94" stroke="#374151" stroke-width="0.8"/>
     
     <text x="292" y="54" font-family="Arial, sans-serif" font-size="6.5" fill="#4B5563">Quotation #:</text>
     <text x="292" y="66" font-family="Arial, sans-serif" font-size="7.5" font-weight="700" fill="#111827">QT-1</text>
-    <text x="292" y="74" font-family="Arial, sans-serif" font-size="6.5" fill="#4B5563">Place of Supply:</text>
-    <text x="292" y="80" font-family="Arial, sans-serif" font-size="7" font-weight="700" fill="#111827">36-TELANGANA</text>
+    <text x="292" y="78" font-family="Arial, sans-serif" font-size="6.5" fill="#4B5563">Place of Supply:</text>
+    <text x="292" y="90" font-family="Arial, sans-serif" font-size="7" font-weight="700" fill="#111827">36-TELANGANA</text>
 
     <text x="434" y="54" font-family="Arial, sans-serif" font-size="6.5" fill="#4B5563">Quotation Date:</text>
     <text x="434" y="66" font-family="Arial, sans-serif" font-size="7.5" font-weight="700" fill="#111827">17 Jun 2023</text>
-    <text x="434" y="74" font-family="Arial, sans-serif" font-size="6.5" fill="#4B5563">Validity:</text>
-    <text x="434" y="80" font-family="Arial, sans-serif" font-size="7" font-weight="700" fill="#111827">17 Jun 2023</text>
+    <text x="434" y="78" font-family="Arial, sans-serif" font-size="6.5" fill="#4B5563">Validity:</text>
+    <text x="434" y="90" font-family="Arial, sans-serif" font-size="7" font-weight="700" fill="#111827">17 Jun 2023</text>
 
     <!-- Shipping address box -->
-    <text x="292" y="94" font-family="Arial, sans-serif" font-size="7" font-weight="700" fill="#111827">Shipping address:</text>
-    <text x="292" y="106" font-family="Arial, sans-serif" font-size="6.5" fill="#374151">Survey 115/1, ISB Rd, Financial District</text>
-    <text x="292" y="116" font-family="Arial, sans-serif" font-size="6.5" fill="#374151">Gachibowli, Nanakramguda</text>
-    <text x="292" y="126" font-family="Arial, sans-serif" font-size="6.5" fill="#374151">Hyderabad, TELANGANA, 500032</text>
+    <text x="292" y="106" font-family="Arial, sans-serif" font-size="7" font-weight="700" fill="#111827">Shipping address:</text>
+    <text x="292" y="118" font-family="Arial, sans-serif" font-size="6.5" fill="#374151">Survey 115/1, ISB Rd, Financial District</text>
+    <text x="292" y="128" font-family="Arial, sans-serif" font-size="6.5" fill="#374151">Gachibowli, Nanakramguda</text>
+    <text x="292" y="138" font-family="Arial, sans-serif" font-size="6.5" fill="#374151">Hyderabad, TELANGANA, 500032</text>
   </g>
 
   <!-- Customer Details Row -->
