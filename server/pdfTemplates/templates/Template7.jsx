@@ -219,7 +219,7 @@ export default function Template7({ invoice }) {
               </Text>
             )}
             {biz?.phone && <Text style={s.bizText}><Text style={s.boldText}>Mobile</Text> {biz.phone}</Text>}
-            {biz?.email && <Text wrap={false} style={s.bizText}><Text style={s.boldText}>Email</Text> {biz.email}</Text>}
+            {biz?.email && <Text wrap={false} numberOfLines={1} style={s.bizText}><Text style={s.boldText}>Email</Text> {biz.email}</Text>}
             {biz?.website && <Text style={s.bizText}><Text style={s.boldText}>Website</Text> {biz.website}</Text>}
               </View>
             </View>
@@ -333,7 +333,6 @@ export default function Template7({ invoice }) {
             )}
           </View>
           <View style={s.sigCol}>
-            <Text style={s.sigText}>For {bizName}</Text>
             <SignatoryDetails biz={biz} showLabel={false} />
             {biz?.businessSeal && (
               <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />

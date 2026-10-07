@@ -37,8 +37,8 @@ export default function Template4({ invoice }) {
 
     headerArea: { flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1.5, borderBottomColor: NAVY, borderBottomStyle: 'solid', paddingBottom: 15, marginBottom: 10 },
     bizInfoBox: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0 },
-    brandText: { width: 230, flexShrink: 1 },
-    topLogo: { maxWidth: 180, maxHeight: 68, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
+    brandText: { flex: 1, minWidth: 0, flexShrink: 1 },
+    topLogo: { width: 110, height: 70, maxWidth: 200, maxHeight: 80, objectFit: 'contain', marginRight: 12, flexShrink: 0 },
     bizNameText: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: NAVY, textTransform: 'uppercase', marginBottom: 2 },
     bizSubText: { fontSize: scaled.bizSubTextFontSize, color: '#444', marginTop: 1, lineHeight: scaled.bizSubTextLineHeight },
     titleBox: { alignItems: 'flex-end', paddingTop: 8 },
@@ -149,7 +149,7 @@ export default function Template4({ invoice }) {
                 {biz.address.city}, {biz.address.state} {biz.address.pincode || ''}
               </Text>
             )}
-            {biz?.email && <Text wrap={false} style={s.bizSubText}>{biz.email}</Text>}
+            {biz?.email && <Text wrap={false} numberOfLines={1} style={s.bizSubText}>{biz.email}</Text>}
             {biz?.gstin && <Text style={[s.bizSubText, { color: GOLD, fontFamily: B }]}>GSTIN: {biz.gstin}</Text>}
           
             </View>

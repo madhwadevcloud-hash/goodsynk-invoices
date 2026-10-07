@@ -262,7 +262,7 @@ export default function Template10({ invoice }) {
         {/* Business contact row */}
         <View style={s.bizDetailsRow}>
           {biz?.phone && <Text style={s.bizText}>P: {biz.phone}</Text>}
-          {biz?.email && <Text wrap={false} style={s.bizText}>E: {biz.email}</Text>}
+          {biz?.email && <Text wrap={false} numberOfLines={1} style={s.bizText}>E: {biz.email}</Text>}
           {biz?.gstin && <Text style={[s.bizText, { fontFamily: B, color: PRIMARY }]}>GSTIN: {biz.gstin}</Text>}
         </View>
 
@@ -390,11 +390,23 @@ export default function Template10({ invoice }) {
             )}
 
             <View style={s.sigBox} wrap={false}>
-              {biz?.businessSignature && <Image src={biz.businessSignature} style={s.sigImg} />
-}
+              {biz?.businessSignature ? (
+                <Image src={biz.businessSignature} style={s.sigImg} />
+              ) : (
+                <View style={{ height: 36 }} />
+              )}
               <View style={s.sigLine} />
-              <SignatoryDetails biz={biz} />
-              <Text style={s.sigText}>Authorised Signatory</Text>
+              <Text style={s.sigText}>Authorized Signature</Text>
+              {(biz?.signatoryName || biz?.name) && (
+                <Text numberOfLines={1} style={{ fontSize: 8.5, fontFamily: B, color: '#111', marginTop: 2 }}>
+                  {String(biz.signatoryName || biz.name).trim()}
+                </Text>
+              )}
+              {biz?.designation && (
+                <Text numberOfLines={1} style={{ fontSize: 7.5, color: '#555', marginTop: 1 }}>
+                  {String(biz.designation).trim()}
+                </Text>
+              )}
               {biz?.businessSeal && <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />}
             </View>
           </View>

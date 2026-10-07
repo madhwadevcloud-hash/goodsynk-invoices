@@ -167,7 +167,7 @@ export default function Template9({ invoice }) {
               {biz?.address?.street && <Text style={s.bizText}>{String(biz.address.street).replace(/\s+,/g, ',').replace(/,(?=\S)/g, ', ').trim()}</Text>}
               {biz?.address?.city && <Text style={s.bizText}>{[[biz?.address?.city, biz?.address?.state].map((v) => String(v || '').trim().replace(/[-,\s]+$/, '')).filter(Boolean).join(', '), String(biz?.address?.pincode || '').trim()].filter(Boolean).join(' ')}</Text>}
               {biz?.phone && <Text style={s.bizText}>P: {biz.phone}</Text>}
-              {biz?.email && <Text wrap={false} style={s.bizText}>E: {biz.email}</Text>}
+              {biz?.email && <Text wrap={false} numberOfLines={1} style={s.bizText}>E: {biz.email}</Text>}
               {biz?.gstin && <Text style={[s.bizText, { marginTop: 6, fontFamily: B, color: PRIMARY }]}>GSTIN: {biz.gstin}</Text>}
               </View>
             </View>
@@ -253,11 +253,23 @@ export default function Template9({ invoice }) {
             </View>
 
             <View style={s.sigBox} wrap={false}>
-              {biz?.businessSignature && <Image src={biz.businessSignature} style={s.sigImg} />
-}
+              {biz?.businessSignature ? (
+                <Image src={biz.businessSignature} style={s.sigImg} />
+              ) : (
+                <View style={{ height: 36 }} />
+              )}
               <View style={s.sigLine} />
-              <SignatoryDetails biz={biz} />
-              <Text style={s.sigText}>Authorised Signatory</Text>
+              <Text style={s.sigText}>Authorized Signature</Text>
+              {(biz?.signatoryName || biz?.name) && (
+                <Text numberOfLines={1} style={{ fontSize: 8.5, fontFamily: B, color: '#111', marginTop: 2, textAlign: 'right' }}>
+                  {String(biz.signatoryName || biz.name).trim()}
+                </Text>
+              )}
+              {biz?.designation && (
+                <Text numberOfLines={1} style={{ fontSize: 7.5, color: '#555', marginTop: 1, textAlign: 'right' }}>
+                  {String(biz.designation).trim()}
+                </Text>
+              )}
               {biz?.businessSeal && <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />}
             </View>
           </View>

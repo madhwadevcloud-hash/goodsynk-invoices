@@ -357,7 +357,7 @@ export default function Template6({ invoice }) {
           {(biz?.phone || biz?.email) && (
             <View style={s.footerContact}>
               {biz?.phone && <Text style={[s.footerContactText, { fontSize: contactSize(phoneTxt), textAlign: 'center' }]}>{phoneTxt}</Text>}
-              {biz?.email && <Text wrap={false} style={[s.footerContactText, { fontSize: contactSize(emailTxt), textAlign: 'center' }]}>{emailTxt}</Text>}
+              {biz?.email && <Text wrap={false} numberOfLines={1} style={[s.footerContactText, { fontSize: contactSize(emailTxt), textAlign: 'center' }]}>{emailTxt}</Text>}
             </View>
           )}
           <View style={s.footerDivider} />

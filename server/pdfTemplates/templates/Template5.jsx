@@ -52,7 +52,7 @@ export default function Template5({ invoice }) {
   const FOOT_A_W = A4_WIDTH * (1.7 / 4.4) - 28;
   const footPhoneSize = fitFont(biz?.phone || '', 7.5, FOOT_A_W, 6);
   const footEmailSize = fitFont(biz?.email || '', 7.5, FOOT_A_W, 6);
-  const notesText = Array.isArray(invoice.notes) ? invoice.notes.filter(Boolean).join('\n') : invoice.notes;
+  const notesText = Array.isArray(invoice.notes) ? invoice.notes.filter(Boolean).map(n => typeof n === 'object' ? (n.text || n.note || JSON.stringify(n)) : String(n)).join('\n') : (invoice.notes ? String(invoice.notes) : (invoice.note ? String(invoice.note) : ''));
 
   const s = StyleSheet.create({
     page: { paddingTop: 32, paddingBottom: footerReserve(biz, 75) + 5, paddingHorizontal: 40, fontFamily: 'Inter', color: '#000' },
@@ -64,8 +64,8 @@ export default function Template5({ invoice }) {
     invoiceTitle: { fontFamily: B, fontSize: 24, color: BLUE, textTransform: 'uppercase', letterSpacing: 1 },
 
     bizInfo: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-start', marginTop: 8, minWidth: 0 },
-    brandText: { width: 230, flexShrink: 1 },
-    topLogo: { maxWidth: 180, maxHeight: 68, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
+    brandText: { flex: 1, minWidth: 0, flexShrink: 1 },
+    topLogo: { width: 110, height: 70, maxWidth: 200, maxHeight: 80, objectFit: 'contain', marginRight: 10, flexShrink: 0 },
     bizText: { fontSize: scaled.bizSubTextFontSize, color: '#444', textAlign: 'right', lineHeight: scaled.bizSubTextLineHeight },
     bizName: { fontSize: scaled.bizNameFontSize, fontFamily: B, color: '#000', marginBottom: 2, textAlign: 'right' },
 
@@ -185,7 +185,7 @@ export default function Template5({ invoice }) {
                   {biz?.address?.city && `${biz.address.city}, ${biz.address.state} ${biz.address.pincode || ''}\n`}
                   {biz?.phone && `${biz.phone}`}
                 </Text>
-                {biz?.email && <Text wrap={false} style={[s.bizText, { fontSize: fitFont(biz.email, scaled.bizSubTextFontSize, 230, 5) }]}>{biz.email}</Text>}
+                {biz?.email && <Text wrap={false} numberOfLines={1} style={[s.bizText, { fontSize: fitFont(biz.email, scaled.bizSubTextFontSize, 230, 5) }]}>{biz.email}</Text>}
                 </View>
               </View>
             </View>
@@ -263,7 +263,7 @@ export default function Template5({ invoice }) {
           <View style={s.leftBottom}>
 
 
-            {notesText && (
+            {(notesText && String(notesText).trim().length > 0) && (
               <View style={{ marginBottom: 15 }}>
                 <Text style={s.metaLabel}>Notes</Text>
                 <Text style={s.metaVal}>{notesText}</Text>
@@ -302,7 +302,7 @@ export default function Template5({ invoice }) {
           <View style={s.footerSegmentA}>
             <Text style={s.footerSectionTitle}>Contact</Text>
             {biz?.phone && <Text style={[s.footerText, { fontSize: footPhoneSize }]}>{biz.phone}</Text>}
-              {biz?.email && <Text wrap={false} style={[s.footerText, { fontSize: footEmailSize }]}>{biz.email}</Text>}
+              {biz?.email && <Text wrap={false} numberOfLines={1} style={[s.footerText, { fontSize: footEmailSize }]}>{biz.email}</Text>}
           </View>
           <View style={s.footerVRule} />
           {/* Segment B — Brand */}

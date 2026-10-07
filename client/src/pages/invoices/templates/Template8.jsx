@@ -131,7 +131,7 @@ export default function Template8({ invoice }) {
             {biz?.address?.street && <Text style={s.bizText}>{String(biz.address.street).replace(/\s+,/g, ',').replace(/,(?=\S)/g, ', ').trim()}</Text>}
             {biz?.address?.city && <Text style={s.bizText}>{[[biz?.address?.city, biz?.address?.state].map((v) => String(v || '').trim().replace(/[-,\s]+$/, '')).filter(Boolean).join(', '), String(biz?.address?.pincode || '').trim()].filter(Boolean).join(' ')}</Text>}
             {biz?.phone && <Text style={s.bizText}>P: {biz.phone}</Text>}
-            {biz?.email && <Text wrap={false} style={s.bizText}>E: {biz.email}</Text>}
+            {biz?.email && <Text wrap={false} numberOfLines={1} style={s.bizText}>E: {biz.email}</Text>}
             {biz?.gstin && <Text style={[s.bizText, { marginTop: 6, fontFamily: B }]}>GSTIN: {biz.gstin}</Text>}
             </View>
           </View>
@@ -245,7 +245,6 @@ export default function Template8({ invoice }) {
 
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 }}>
           <View style={s.sigBox} wrap={false}>
-            <View style={s.sigLine} />
             <SignatoryDetails biz={biz} showLabel={false} />
             {biz?.businessSeal && <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />}
           </View>

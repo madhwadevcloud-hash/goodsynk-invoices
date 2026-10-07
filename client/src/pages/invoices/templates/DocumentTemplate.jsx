@@ -44,8 +44,8 @@ export default function DocumentTemplate({ invoice, variant }) {
   // client.address is an object ({ street, city, state, pincode }); interpolating it directly printed "[object Object]".
   const clientAddress = [getAddressStreet(client.address), getAddressCityLine(client.address)].filter(Boolean).join('\n');
   const isQuotation = theme.title === 'QUOTATION';
-  const notesText = variant === 'invoice12'
-    ? (Array.isArray(invoice.notes) ? invoice.notes.filter(Boolean).join(' ') : String(invoice.notes || '').replace(/\s*\n\s*/g, ' '))
+  const notesText = (variant === 'invoice12' || variant === 'quotation12')
+    ? (Array.isArray(invoice.notes) ? invoice.notes.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim() : String(invoice.notes || '').replace(/\s+/g, ' ').trim())
     : invoice.notes;
   const styles = StyleSheet.create({
     page: { padding: 34, fontSize: 9, color: '#27313B', fontFamily: 'Helvetica', backgroundColor: '#FFFFFF' },
@@ -274,7 +274,7 @@ export default function DocumentTemplate({ invoice, variant }) {
           {items.map((item, index) => <View key={index} style={[styles.row, index % 2 ? styles.alt : {}]}><View style={styles.desc}><Text style={styles.itemName}>{item.name || 'Item'}</Text><Text style={styles.itemSub}>{item.description || ''}{item.hsn ? ` | HSN ${item.hsn}` : ''}</Text></View><Text style={styles.qty}>{item.quantity || 0} {item.unit || ''}</Text><Text style={styles.price}>{money(item.price, currency)}</Text><Text style={styles.tax}>{Number(item.cgstRate || 0) + Number(item.sgstRate || 0) + Number(item.igstRate || 0) + Number(item.vatRate || 0)}%</Text><Text style={styles.total}>{money(item.total ?? (item.price || 0) * (item.quantity || 0), currency)}</Text></View>)}
         </View>
         <View style={styles.lower}>
-          <View style={styles.notes}><Text style={styles.sectionLabel}>{isQuotation ? 'Scope and terms' : 'Notes and payment details'}</Text><Text>{notesText || 'Thank you for your business.'}</Text><Text style={{ marginTop: 8 }}>{invoice.termsAndConditions || ''}</Text>{biz.bankDetails?.bankName && <Text style={{ marginTop: 8 }}>Bank: {biz.bankDetails.bankName}{biz.bankDetails.accountNumber ? ` | A/C ${biz.bankDetails.accountNumber}` : ''}{biz.bankDetails.ifscCode ? ` | IFSC ${biz.bankDetails.ifscCode}` : ''}{biz.bankDetails.branch ? ` | Branch ${biz.bankDetails.branch}` : ''}</Text>}</View>
+          <View style={styles.notes}><Text style={styles.sectionLabel}>{isQuotation ? 'Scope and terms' : 'Notes and payment details'}</Text><Text style={(variant === 'invoice12' || variant === 'quotation12') ? { fontSize: 8, lineHeight: 1.1, color: '#53606C' } : {}}>{notesText || 'Thank you for your business.'}</Text><Text style={{ marginTop: 8 }}>{invoice.termsAndConditions || ''}</Text>{biz.bankDetails?.bankName && <Text style={{ marginTop: 8 }}>Bank: {biz.bankDetails.bankName}{biz.bankDetails.accountNumber ? ` | A/C ${biz.bankDetails.accountNumber}` : ''}{biz.bankDetails.ifscCode ? ` | IFSC ${biz.bankDetails.ifscCode}` : ''}{biz.bankDetails.branch ? ` | Branch ${biz.bankDetails.branch}` : ''}</Text>}</View>
           <View style={styles.totals}><View style={styles.totalLine}><Text>Subtotal</Text><Text>{money(invoice.subtotal, currency)}</Text></View><View style={styles.totalLine}><Text>Discount</Text><Text>- {money(invoice.discountAmount, currency)}</Text></View><View style={styles.totalLine}><Text>Tax</Text><Text>{money(invoice.taxTotal, currency)}</Text></View><View style={styles.grand}><Text>{isQuotation ? 'Estimated total' : 'Amount due'}</Text><Text>{money(invoice.total, currency)}</Text></View></View>
         </View>
         <View style={{ marginTop: 10, paddingHorizontal: 34, flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }} wrap={false}>
