@@ -1,14 +1,14 @@
 import React from 'react';
 import { Text, View, Image } from '@react-pdf/renderer';
 
-export default function SignatoryDetails({ biz, align = 'center', color = '#1a3a6b', labelStyle = {}, showLabel = true }) {
+export default function SignatoryDetails({ biz, align = 'center', color = '#1a3a6b', labelStyle = {}, label = 'Authorized signature', showLabel = true, showImage = true }) {
   const sigImg = biz?.businessSignature || biz?.signature || biz?.signatureImage;
   const signatoryName = String(biz?.signatoryName || '').trim() || String(biz?.name || '').trim();
   const designation = biz?.designation || '';
 
   return (
     <View style={{ width: 160, alignItems: 'center' }}>
-      {sigImg ? (
+      {!showImage ? null : sigImg ? (
         <Image
           src={sigImg}
           style={{ width: 140, height: 48, objectFit: 'contain', marginBottom: 4 }}
@@ -18,7 +18,7 @@ export default function SignatoryDetails({ biz, align = 'center', color = '#1a3a
       )}
       {showLabel && (
         <Text style={[{ fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: color || '#333333', textAlign: 'center' }, labelStyle]}>
-          Authorized signature
+          {label}
         </Text>
       )}
       {signatoryName ? (
@@ -34,4 +34,3 @@ export default function SignatoryDetails({ biz, align = 'center', color = '#1a3a
     </View>
   );
 }
-

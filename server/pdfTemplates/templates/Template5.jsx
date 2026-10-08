@@ -52,20 +52,22 @@ export default function Template5({ invoice }) {
   const FOOT_A_W = A4_WIDTH * (1.7 / 4.4) - 28;
   const footPhoneSize = fitFont(biz?.phone || '', 7.5, FOOT_A_W, 6);
   const footEmailSize = fitFont(biz?.email || '', 7.5, FOOT_A_W, 6);
-  const notesText = Array.isArray(invoice.notes) ? invoice.notes.filter(Boolean).map(n => typeof n === 'object' ? (n.text || n.note || JSON.stringify(n)) : String(n)).join('\n') : (invoice.notes ? String(invoice.notes) : (invoice.note ? String(invoice.note) : ''));
+  const BRAND_W = 250;
+  const bizNameSize = fitFont(String(biz?.businessName || biz?.name || ''), scaled.bizNameFontSize, BRAND_W * 0.84, 6, true);
+  const notesText = Array.isArray(invoice.notes) ? invoice.notes.filter(Boolean).join('\n') : invoice.notes;
 
   const s = StyleSheet.create({
     page: { paddingTop: 32, paddingBottom: footerReserve(biz, 75) + 5, paddingHorizontal: 40, fontFamily: 'Inter', color: '#000' },
 
     headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 },
-    headerLeft: { width: '46%', minWidth: 0 },
-    headerRight: { width: '54%', alignItems: 'flex-end', minWidth: 0 },
+    headerLeft: { width: '30%', minWidth: 0 },
+    headerRight: { width: '70%', alignItems: 'flex-end', minWidth: 0 },
 
     invoiceTitle: { fontFamily: B, fontSize: 24, color: BLUE, textTransform: 'uppercase', letterSpacing: 1 },
 
     bizInfo: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-start', marginTop: 8, minWidth: 0 },
-    brandText: { flex: 1, minWidth: 0, flexShrink: 1 },
-    topLogo: { width: 110, height: 70, maxWidth: 200, maxHeight: 80, objectFit: 'contain', marginRight: 10, flexShrink: 0 },
+    brandText: { width: 250, flexShrink: 1 },
+    topLogo: { width: 100, height: 70, objectFit: 'contain', objectPositionX: '100%', marginRight: 8, flexShrink: 0 },
     bizText: { fontSize: scaled.bizSubTextFontSize, color: '#444', textAlign: 'right', lineHeight: scaled.bizSubTextLineHeight },
     bizName: { fontSize: scaled.bizNameFontSize, fontFamily: B, color: '#000', marginBottom: 2, textAlign: 'right' },
 
@@ -167,10 +169,10 @@ export default function Template5({ invoice }) {
               <Text style={[s.metaVal, { fontFamily: B, marginBottom: 10 }]}>{invoice.invoiceNumber || invoice.quotationNumber}</Text>
 
               <Text style={s.metaLabel}>Date of Issue</Text>
-              <Text style={[s.metaVal, { marginBottom: 10 }]}>{new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text>
+              <Text style={[s.metaVal, { marginBottom: 10 }]}>{new Date(invoice.issueDate).toLocaleDateString('en-GB')}</Text>
 
-              <Text style={s.metaLabel}>Due Date</Text>
-              <Text style={s.metaVal}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US') : 'Upon Receipt'}</Text>
+              <Text style={s.metaLabel}>{isQuotation ? 'Valid Until' : 'Due Date'}</Text>
+              <Text style={s.metaVal}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-GB') : (isQuotation ? '-' : 'Upon Receipt')}</Text>
             </View>
           </View>
 
@@ -179,13 +181,13 @@ export default function Template5({ invoice }) {
               <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center' }}>
                 {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
                 <View style={s.brandText}>
-                <Text numberOfLines={1} wrap={false} style={s.bizName}>{bizName}</Text>
+                <Text numberOfLines={1} wrap={false} style={[s.bizName, { fontSize: bizNameSize }]}>{bizName}</Text>
                 <Text style={s.bizText}>
                   {biz?.address?.street && `${biz.address.street}\n`}
                   {biz?.address?.city && `${biz.address.city}, ${biz.address.state} ${biz.address.pincode || ''}\n`}
                   {biz?.phone && `${biz.phone}`}
                 </Text>
-                {biz?.email && <Text wrap={false} numberOfLines={1} style={[s.bizText, { fontSize: fitFont(biz.email, scaled.bizSubTextFontSize, 230, 5) }]}>{biz.email}</Text>}
+                {biz?.email && <Text wrap={false} style={[s.bizText, { fontSize: fitFont(biz.email, scaled.bizSubTextFontSize, BRAND_W - 20, 5) }]}>{biz.email}</Text>}
                 </View>
               </View>
             </View>
@@ -195,7 +197,7 @@ export default function Template5({ invoice }) {
         {/* Billed To */}
         <View style={s.metaSection}>
           <View style={s.metaCol}>
-            <Text style={s.metaLabel}>Billed To:</Text>
+            <Text style={s.metaLabel}>{isQuotation ? 'Prepared For:' : 'Billed To:'}</Text>
             <Text style={[s.metaVal, { fontFamily: B, marginBottom: 4 }]}>{client?.name}</Text>
             <Text style={s.metaVal}>
               {client?.address?.street && `${client.address.street}\n`}
@@ -263,7 +265,7 @@ export default function Template5({ invoice }) {
           <View style={s.leftBottom}>
 
 
-            {(notesText && String(notesText).trim().length > 0) && (
+            {notesText && (
               <View style={{ marginBottom: 15 }}>
                 <Text style={s.metaLabel}>Notes</Text>
                 <Text style={s.metaVal}>{notesText}</Text>
@@ -302,7 +304,7 @@ export default function Template5({ invoice }) {
           <View style={s.footerSegmentA}>
             <Text style={s.footerSectionTitle}>Contact</Text>
             {biz?.phone && <Text style={[s.footerText, { fontSize: footPhoneSize }]}>{biz.phone}</Text>}
-              {biz?.email && <Text wrap={false} numberOfLines={1} style={[s.footerText, { fontSize: footEmailSize }]}>{biz.email}</Text>}
+              {biz?.email && <Text wrap={false} style={[s.footerText, { fontSize: footEmailSize }]}>{biz.email}</Text>}
           </View>
           <View style={s.footerVRule} />
           {/* Segment B — Brand */}

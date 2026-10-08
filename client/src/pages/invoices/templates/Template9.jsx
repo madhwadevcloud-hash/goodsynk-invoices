@@ -2,6 +2,7 @@ import SignatoryDetails from './SignatoryDetails';
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image, Link } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
+import { fitFont } from './layoutUtils';
 
 const B = 'Inter-Bold';
 
@@ -42,8 +43,8 @@ export default function Template9({ invoice }) {
     // Right Header (Dark Gray/Black)
     topRight: { width: '65%', padding: 30, paddingLeft: 40, color: '#FFF', justifyContent: 'space-between' },
     brandRow: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0 },
-    brandText: { width: 230, flexShrink: 1 },
-    topLogo: { maxWidth: 140, maxHeight: 52, objectFit: 'contain', marginRight: 8, flexShrink: 0, backgroundColor: '#FFF', padding: 2, borderRadius: 2 },
+    brandText: { flex: 1, minWidth: 0 },
+    topLogo: { width: 84, height: 52, objectFit: 'contain', marginRight: 10, flexShrink: 0, backgroundColor: '#FFF', padding: 3, borderRadius: 3 },
     bizName: { fontFamily: B, fontSize: scaled.bizNameFontSize, color: '#FFF', textTransform: 'uppercase', marginBottom: 4, letterSpacing: 1 },
     bizText: { fontSize: scaled.bizSubTextFontSize, color: '#FFF', opacity: 0.7, lineHeight: scaled.bizSubTextLineHeight },
     
@@ -87,7 +88,7 @@ export default function Template9({ invoice }) {
     sectionTitle: { fontSize: 9, fontFamily: B, color: '#111', textTransform: 'uppercase', marginBottom: 8, letterSpacing: 1 },
     notesText: { fontSize: 8.5, color: '#555', lineHeight: 1.5, marginBottom: 15 },
     
-    sigBox: { width: '40%', alignItems: 'flex-end', justifyContent: 'flex-end' },
+    sigBox: { width: 190, alignItems: 'flex-end', justifyContent: 'flex-end' },
     sigImg: { width: 140, height: 45, objectFit: 'contain', marginBottom: 6 },
     sigLine: { width: '100%', height: 2, backgroundColor: PRIMARY, marginBottom: 6 },
     sigText: { fontSize: 8, fontFamily: B, color: '#111', textTransform: 'uppercase', letterSpacing: 1 },
@@ -106,6 +107,15 @@ export default function Template9({ invoice }) {
   const isQuotation = invoice.invoiceType === 'quotation';
   const docTitle = isQuotation ? 'QUOTATION' : 'INVOICE';
   const docNo = invoice.invoiceNumber || invoice.quotationNumber;
+
+  // Company name + e-mail must stay on ONE line: shrink the font until they fit the available width.
+  const brandW = 595.28 * 0.65 - 70 - (biz?.businessLogo ? 94 : 0);
+  const nameUpper = String(bizName).toUpperCase();
+  const nameFont = fitFont(nameUpper, scaled.bizNameFontSize, brandW - nameUpper.length, 7.5, true);
+  const emailText = biz?.email ? `E: ${biz.email}` : '';
+  const emailFont = fitFont(emailText, scaled.bizSubTextFontSize, brandW, 5);
+  const signerName = String(biz?.signatoryName || biz?.name || biz?.ownerName || biz?.businessName || '').trim();
+  const signerDesignation = String(biz?.designation || '').trim();
 
   const showCGST = invoice.cgstTotal > 0;
   const showSGST = invoice.sgstTotal > 0;
@@ -163,11 +173,11 @@ export default function Template9({ invoice }) {
             <View style={s.brandRow}>
               {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
               <View style={s.brandText}>
-                <Text numberOfLines={1} wrap={false} style={s.bizName}>{bizName}</Text>
+                <Text wrap={false} style={[s.bizName, { fontSize: nameFont }]}>{bizName}</Text>
               {biz?.address?.street && <Text style={s.bizText}>{String(biz.address.street).replace(/\s+,/g, ',').replace(/,(?=\S)/g, ', ').trim()}</Text>}
               {biz?.address?.city && <Text style={s.bizText}>{[[biz?.address?.city, biz?.address?.state].map((v) => String(v || '').trim().replace(/[-,\s]+$/, '')).filter(Boolean).join(', '), String(biz?.address?.pincode || '').trim()].filter(Boolean).join(' ')}</Text>}
               {biz?.phone && <Text style={s.bizText}>P: {biz.phone}</Text>}
-              {biz?.email && <Text wrap={false} numberOfLines={1} style={s.bizText}>E: {biz.email}</Text>}
+              {biz?.email && <Text wrap={false} style={[s.bizText, { fontSize: emailFont }]}>{emailText}</Text>}
               {biz?.gstin && <Text style={[s.bizText, { marginTop: 6, fontFamily: B, color: PRIMARY }]}>GSTIN: {biz.gstin}</Text>}
               </View>
             </View>
@@ -260,16 +270,8 @@ export default function Template9({ invoice }) {
               )}
               <View style={s.sigLine} />
               <Text style={s.sigText}>Authorized Signature</Text>
-              {(biz?.signatoryName || biz?.name) && (
-                <Text numberOfLines={1} style={{ fontSize: 8.5, fontFamily: B, color: '#111', marginTop: 2, textAlign: 'right' }}>
-                  {String(biz.signatoryName || biz.name).trim()}
-                </Text>
-              )}
-              {biz?.designation && (
-                <Text numberOfLines={1} style={{ fontSize: 7.5, color: '#555', marginTop: 1, textAlign: 'right' }}>
-                  {String(biz.designation).trim()}
-                </Text>
-              )}
+              {signerName ? <Text wrap={false} style={{ fontSize: 8.5, fontFamily: B, color: '#111', marginTop: 2, textAlign: 'right' }}>{signerName}</Text> : null}
+              {signerDesignation ? <Text wrap={false} style={{ fontSize: 7.5, color: '#555', marginTop: 1, textAlign: 'right' }}>{signerDesignation}</Text> : null}
               {biz?.businessSeal && <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />}
             </View>
           </View>

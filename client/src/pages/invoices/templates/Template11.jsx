@@ -1,7 +1,7 @@
-import SignatoryDetails from './SignatoryDetails';
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image, Link } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
+import { fitFont } from './layoutUtils';
 
 const B = 'Inter-Bold';
 
@@ -17,6 +17,12 @@ const hexToRgba = (hex, alpha) => {
 
 const M = 'Inter-SemiBold';
 
+// Layout constants used to keep the company name / e-mail on a single line
+const CONTENT_W = 595.28 - 90;
+const DOC_COL_W = 200;
+const LOGO_W = 150;
+const NAME_LS = 1.5;
+
 export default function Template11({ invoice }) {
   const { client, user: biz } = invoice;
   const colors = invoice.templateColors || { primary: '#000000' };
@@ -30,13 +36,14 @@ export default function Template11({ invoice }) {
     
     // Minimalist Header
     headerWrap: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 },
-    bizBox: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'flex-start' },
-    brandText: { width: 230, flexShrink: 1 },
-    topLogo: { maxWidth: 140, maxHeight: 52, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
-    bizName: { fontFamily: B, fontSize: 14, color: '#111', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 8 },
+    bizBox: { flex: 1, minWidth: 0, flexDirection: 'column', alignItems: 'flex-start', paddingRight: 14 },
+    brandText: { width: '100%' },
+    // Fixed logo box (contain): any uploaded logo is shown dynamically, large enough to read clearly
+    topLogo: { width: LOGO_W, height: 52, objectFit: 'contain', objectPositionX: 0, marginBottom: 8 },
+    bizName: { fontFamily: B, fontSize: 14, color: '#111', textTransform: 'uppercase', letterSpacing: NAME_LS, marginBottom: 8 },
     bizText: { fontSize: 8.5, color: '#555', lineHeight: 1.6 },
     
-    docBox: { width: '45%', alignItems: 'flex-end' },
+    docBox: { width: DOC_COL_W, alignItems: 'flex-end' },
     docTitle: { fontFamily: B, fontSize: 12, color: PRIMARY, textTransform: 'uppercase', letterSpacing: 4, marginBottom: 15 },
     docMetaRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 4 },
     docMetaLabel: { fontSize: 8.5, color: '#777', marginRight: 10, textTransform: 'uppercase', letterSpacing: 1 },
@@ -80,10 +87,15 @@ export default function Template11({ invoice }) {
     sectionTitle: { fontSize: 8, color: '#999', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 8 },
     notesText: { fontSize: 8.5, color: '#444', lineHeight: 1.6, maxWidth: '80%' },
     
-    sigWrap: { alignItems: 'flex-end', marginTop: 10 },
-    sigImg: { width: 140, height: 50, objectFit: 'contain', marginBottom: 10 },
-    sigLine: { width: 160, height: 1, backgroundColor: '#DDD', marginBottom: 6 },
-    sigText: { fontSize: 8, color: '#777', textTransform: 'uppercase', letterSpacing: 1 },
+    // Single signature block (signature, label, name, designation) with the optional seal beside it
+    sigWrap: { flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end', marginTop: 10 },
+    sigBox: { width: 160, alignItems: 'flex-end' },
+    sigImg: { width: 140, height: 44, objectFit: 'contain', objectPositionX: '100%', marginBottom: 6 },
+    sigLine: { width: '100%', height: 1, backgroundColor: '#DDD', marginBottom: 6 },
+    sigText: { fontSize: 8, color: '#777', textTransform: 'uppercase', letterSpacing: 1, textAlign: 'right' },
+    sigName: { fontSize: 8.5, fontFamily: B, color: '#111', marginTop: 3, textAlign: 'right' },
+    sigDesig: { fontSize: 7.5, color: '#666', marginTop: 1, textAlign: 'right' },
+    sealImg: { width: 56, height: 56, objectFit: 'contain', marginRight: 12 },
 
     // Footer
     footer: { position: 'absolute', bottom: 20, left: 45, right: 45, alignItems: 'center' },
@@ -99,6 +111,14 @@ export default function Template11({ invoice }) {
   const isQuotation = invoice.invoiceType === 'quotation';
   const docTitle = isQuotation ? 'QUOTATION' : 'INVOICE';
   const docNo = invoice.invoiceNumber || invoice.quotationNumber;
+
+  // Company name + e-mail must stay on ONE line: shrink the font until they fit the available width.
+  const brandW = CONTENT_W - DOC_COL_W - 14;
+  const nameUpper = String(bizName).toUpperCase();
+  const nameFont = fitFont(nameUpper, 14, brandW - NAME_LS * nameUpper.length, 8, true);
+  const emailFont = fitFont(String(biz?.email || ''), 8.5, brandW, 5);
+  const signerName = String(biz?.signatoryName || biz?.name || biz?.ownerName || biz?.businessName || '').trim();
+  const signerDesignation = String(biz?.designation || '').trim();
 
   const showCGST = invoice.cgstTotal > 0;
   const showSGST = invoice.sgstTotal > 0;
@@ -125,11 +145,11 @@ export default function Template11({ invoice }) {
           <View style={s.bizBox}>
             {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
             <View style={s.brandText}>
-            <Text numberOfLines={1} wrap={false} style={s.bizName}>{bizName}</Text>
+            <Text wrap={false} style={[s.bizName, { fontSize: nameFont }]}>{bizName}</Text>
             {biz?.address?.street && <Text style={s.bizText}>{String(biz.address.street).replace(/\s+,/g, ',').replace(/,(?=\S)/g, ', ').trim()}</Text>}
             {biz?.address?.city && <Text style={s.bizText}>{[[biz?.address?.city, biz?.address?.state].map((v) => String(v || '').trim().replace(/[-,\s]+$/, '')).filter(Boolean).join(', '), String(biz?.address?.pincode || '').trim()].filter(Boolean).join(' ')}</Text>}
             {biz?.phone && <Text style={s.bizText}>{biz.phone}</Text>}
-            {biz?.email && <Text wrap={false} numberOfLines={1} style={s.bizText}>{biz.email}</Text>}
+            {biz?.email && <Text wrap={false} style={[s.bizText, { fontSize: emailFont }]}>{biz.email}</Text>}
             {biz?.gstin && <Text style={[s.bizText, { marginTop: 10, fontFamily: B }]}>GSTIN: {biz.gstin}</Text>}
             </View>
           </View>
@@ -246,8 +266,14 @@ export default function Template11({ invoice }) {
           )}
           
           <View style={s.sigWrap} wrap={false}>
-            <SignatoryDetails biz={biz} showLabel={false} />
-            {biz?.businessSeal && <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />}
+            {biz?.businessSeal && <Image src={biz.businessSeal} style={s.sealImg} />}
+            <View style={s.sigBox}>
+              {biz?.businessSignature ? <Image src={biz.businessSignature} style={s.sigImg} /> : <View style={{ height: 36 }} />}
+              <View style={s.sigLine} />
+              <Text style={s.sigText}>Authorised Signatory</Text>
+              {signerName ? <Text wrap={false} style={s.sigName}>{signerName}</Text> : null}
+              {signerDesignation ? <Text wrap={false} style={s.sigDesig}>{signerDesignation}</Text> : null}
+            </View>
           </View>
         </View>
 

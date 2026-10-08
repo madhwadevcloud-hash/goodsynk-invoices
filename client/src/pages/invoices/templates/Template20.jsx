@@ -644,10 +644,10 @@ export default function Template20({ invoice }) {
                 </View>
               ) : null}
 
-              <Text style={{ fontSize: 6, fontFamily: B, color: '#374151', marginTop: 4, alignSelf: 'flex-end' }}>
+              <Text style={{ fontSize: 6, fontFamily: B, color: '#374151', marginTop: 4, alignSelf: 'center', textAlign: 'center', width: 160 }}>
                 Authorised Signatory
               </Text>
-              <SignatoryDetails biz={biz} />
+              <SignatoryDetails biz={biz} showLabel={false} showImage={false} />
             </View>
           </View>
 

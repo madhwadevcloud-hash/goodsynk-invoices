@@ -312,10 +312,7 @@ export default function Template17({ invoice }) {
 
           <View style={s.sigCol}>
             <Text style={s.sigLabel}>For {bizName}</Text>
-            {biz?.businessSignature && <Image src={biz.businessSignature} style={{ width: 100, height: 34, objectFit: 'contain', marginBottom: 2 }} />
-}
             <SignatoryDetails biz={biz} />
-              <Text style={s.sigLine}>Authorised Signatory</Text>
             {biz?.businessSeal && <Image src={biz.businessSeal} style={{ width: 60, height: 60, objectFit: 'contain', marginTop: 6 }} />}
           </View>
         </View>

@@ -64,14 +64,18 @@ export default function Template6({ invoice }) {
   const hdrHasLogo = !!biz?.businessLogo;
   const hdrTextHeight = (textW) => {
     const lines = (str, size, bold) => (str ? Math.max(1, Math.ceil((textWidth(str, size, bold) * 1.1) / textW)) : 0);
-    return lines(hdrName, hdrNameSize, true) * hdrNameSize * 1.25 + 2
+    return (hdrName ? 1 : 0) * hdrNameSize * 1.25 + 2
       + (lines(biz?.address?.street, hdrSubSize) + lines(hdrCity, hdrSubSize) + lines(biz?.gstin ? `GSTIN: ${biz.gstin}` : '', hdrSubSize)) * hdrSubSize * scaled.bizSubTextLineHeight;
   };
   let hdrShift = 0;
-  const hdrTextW = (shift) => (260 + shift) * SX - 12 - 40 - (hdrHasLogo ? 44 : 0);
-  while (hdrShift < 140 && 30 + hdrTextHeight(hdrTextW(hdrShift)) + 22 > 170) hdrShift += 35;
+  const hdrLogoW = hdrHasLogo ? 88 : 0; // logo box (80) + gap (8)
+  const hdrTextW = (shift) => (260 + shift) * SX - 12 - 40 - hdrLogoW;
+  // Company name always stays on ONE line: widen the orange panel until it fits at a readable size.
+  const hdrNameFits = (shift) => textWidth(hdrName, 9.5, true) * 1.1 <= hdrTextW(shift);
+  while (hdrShift < 140 && (30 + hdrTextHeight(hdrTextW(hdrShift)) + 22 > 170 || !hdrNameFits(hdrShift))) hdrShift += 35;
   const HDR_H = Math.min(300, Math.max(160, Math.ceil(30 + hdrTextHeight(hdrTextW(hdrShift)) + 24)));
-  const hdrLeftW = hdrTextW(hdrShift) + (hdrHasLogo ? 44 : 0);
+  const hdrLeftW = hdrTextW(hdrShift) + hdrLogoW;
+  const hdrNameFitSize = fitFont(hdrName, hdrNameSize, hdrTextW(hdrShift) * 0.92, 5, true);
   const titleStr = isQuotation ? 'QUOTATION' : 'INVOICE';
   const titleSize = fitFont(titleStr, 28, (800 - (440 + hdrShift)) * SX - 60, 16, true);
 
@@ -89,7 +93,7 @@ export default function Template6({ invoice }) {
 
     headerLeft: { width: hdrLeftW, paddingTop: 0, flexDirection: 'row', alignItems: 'flex-start', minWidth: 0 },
     brandText: { flex: 1, minWidth: 0 },
-    topLogo: { maxWidth: 140, maxHeight: 52, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
+    topLogo: { width: 80, height: 70, objectFit: 'contain', objectPositionX: 0, marginRight: 8, flexShrink: 0 },
     bizNameHeader: { fontSize: scaled.bizNameFontSize + 2, fontFamily: B, color: '#FFF', textTransform: 'uppercase', marginBottom: 2 },
     bizSubTextHeader: { fontSize: scaled.bizSubTextFontSize, color: '#ffffffff', lineHeight: scaled.bizSubTextLineHeight },
 
@@ -222,7 +226,7 @@ export default function Template6({ invoice }) {
             <View style={s.headerLeft}>
               {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
               <View style={s.brandText}>
-              <Text numberOfLines={1} wrap={false} style={s.bizNameHeader}>{bizName}</Text>
+              <Text numberOfLines={1} wrap={false} style={[s.bizNameHeader, { fontSize: hdrNameFitSize }]}>{bizName}</Text>
               <Text style={s.bizSubTextHeader}>
                 {biz?.address?.street && `${biz.address.street}\n`}
                 {biz?.address?.city && `${biz.address.city}, ${biz.address.state} ${biz.address.pincode || ''}\n`}
@@ -271,8 +275,8 @@ export default function Template6({ invoice }) {
           <View style={s.paymentInfoBlock}>
             <Text style={s.detailsTitle}>Details :</Text>
             <View style={s.detailsRow}><Text style={s.detailsLabel}>{isQuotation ? 'Quotation No' : 'Invoice No'}</Text><Text style={s.detailsColon}>:</Text><Text style={s.detailsVal}>{invoice.invoiceNumber || invoice.quotationNumber}</Text></View>
-            <View style={s.detailsRow}><Text style={s.detailsLabel}>Date of Issue</Text><Text style={s.detailsColon}>:</Text><Text style={s.detailsVal}>{new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text></View>
-            <View style={s.detailsRow}><Text style={s.detailsLabel}>Due Date</Text><Text style={s.detailsColon}>:</Text><Text style={s.detailsVal}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US') : 'Upon Receipt'}</Text></View>
+            <View style={s.detailsRow}><Text style={s.detailsLabel}>Date of Issue</Text><Text style={s.detailsColon}>:</Text><Text style={s.detailsVal}>{new Date(invoice.issueDate).toLocaleDateString('en-GB')}</Text></View>
+            <View style={s.detailsRow}><Text style={s.detailsLabel}>{isQuotation ? 'Valid Until' : 'Due Date'}</Text><Text style={s.detailsColon}>:</Text><Text style={s.detailsVal}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-GB') : (isQuotation ? '-' : 'Upon Receipt')}</Text></View>
           </View>
         </View>
 
@@ -348,7 +352,7 @@ export default function Template6({ invoice }) {
           {biz?.businessSeal && (
             <Image src={biz.businessSeal} style={{ width: 55, height: 55, objectFit: 'contain', marginRight: 16 }} />
           )}
-          <SignatoryDetails biz={biz} color={'#1a3a6b'} showLabel={false} />
+          <SignatoryDetails biz={biz} color={'#1a3a6b'} label="Authorized Signatory" />
         </View>
         <Text style={s.thankYou}>Thank you for your business</Text>
 
@@ -357,7 +361,7 @@ export default function Template6({ invoice }) {
           {(biz?.phone || biz?.email) && (
             <View style={s.footerContact}>
               {biz?.phone && <Text style={[s.footerContactText, { fontSize: contactSize(phoneTxt), textAlign: 'center' }]}>{phoneTxt}</Text>}
-              {biz?.email && <Text wrap={false} numberOfLines={1} style={[s.footerContactText, { fontSize: contactSize(emailTxt), textAlign: 'center' }]}>{emailTxt}</Text>}
+              {biz?.email && <Text wrap={false} style={[s.footerContactText, { fontSize: contactSize(emailTxt), textAlign: 'center' }]}>{emailTxt}</Text>}
             </View>
           )}
           <View style={s.footerDivider} />

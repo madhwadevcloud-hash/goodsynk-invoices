@@ -340,19 +340,19 @@ export default function Template16({ invoice }) {
               <Text style={s.sigFor}>For {bizName}</Text>
               {biz?.businessSignature && <Image src={biz.businessSignature} style={{ width: 100, height: 36, objectFit: 'contain', marginBottom: 2 }} />
 }
-              <SignatoryDetails biz={biz} />
               <Text style={s.sigLine}>Authorised Signatory</Text>
+              <SignatoryDetails biz={biz} showLabel={false} showImage={false} />
               {biz?.businessSeal && <Image src={biz.businessSeal} style={{ width: 62, height: 62, objectFit: 'contain', marginTop: 6 }} />}
             </View>
           </View>
 
-          <View style={s.footerNote}>
-            <Text style={s.footerNoteText}>This is a computer generated document and does not require a physical signature.</Text>
-          </View>
         </View>
 
         <View style={s.footerBar} fixed>
-          <Text style={s.footerBrand}>Powered by GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text> — Simple Invoicing, Billing & Quotations</Text>
+          <View>
+            <Text style={s.footerBrand}>Powered by GoodSynk<Text style={{ fontSize: 7, fontFamily: 'Helvetica' }}>™</Text> — Simple Invoicing, Billing & Quotations</Text>
+            <Text style={[s.footerNoteText, { marginTop: 2 }]}>This is a computer generated document and does not require a physical signature.</Text>
+          </View>
           <Text
             style={s.footerTrust}
             render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`}
