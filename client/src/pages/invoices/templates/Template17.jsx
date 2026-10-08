@@ -193,7 +193,7 @@ export default function Template17({ invoice }) {
         {/* Client Info Section */}
         <View style={s.metaGrid}>
           <View style={s.metaCol}>
-            <Text style={s.metaLabel}>Bill To</Text>
+            <Text style={s.metaLabel}>{isQuotation ? 'Prepared For' : 'Bill To'}</Text>
             <Text style={s.metaName}>{client?.name}</Text>
             {client?.phone && <Text style={s.metaText}>Ph: {client.phone}</Text>}
             {client?.address?.street && <Text style={s.metaText}>{client.address.street}</Text>}

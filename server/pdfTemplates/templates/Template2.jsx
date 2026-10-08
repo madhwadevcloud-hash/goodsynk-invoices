@@ -197,8 +197,8 @@ export default function Template2({ invoice }) {
           <View style={s.metaColumn}>
             <Text style={s.metaTitle}>Details:</Text>
             <Text style={s.metaText}>{isQuotation ? 'Quotation No' : 'Invoice No'}: <Text style={{ fontFamily: B }}>{invoice.invoiceNumber || invoice.quotationNumber}</Text></Text>
-            <Text style={s.metaText}>Date of Issue: <Text style={{ fontFamily: B }}>{new Date(invoice.issueDate).toLocaleDateString('en-US')}</Text></Text>
-            <Text style={s.metaText}>Due Date: <Text style={{ fontFamily: B }}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US') : 'Upon Receipt'}</Text></Text>
+            <Text style={s.metaText}>Date of Issue: <Text style={{ fontFamily: B }}>{new Date(invoice.issueDate).toLocaleDateString('en-GB')}</Text></Text>
+            <Text style={s.metaText}>{isQuotation ? 'Valid Until' : 'Due Date'}: <Text style={{ fontFamily: B }}>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-GB') : (isQuotation ? '-' : 'Upon Receipt')}</Text></Text>
           </View>
 
           <View style={s.metaColumn}>
