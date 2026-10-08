@@ -43,6 +43,10 @@ const TEMPLATE_MAP = {
     // Restaurant template
     restro: Restro,
 
+    template12: (props) => <DocumentTemplate {...props} variant="invoice12" />,
+    template13: (props) => <DocumentTemplate {...props} variant="invoice13" />,
+    template14: (props) => <DocumentTemplate {...props} variant="invoice14" />,
+
     invoice12: (props) => <DocumentTemplate {...props} variant="invoice12" />,
     invoice13: (props) => <DocumentTemplate {...props} variant="invoice13" />,
     invoice14: (props) => <DocumentTemplate {...props} variant="invoice14" />,
@@ -50,7 +54,7 @@ const TEMPLATE_MAP = {
     // Legacy fallbacks for removed templates so existing saved records don't break:
     invoice15: Template1,
     quotation12: (props) => <DocumentTemplate {...props} variant="invoice12" />,
-    quotation13: Template1,
+    quotation13: (props) => <DocumentTemplate {...props} variant="invoice13" />,
     quotation14: (props) => <DocumentTemplate {...props} variant="invoice14" />,
     quotation15: Template1,
 };
@@ -88,7 +92,7 @@ export default function TemplateResolver({ invoice }) {
         processedInvoice.template ||
         processedInvoice._resolvedTemplate ||
         'template1'
-    ).toLowerCase();
+    ).toLowerCase().replace(/-/g, '');
 
     const Chosen = TEMPLATE_MAP[key] || Template1;
 

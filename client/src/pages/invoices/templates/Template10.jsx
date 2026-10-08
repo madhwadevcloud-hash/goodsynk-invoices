@@ -1,9 +1,8 @@
-import SignatoryDetails from './SignatoryDetails';
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image, Link } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
 import { isRasterImage } from './watermarkUtils';
-import { safeHyphenation } from './layoutUtils';
+import { safeHyphenation, fitFont } from './layoutUtils';
 
 const B = 'Inter-Bold';
 const M = 'Inter-SemiBold';
@@ -126,9 +125,9 @@ export default function Template10({ invoice }) {
 
     // Top Bar (No background block)
     topFlex: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
-    bizBox: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, minWidth: 0, paddingRight: 20 },
-    topLogo: { maxWidth: 140, maxHeight: 52, objectFit: 'contain', marginRight: 10, flexShrink: 0 },
-    bizInfoCol: { flexDirection: 'column', flex: 1, minWidth: 0 },
+    bizBox: { flexDirection: 'column', alignItems: 'flex-start', flex: 1, minWidth: 0, paddingRight: 20 },
+    topLogo: { width: 150, height: 52, objectFit: 'contain', objectPositionX: 0, marginBottom: 8 },
+    bizInfoCol: { flexDirection: 'column', width: '100%' },
     bizName: { fontFamily: B, fontSize: 18, color: PRIMARY, textTransform: 'uppercase', letterSpacing: 1 },
     bizAddress: { color: '#4B5563', marginTop: 4, lineHeight: 1.35 },
 
@@ -176,7 +175,7 @@ export default function Template10({ invoice }) {
     // Totals Section in a Card
     bottomFlex: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
     notesBox: { width: '50%' },
-    totalsCard: { width: '45%', backgroundColor: LIGHT_CARD, borderRadius: 8, padding: 15 },
+    totalsCard: { width: '45%', alignSelf: 'flex-start', backgroundColor: LIGHT_CARD, borderRadius: 8, padding: 15 },
 
     totRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 },
     totLabel: { fontSize: 9, color: '#6B7280' },
@@ -195,10 +194,12 @@ export default function Template10({ invoice }) {
     sectionTitle: { fontSize: 9, fontFamily: B, color: '#111', textTransform: 'uppercase', marginBottom: 6, letterSpacing: 1 },
     notesText: { fontSize: 8.5, color: '#4B5563', lineHeight: 1.5, marginBottom: 15 },
 
-    sigBox: { width: '40%', alignItems: 'flex-start', marginTop: 20 },
+    sigBox: { width: 170, alignItems: 'flex-start', marginTop: 20 },
     sigImg: { width: 120, height: 40, objectFit: 'contain', marginBottom: 6 },
-    sigLine: { width: 140, height: 1, backgroundColor: '#D1D5DB', marginBottom: 4 },
+    sigLine: { width: 160, height: 1, backgroundColor: '#D1D5DB', marginBottom: 4 },
     sigText: { fontSize: 8, color: '#6B7280' },
+    sigName: { fontSize: 8.5, fontFamily: B, color: '#111', marginTop: 2 },
+    sigDesig: { fontSize: 7.5, color: '#555', marginTop: 1 },
 
     // Footer
     footer: { position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#E5E7EB', paddingTop: 12 },
@@ -211,6 +212,12 @@ export default function Template10({ invoice }) {
   const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency, currencyDisplay: 'code' }).format(n || 0).replace(currency, '').trim();
 
   const bizName = biz?.businessName || biz?.name || '';
+  // Company name must stay on ONE line: shrink the font until it fits.
+  const nameUpper = String(bizName).toUpperCase();
+  const nameFont = fitFont(nameUpper, 18, 330 - nameUpper.length, 8, true);
+  const emailFont = fitFont(String(biz?.email ? `E: ${biz.email}` : ''), 8.5, 400, 5);
+  const signerName = String(biz?.signatoryName || biz?.name || biz?.ownerName || biz?.businessName || '').trim();
+  const signerDesignation = String(biz?.designation || '').trim();
   const isQuotation = invoice.invoiceType === 'quotation';
   const docTitle = isQuotation ? 'QUOTATION' : 'INVOICE';
   const docNo = invoice.invoiceNumber || invoice.quotationNumber;
@@ -245,7 +252,7 @@ export default function Template10({ invoice }) {
           <View style={s.bizBox}>
             {biz?.businessLogo && <Image style={s.topLogo} src={biz.businessLogo} />}
             <View style={s.bizInfoCol}>
-              <Text numberOfLines={1} wrap={false} style={s.bizName}>{bizName}</Text>
+              <Text wrap={false} style={[s.bizName, { fontSize: nameFont }]}>{bizName}</Text>
               {addrLines.length > 0 && (
                 <Text style={[s.bizAddress, { fontSize: addrFontSize }]}>
                   {addrLines.join('\n')}
@@ -262,7 +269,7 @@ export default function Template10({ invoice }) {
         {/* Business contact row */}
         <View style={s.bizDetailsRow}>
           {biz?.phone && <Text style={s.bizText}>P: {biz.phone}</Text>}
-          {biz?.email && <Text wrap={false} style={s.bizText}>E: {biz.email}</Text>}
+          {biz?.email && <Text wrap={false} style={[s.bizText, { fontSize: emailFont }]}>E: {biz.email}</Text>}
           {biz?.gstin && <Text style={[s.bizText, { fontFamily: B, color: PRIMARY }]}>GSTIN: {biz.gstin}</Text>}
         </View>
 
@@ -393,8 +400,9 @@ export default function Template10({ invoice }) {
               {biz?.businessSignature && <Image src={biz.businessSignature} style={s.sigImg} />
 }
               <View style={s.sigLine} />
-              <SignatoryDetails biz={biz} />
               <Text style={s.sigText}>Authorised Signatory</Text>
+              {signerName ? <Text wrap={false} style={s.sigName}>{signerName}</Text> : null}
+              {signerDesignation ? <Text wrap={false} style={s.sigDesig}>{signerDesignation}</Text> : null}
               {biz?.businessSeal && <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />}
             </View>
           </View>

@@ -3,7 +3,7 @@ import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font, Image, Link } from '@react-pdf/renderer';
 import { buildScaledStyles } from './Pdfheaderscaling';
 import { isRasterImage } from './watermarkUtils';
-import { safeHyphenation } from './layoutUtils';
+import { safeHyphenation, fitFont } from './layoutUtils';
 
 // Register fonts
 Font.register({ family: 'Inter', src: 'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYMZhrib2Bg-4.ttf' });
@@ -102,8 +102,8 @@ export default function Template7({ invoice }) {
     docTitle: { fontFamily: B, fontSize: 24, letterSpacing: 1.5, textTransform: 'uppercase', color: PRIMARY, marginBottom: 6 },
     bizName: { fontFamily: B, fontSize: headerScale.bizNameFontSize, color: '#000', textTransform: 'uppercase', marginBottom: 2 },
     brandRow: { flexDirection: 'row', alignItems: 'flex-start', minWidth: 0 },
-    brandText: { width: 230, flexShrink: 1 },
-    topLogoSafe: { maxWidth: 140, maxHeight: 52, objectFit: 'contain', marginRight: 8, flexShrink: 0 },
+    brandText: { width: 320, flexShrink: 1 },
+    topLogoSafe: { width: 100, height: 75, objectFit: 'contain', objectPositionX: 0, marginRight: 10, flexShrink: 0 },
     bizText: { fontSize: headerScale.bizSubTextFontSize, color: '#444', marginBottom: 1, lineHeight: headerScale.bizSubTextLineHeight },
     boldText: { fontFamily: B, color: '#000' },
     originalText: { fontSize: 6.5, color: '#666', textTransform: 'uppercase', textAlign: 'right', marginBottom: 10, fontFamily: B },
@@ -158,6 +158,7 @@ export default function Template7({ invoice }) {
     bankKey: { fontSize: 7, color: '#444', width: 60, flexShrink: 0 },
     bankVal: { fontSize: 7, fontFamily: B, color: '#000', flex: 1, minWidth: 0 },
 
+    notesText: { fontSize: 7, color: '#444', lineHeight: 1.3 },
     sigText: { fontSize: 7, color: '#444', marginBottom: 25 },
     sigLine: { fontSize: 7, color: '#444', paddingTop: 4, width: 100, textAlign: 'center' },
 
@@ -177,6 +178,10 @@ export default function Template7({ invoice }) {
   const fmt = (n) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0);
 
   const bizName = biz?.businessName || biz?.name || '';
+  const BRAND_W = 320;
+  const bizNameSize = fitFont(String(bizName).toUpperCase(), headerScale.bizNameFontSize, BRAND_W * 0.9, 6, true);
+  const bizEmailSize = fitFont(`Email ${biz?.email || ''}`, headerScale.bizSubTextFontSize, BRAND_W - 20, 5);
+  const notesText = Array.isArray(invoice.notes) ? invoice.notes.filter(Boolean).join('\n') : invoice.notes;
   const isQuotation = invoice.invoiceType === 'quotation';
   const docTitle = isQuotation ? 'QUOTATION' : 'INVOICE';
 
@@ -210,7 +215,7 @@ export default function Template7({ invoice }) {
             <View style={s.brandRow}>
               {biz?.businessLogo && <Image style={s.topLogoSafe} src={biz.businessLogo} />}
               <View style={s.brandText}>
-                <Text numberOfLines={1} wrap={false} style={s.bizName}>{bizName}</Text>
+                <Text numberOfLines={1} wrap={false} style={[s.bizName, { fontSize: bizNameSize }]}>{bizName}</Text>
                 {biz?.gstin && <Text style={s.bizText}>GSTIN <Text style={s.boldText}>{biz.gstin}</Text></Text>}
             {biz?.address?.street && <Text style={s.bizText}>{biz.address.street}</Text>}
             {biz?.address?.city && (
@@ -219,7 +224,7 @@ export default function Template7({ invoice }) {
               </Text>
             )}
             {biz?.phone && <Text style={s.bizText}><Text style={s.boldText}>Mobile</Text> {biz.phone}</Text>}
-            {biz?.email && <Text wrap={false} style={s.bizText}><Text style={s.boldText}>Email</Text> {biz.email}</Text>}
+            {biz?.email && <Text wrap={false} style={[s.bizText, { fontSize: bizEmailSize }]}><Text style={s.boldText}>Email</Text> {biz.email}</Text>}
             {biz?.website && <Text style={s.bizText}><Text style={s.boldText}>Website</Text> {biz.website}</Text>}
               </View>
             </View>
@@ -331,10 +336,16 @@ export default function Template7({ invoice }) {
                 )}
               </>
             )}
+            {notesText ? (
+              <View style={{ marginTop: 8 }}>
+                <Text style={s.bankLabel}>Notes:</Text>
+                <Text style={s.notesText}>{notesText}</Text>
+              </View>
+            ) : null}
           </View>
           <View style={s.sigCol}>
             <Text style={s.sigText}>For {bizName}</Text>
-            <SignatoryDetails biz={biz} showLabel={false} />
+            <SignatoryDetails biz={biz} label="Authorized Signatory" />
             {biz?.businessSeal && (
               <Image src={biz.businessSeal} style={{ width: 70, height: 70, objectFit: 'contain', marginTop: 4 }} />
             )}
