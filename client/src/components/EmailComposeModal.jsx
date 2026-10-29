@@ -75,22 +75,16 @@ export default function EmailComposeModal({
             toast.custom((toastItem) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--shadow-lg)' }}>
                     <span>{title} email is sending…</span>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={async () => {
+                    <button type="button" onClick={async () => {
                         try {
                             await onUndo(emailId);
                             toast.dismiss(toastItem.id);
-                            toast.custom((cancelToast) => (
-                                <div role="status" style={{ display: 'flex', alignItems: 'center', gap: 12, width: 'min(420px, calc(100vw - 32px))', boxSizing: 'border-box', padding: '15px 18px', background: '#2563EB', color: '#FFFFFF', border: '1px solid #93C5FD', borderRadius: 12, boxShadow: '0 16px 42px rgba(15, 23, 42, 0.38)', fontWeight: 700, fontSize: '0.95rem' }}>
-                                    <span aria-hidden="true" style={{ display: 'grid', placeItems: 'center', flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }}>✓</span>
-                                    <span style={{ flex: 1, minWidth: 0 }}>Email canceled</span>
-                                    <button type="button" aria-label="Dismiss notification" onClick={() => toast.dismiss(cancelToast.id)} style={{ border: 0, background: 'transparent', color: '#FFFFFF', fontSize: 20, lineHeight: 1, cursor: 'pointer', padding: 2 }}>×</button>
-                                </div>
-                            ), { duration: 4500, position: 'top-center' });
+                            toast.success('Email canceled', { position: 'top-center' });
                         } catch (err) {
                             toast.dismiss(toastItem.id);
                             toast.error(err?.response?.data?.message || 'The email can no longer be undone');
                         }
-                    }}>Undo</button>
+                    }} style={{ border: 'none', outline: 'none', borderRadius: 8, padding: '8px 14px', background: '#2563EB', color: '#FFFFFF', fontWeight: 700, fontSize: '0.875rem', cursor: 'pointer', boxShadow: '0 2px 8px rgba(37, 99, 235, 0.28)' }}>Undo</button>
                 </div>
             ), { duration: response?.data?.undoWindowMs || 10000, position: 'top-right' });
             onClose();
