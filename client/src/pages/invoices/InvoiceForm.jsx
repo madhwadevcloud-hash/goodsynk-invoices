@@ -2458,14 +2458,25 @@ export default function InvoiceForm() {
             <label className="form-label">Terms & Conditions</label>
             <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 10, background: 'var(--bg-elevated)' }}>
               {termsPoints.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: 8 }}>Add bullet-point terms for this {docLabel.toLowerCase()}.</p>}
-              <textarea
-                className="form-control"
-                rows={6}
-                value={termsPoints.join('\n')}
-                onChange={(e) => setField('termsAndConditions', e.target.value.split(/\r?\n/))}
-                placeholder="Enter all terms and conditions. Use a new line for each point."
-                style={{ resize: 'vertical', lineHeight: 1.5 }}
-              />
+              {termsPoints.map((point, termIdx) => (
+                <div key={termIdx} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+                  <span style={{ color: 'var(--primary)', fontWeight: 700, paddingTop: 9 }}>•</span>
+                  <textarea
+                    className="form-control"
+                    rows={Math.min(Math.max(String(point).split('\n').length, 2), 8)}
+                    value={point}
+                    onChange={(e) => {
+                      const next = [...termsPoints];
+                      next[termIdx] = e.target.value;
+                      setField('termsAndConditions', next);
+                    }}
+                    placeholder={`Term ${termIdx + 1}`}
+                    style={{ resize: 'vertical', lineHeight: 1.5 }}
+                  />
+                  <button type="button" aria-label={`Remove term ${termIdx + 1}`} className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)', marginTop: 4 }} onClick={() => setField('termsAndConditions', termsPoints.filter((_, i) => i !== termIdx))}><X size={14} /></button>
+                </div>
+              ))}
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('termsAndConditions', [...termsPoints, ''])}><Plus size={14} /> Add point</button>
             </div>
           </div>
         </div>
