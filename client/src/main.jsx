@@ -14,7 +14,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <ThemeProvider>
           <App />
           <Toaster
-            position="top-right"
+            position="top-center"
+            gutter={12}
+            containerStyle={{ zIndex: 10000 }}
             toastOptions={{
               duration: 3000,
               style: {
@@ -23,6 +25,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                 border: '1px solid var(--border)',
                 borderRadius: '10px',
                 fontSize: '0.875rem',
+                maxWidth: 'calc(100vw - 32px)',
+                boxSizing: 'border-box',
               },
             }}
           />

@@ -79,7 +79,13 @@ export default function EmailComposeModal({
                         try {
                             await onUndo(emailId);
                             toast.dismiss(toastItem.id);
-                            toast.success('Email canceled');
+                            toast.custom((cancelToast) => (
+                                <div role="status" style={{ display: 'flex', alignItems: 'center', gap: 12, width: 'min(420px, calc(100vw - 32px))', boxSizing: 'border-box', padding: '15px 18px', background: '#2563EB', color: '#FFFFFF', border: '1px solid #93C5FD', borderRadius: 12, boxShadow: '0 16px 42px rgba(15, 23, 42, 0.38)', fontWeight: 700, fontSize: '0.95rem' }}>
+                                    <span aria-hidden="true" style={{ display: 'grid', placeItems: 'center', flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }}>✓</span>
+                                    <span style={{ flex: 1, minWidth: 0 }}>Email canceled</span>
+                                    <button type="button" aria-label="Dismiss notification" onClick={() => toast.dismiss(cancelToast.id)} style={{ border: 0, background: 'transparent', color: '#FFFFFF', fontSize: 20, lineHeight: 1, cursor: 'pointer', padding: 2 }}>×</button>
+                                </div>
+                            ), { duration: 4500, position: 'top-center' });
                         } catch (err) {
                             toast.dismiss(toastItem.id);
                             toast.error(err?.response?.data?.message || 'The email can no longer be undone');
