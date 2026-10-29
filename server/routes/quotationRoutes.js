@@ -14,6 +14,7 @@ const {
 
 const {
   sendQuotationEmail,
+  cancelQueuedEmail,
 } = require('../controllers/emailController');
 
 const {
@@ -54,6 +55,8 @@ router
 // ============================================================================
 // SINGLE QUOTATION
 // ============================================================================
+
+router.post('/:id/send-email/:emailId/cancel', cancelQueuedEmail);
 
 // GET    /api/quotations/:id
 // PUT    /api/quotations/:id

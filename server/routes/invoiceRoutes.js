@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
-const { sendInvoiceEmail } = require('../controllers/emailController');
+const { sendInvoiceEmail, cancelQueuedEmail } = require('../controllers/emailController');
 const { checkDocumentLimit } = require('../middleware/planLimitMiddleware');
 
 const router = express.Router();
@@ -24,6 +24,7 @@ router.use(protect);
 router.get('/stats', getStats);
 router.get('/usage', getUsage); // protect already applied via router.use above
 
+router.post('/:id/send-email/:emailId/cancel', cancelQueuedEmail);
 router.route('/').get(getInvoices).post(checkDocumentLimit, createInvoice);
 router.route('/:id').get(getInvoice).put(updateInvoice).delete(deleteInvoice);
 router.patch('/:id/status', updateInvoiceStatus);

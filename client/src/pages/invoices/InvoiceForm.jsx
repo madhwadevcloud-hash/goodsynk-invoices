@@ -716,8 +716,6 @@ export default function InvoiceForm() {
       setForm(f => ({ ...(location.state.formDraft || f), client: location.state.newClientId }));
       setClientQuery(location.state.newClientName || '');
       clientAPI.getAll().then((r) => setClients(r.data.clients)).catch(() => { });
-      // Clear the navigation state so a refresh doesn't re-trigger this
-      navigate(location.pathname, { replace: true, state: {} });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -1108,8 +1106,7 @@ export default function InvoiceForm() {
   const notePoints = form.notes || [];
   const termsPoints = form.termsAndConditions || [];
 
-  // Template 19 (Legal Services Boxed) has no 55-character restriction
-  // for Notes or Terms & Conditions. All other templates are limited to 55.
+  // Template 19 allows longer notes; other templates keep their existing limit.
   const isLegalServicesBoxed =
     String(form.template || '').trim().toLowerCase() === 'template19';
 
@@ -2461,50 +2458,14 @@ export default function InvoiceForm() {
             <label className="form-label">Terms & Conditions</label>
             <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 10, background: 'var(--bg-elevated)' }}>
               {termsPoints.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: 8 }}>Add bullet-point terms for this {docLabel.toLowerCase()}.</p>}
-              {termsPoints.map((point, termIdx) => (
-                <div key={termIdx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <span style={{ color: 'var(--primary)', fontWeight: 700 }}>•</span>
-                  <input
-                    className="form-control"
-                    value={point}
-                    onChange={(e) => {
-                      const next = [...termsPoints];
-                      let value = e.target.value;
-
-                      // Template 19 allows unlimited Terms & Conditions.
-                      // Other templates are limited to 55 characters and
-                      // show a website notification when the limit is reached.
-                      if (!isLegalServicesBoxed && value.length > 55) {
-                        value = value.slice(0, 55);
-                        toast.error('Terms & Conditions are limited to 55 characters for this template.', {
-                          id: `terms-limit-${termIdx}`,
-                        });
-                      } else if (
-                        !isLegalServicesBoxed &&
-                        value.length === 55 &&
-                        termsPoints[termIdx]?.length < 55
-                      ) {
-                        toast.error('55 character limit reached for Terms & Conditions.', {
-                          id: `terms-limit-${termIdx}`,
-                        });
-                      }
-
-                      next[termIdx] = value;
-                      setField('termsAndConditions', next);
-                    }}
-                    placeholder={`Term ${termIdx + 1}`}
-                  />
-                  {!isLegalServicesBoxed && (
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', minWidth: 40, textAlign: 'right' }}>
-                      {point.length}/55
-                    </span>
-                  )}
-                  <button type="button" className="btn btn-ghost btn-sm" style={{ color: 'var(--danger)' }} onClick={() => setField('termsAndConditions', termsPoints.filter((_, i) => i !== termIdx))}><X size={14} /></button>
-                </div>
-              ))}
-              {termsPoints.length < 5 && (
-                <button type="button" className="btn btn-primary btn-sm" onClick={() => setField('termsAndConditions', [...termsPoints, ''])}><Plus size={14} /> Add point</button>
-              )}
+              <textarea
+                className="form-control"
+                rows={6}
+                value={termsPoints.join('\n')}
+                onChange={(e) => setField('termsAndConditions', e.target.value.split(/\r?\n/))}
+                placeholder="Enter all terms and conditions. Use a new line for each point."
+                style={{ resize: 'vertical', lineHeight: 1.5 }}
+              />
             </div>
           </div>
         </div>

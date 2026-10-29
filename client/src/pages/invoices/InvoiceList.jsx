@@ -175,8 +175,10 @@ export default function InvoiceList() {
     if (!emailModalData) return;
     const { id, blob, fileName, inv } = emailModalData;
     const viewUrl = `${window.location.origin}/share/invoice/${inv.shareToken}`;
-    await invoiceAPI.sendEmail(id, { to, cc, subject, body, pdfBlob: blob, pdfFileName: fileName, viewUrl });
+    return invoiceAPI.sendEmail(id, { to, cc, subject, body, pdfBlob: blob, pdfFileName: fileName, viewUrl });
   };
+
+  const handleUndoEmail = (emailId) => invoiceAPI.cancelSendEmail(emailModalData.id, emailId);
 
   // 🟢 WHATSAPP — triggers modal to review/edit message before opening WhatsApp
   const shareViaWhatsapp = async (id) => {
@@ -671,6 +673,7 @@ export default function InvoiceList() {
           isOpen={!!emailModalData}
           onClose={() => setEmailModalData(null)}
           onSend={handleSendEmail}
+          onUndo={handleUndoEmail}
           defaultTo={emailModalData.inv?.client?.email || ''}
           defaultCc={currentUser?.email || ''}
           defaultSubject={`Invoice #${emailModalData.inv?.invoiceNumber || ''} from ${currentUser?.businessName || 'your business'}`}

@@ -20,6 +20,7 @@ export default function EmailComposeModal({
     isOpen,
     onClose,
     onSend,
+    onUndo,
     defaultTo = '',
     defaultCc = '',
     defaultSubject = '',
@@ -29,6 +30,8 @@ export default function EmailComposeModal({
 }) {
     const [to, setTo] = useState(defaultTo);
     const [cc, setCc] = useState(defaultCc);
+    const [extraTo, setExtraTo] = useState([]);
+    const [extraCc, setExtraCc] = useState([]);
     const [subject, setSubject] = useState(defaultSubject);
     const [body, setBody] = useState(defaultBody);
     const [sending, setSending] = useState(false);
@@ -38,6 +41,8 @@ export default function EmailComposeModal({
         if (isOpen) {
             setTo(defaultTo);
             setCc(defaultCc);
+            setExtraTo([]);
+            setExtraCc([]);
             setSubject(defaultSubject);
             setBody(defaultBody);
         }
@@ -47,19 +52,41 @@ export default function EmailComposeModal({
 
     const handleSend = async (e) => {
         e.preventDefault();
-        if (!to.trim()) {
+        const recipients = [to, ...extraTo].flatMap((value) => value.split(/[;,\n]+/)).map((email) => email.trim()).filter(Boolean);
+        const ccRecipients = [cc, ...extraCc].flatMap((value) => value.split(/[;,\n]+/)).map((email) => email.trim()).filter(Boolean);
+        const isEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        if (!recipients.length) {
             toast.error('Please enter a recipient email');
+            return;
+        }
+        if ([...recipients, ...ccRecipients].some((email) => !isEmail(email))) {
+            toast.error('Please enter valid email addresses separated by commas');
             return;
         }
         setSending(true);
         try {
-            await onSend({ 
-                to: to.trim().replace(/;/g, ','), 
-                cc: cc.trim().replace(/;/g, ','), 
+            const response = await onSend({
+                to: recipients,
+                cc: ccRecipients,
                 subject, 
                 body 
             });
-            toast.success(`${title} email sent successfully!`);
+            const emailId = response?.data?.id;
+            toast.custom((toastItem) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: 10, boxShadow: 'var(--shadow-lg)' }}>
+                    <span>{title} email is sending…</span>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={async () => {
+                        try {
+                            await onUndo(emailId);
+                            toast.dismiss(toastItem.id);
+                            toast.success('Email canceled');
+                        } catch (err) {
+                            toast.dismiss(toastItem.id);
+                            toast.error(err?.response?.data?.message || 'The email can no longer be undone');
+                        }
+                    }}>Undo</button>
+                </div>
+            ), { duration: response?.data?.undoWindowMs || 10000 });
             onClose();
         } catch (err) {
             toast.error(err?.response?.data?.message || err?.message || `Failed to send ${title.toLowerCase()}`);
@@ -133,8 +160,8 @@ export default function EmailComposeModal({
                         <div style={{ marginBottom: 16 }}>
                             <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px', color: 'var(--text-secondary)' }}>To</label>
                             <input
-                                type="email"
-                                placeholder="client@example.com"
+                                type="text"
+                                placeholder="client@example.com, accounts@example.com"
                                 value={to}
                                 onChange={(e) => setTo(e.target.value)}
                                 required
@@ -151,6 +178,13 @@ export default function EmailComposeModal({
                                     fontFamily: 'inherit'
                                 }}
                             />
+                            {extraTo.map((email, index) => (
+                                <div key={`to-${index}`} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                                    <input type="text" aria-label={`Additional recipient ${index + 1}`} placeholder="another@example.com" value={email} onChange={(e) => setExtraTo((values) => values.map((value, i) => i === index ? e.target.value : value))} disabled={sending} style={{ flex: 1, minWidth: 0, padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: '0.9rem', fontFamily: 'inherit' }} />
+                                    <button type="button" aria-label="Remove recipient" className="btn btn-ghost btn-sm" onClick={() => setExtraTo((values) => values.filter((_, i) => i !== index))} disabled={sending}><X size={16} /></button>
+                                </div>
+                            ))}
+                            <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 6, paddingLeft: 0, color: 'var(--primary)' }} onClick={() => setExtraTo((values) => [...values, ''])} disabled={sending}>+ Add recipient</button>
                         </div>
 
                         {/* Cc */}
@@ -158,7 +192,7 @@ export default function EmailComposeModal({
                             <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px', color: 'var(--text-secondary)' }}>Cc</label>
                             <input
                                 type="text"
-                                placeholder="company@example.com"
+                                placeholder="company@example.com, manager@example.com"
                                 value={cc}
                                 onChange={(e) => setCc(e.target.value)}
                                 disabled={sending}
@@ -174,6 +208,13 @@ export default function EmailComposeModal({
                                     fontFamily: 'inherit'
                                 }}
                             />
+                            {extraCc.map((email, index) => (
+                                <div key={`cc-${index}`} style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                                    <input type="text" aria-label={`Additional Cc recipient ${index + 1}`} placeholder="another@example.com" value={email} onChange={(e) => setExtraCc((values) => values.map((value, i) => i === index ? e.target.value : value))} disabled={sending} style={{ flex: 1, minWidth: 0, padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: '0.9rem', fontFamily: 'inherit' }} />
+                                    <button type="button" aria-label="Remove Cc recipient" className="btn btn-ghost btn-sm" onClick={() => setExtraCc((values) => values.filter((_, i) => i !== index))} disabled={sending}><X size={16} /></button>
+                                </div>
+                            ))}
+                            <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 6, paddingLeft: 0, color: 'var(--primary)' }} onClick={() => setExtraCc((values) => [...values, ''])} disabled={sending}>+ Add Cc</button>
                         </div>
 
                         {/* Subject */}

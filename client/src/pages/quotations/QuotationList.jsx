@@ -194,8 +194,10 @@ export default function QuotationList() {
     if (!emailModalData) return;
     const { id, blob, fileName, inv } = emailModalData;
     const viewUrl = `${window.location.origin}/share/quotation/${inv.shareToken}`;
-    await quotationAPI.sendEmail(id, { to, cc, subject, body, pdfBlob: blob, pdfFileName: fileName, viewUrl });
+    return quotationAPI.sendEmail(id, { to, cc, subject, body, pdfBlob: blob, pdfFileName: fileName, viewUrl });
   };
+
+  const handleUndoEmail = (emailId) => quotationAPI.cancelSendEmail(emailModalData.id, emailId);
 
   // 🟢 WHATSAPP — triggers modal to review/edit message before opening WhatsApp
   const shareViaWhatsapp = async (id) => {
@@ -637,6 +639,7 @@ export default function QuotationList() {
           isOpen={!!emailModalData}
           onClose={() => setEmailModalData(null)}
           onSend={handleSendEmail}
+          onUndo={handleUndoEmail}
           defaultTo={emailModalData.inv?.client?.email || ''}
           defaultCc={currentUser?.email || ''}
           defaultSubject={`Quotation #${emailModalData.inv?.invoiceNumber || ''} from ${currentUser?.businessName || 'your business'} is Ready`}

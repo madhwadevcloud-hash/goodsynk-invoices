@@ -42,6 +42,7 @@ export const invoiceAPI = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+  cancelSendEmail: (id, emailId) => api.post(`/invoices/${id}/send-email/${emailId}/cancel`),
 
 };
 
@@ -67,6 +68,7 @@ export const quotationAPI = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+  cancelSendEmail: (id, emailId) => api.post(`/quotations/${id}/send-email/${emailId}/cancel`),
 };
 
 // ─── Clients ──────────────────────────────────────────────────────────────────
