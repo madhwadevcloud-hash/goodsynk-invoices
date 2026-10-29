@@ -92,7 +92,7 @@ export default function EmailComposeModal({
                         }
                     }}>Undo</button>
                 </div>
-            ), { duration: response?.data?.undoWindowMs || 10000 });
+            ), { duration: response?.data?.undoWindowMs || 10000, position: 'top-right' });
             onClose();
         } catch (err) {
             toast.error(err?.response?.data?.message || err?.message || `Failed to send ${title.toLowerCase()}`);
