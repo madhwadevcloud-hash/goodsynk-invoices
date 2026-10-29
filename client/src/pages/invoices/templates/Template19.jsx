@@ -238,12 +238,11 @@ export default function Template19({ invoice }) {
   // Category with Legal Services default
   const categoryText = inv.category || 'Legal Services';
 
-  // Keep the Ref field separate from Terms & Conditions. Long terms belong in
-  // their own wrapping block below so the PDF can paginate them in full.
-  const rawRefText = inv.reference || '';
-  const cleanRefText = rawRefText.replace(/\n/g, ' ').trim();
-  const displayRefText = cleanRefText;
-  const showTermsBlock = Boolean(String(termsText || '').trim());
+  // Keep the existing Ref layout, using Terms & Conditions when there is no
+  // separate reference. Leave the full text intact so it can wrap and paginate.
+  const rawRefText = inv.reference || termsText || '';
+  const displayRefText = String(rawRefText).trim();
+  const showTermsBlock = Boolean(termsText && inv.reference);
 
   const s = StyleSheet.create({
     page: { paddingTop: 25, paddingBottom: 50, paddingHorizontal: 30, fontFamily: 'Inter', color: '#111827', fontSize: 8 },
@@ -395,7 +394,7 @@ export default function Template19({ invoice }) {
             </View>
           </View>
 
-          {/* Optional reference text; terms are shown separately below. */}
+          {/* Ref uses the full terms when no separate reference was entered. */}
           {displayRefText ? (
             <Text style={s.refText}>
               <Text style={{ fontFamily: B }}>Ref:</Text> {displayRefText}
