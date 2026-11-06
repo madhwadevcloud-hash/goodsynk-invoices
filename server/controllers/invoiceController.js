@@ -405,7 +405,9 @@ const getInvoices = async (req, res) => {
 
     const total = await Invoice.countDocuments(filter);
     const invoices = await Invoice.find(filter)
-      .populate('client', 'name email phone')
+      // Keep client fields complete anywhere invoice records are returned;
+      // consumers may render a preview without making another request.
+      .populate('client')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(Number(limit));
@@ -554,7 +556,10 @@ const createInvoice = async (req, res) => {
     // Automatically reflect items in products/services database.
     await upsertProductsFromItems(req.user._id, items);
 
-    await invoice.populate('client', 'name email phone');
+    // Save & Download builds its first PDF from this response. Return the full
+    // client record so address and special-attention fields are available just
+    // as they are on the later GET /:id request.
+    await invoice.populate('client');
     await invoice.populate(
       'user',
       'name email businessName businessLogo businessSignature businessSeal address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan'
@@ -601,7 +606,9 @@ const updateInvoice = async (req, res) => {
       },
       { new: true, runValidators: true }
     )
-      .populate('client', 'name email phone')
+      // Keep the update response complete: the edit form can immediately
+      // render/download this invoice before fetching it again via GET /:id.
+      .populate('client')
       .populate('user', 'name email businessName signatoryName designation businessLogo businessSignature businessSeal address gstin phone bankDetails invoiceTemplate invoiceTemplateColors quotationTemplate quotationTemplateColors plan');
 
     // Automatically reflect items in products/services database
